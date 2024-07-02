@@ -24,15 +24,16 @@
  */
 package net.runelite.client.plugins.questhelper.steps;
 
-import net.runelite.client.plugins.questhelper.MQuestHelperPlugin;
-import net.runelite.client.plugins.questhelper.questhelpers.QuestHelper;
-import lombok.Setter;
-import net.runelite.api.widgets.Widget;
-
-import java.awt.*;
+import net.runelite.client.plugins.questhelper.steps.widget.WidgetDetails;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import lombok.Setter;
+import net.runelite.api.widgets.Widget;
+import net.runelite.client.plugins.questhelper.QuestHelperPlugin;
+import net.runelite.client.plugins.questhelper.questhelpers.QuestHelper;
 
 public class WidgetStep extends DetailedQuestStep
 {
@@ -52,7 +53,7 @@ public class WidgetStep extends DetailedQuestStep
 	}
 
 	@Override
-	public void makeWidgetOverlayHint(Graphics2D graphics, MQuestHelperPlugin plugin)
+	public void makeWidgetOverlayHint(Graphics2D graphics, QuestHelperPlugin plugin)
 	{
 		super.makeWidgetOverlayHint(graphics, plugin);
 		for (WidgetDetails widgetDetail : widgetDetails)

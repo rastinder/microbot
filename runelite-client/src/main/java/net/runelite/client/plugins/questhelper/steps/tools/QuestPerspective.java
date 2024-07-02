@@ -24,29 +24,39 @@
  */
 package net.runelite.client.plugins.questhelper.steps.tools;
 
-import net.runelite.api.Point;
-import net.runelite.api.*;
-import net.runelite.api.coords.LocalPoint;
-import net.runelite.api.coords.WorldPoint;
-import net.runelite.api.widgets.Widget;
-import net.runelite.api.widgets.WidgetInfo;
-
-import java.awt.*;
+import net.runelite.client.plugins.questhelper.requirements.zone.Zone;
+import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
+import net.runelite.api.Client;
 import static net.runelite.api.Constants.CHUNK_SIZE;
+import net.runelite.api.Perspective;
+import net.runelite.api.Point;
+import net.runelite.api.Varbits;
+import net.runelite.api.coords.LocalPoint;
+import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.widgets.ComponentID;
+import net.runelite.api.widgets.Widget;
 
 public class QuestPerspective
 {
-	public static Collection<WorldPoint> toLocalInstance(Client client, WorldPoint worldPoint)
+	// Order of poly corners from getCanvasTilePoly
+	private final static int SW = 0;
+	private final static int NW = 3;
+	private final static int NE = 2;
+	private final static int SE = 1;
+
+	public static Collection<WorldPoint> toLocalInstanceFromReal(Client client, WorldPoint worldPoint)
 	{
 		if (!client.isInInstancedRegion())
 		{
 			return Collections.singleton(worldPoint);
 		}
+
+		if (worldPoint == null) return Collections.singleton(null);
 
 		// find instance chunks using the template point. there might be more than one.
 		List<WorldPoint> worldPoints = new ArrayList<>();
@@ -83,8 +93,8 @@ public class QuestPerspective
 
 	private static WorldPoint rotate(WorldPoint point, int rotation)
 	{
-		int chunkX = point.getX() & ~(CHUNK_SIZE - 1);
-		int chunkY = point.getY() & ~(CHUNK_SIZE - 1);
+		int chunkX = point.getX() & -CHUNK_SIZE;
+		int chunkY = point.getY() & -CHUNK_SIZE;
 		int x = point.getX() & (CHUNK_SIZE - 1);
 		int y = point.getY() & (CHUNK_SIZE - 1);
 		switch (rotation)
@@ -99,20 +109,20 @@ public class QuestPerspective
 		return point;
 	}
 
-	public static LocalPoint getInstanceLocalPoint(Client client, WorldPoint wp)
+	public static LocalPoint getInstanceLocalPointFromReal(Client client, WorldPoint wp)
 	{
-		WorldPoint instanceWorldPoint = getInstanceWorldPoint(client, wp);
+		WorldPoint instanceWorldPoint = getInstanceWorldPointFromReal(client, wp);
 		if (instanceWorldPoint == null)
 		{
 			return null;
 		}
 
-		return LocalPoint.fromWorld(client, instanceWorldPoint);
+		return LocalPoint.fromWorld(client.getTopLevelWorldView(), instanceWorldPoint);
 	}
 
-	public static WorldPoint getInstanceWorldPoint(Client client, WorldPoint wp)
+	public static WorldPoint getInstanceWorldPointFromReal(Client client, WorldPoint wp)
 	{
-		Collection<WorldPoint> points = QuestPerspective.toLocalInstance(client, wp);
+		Collection<WorldPoint> points = QuestPerspective.toLocalInstanceFromReal(client, wp);
 
 		for (WorldPoint point : points)
 		{
@@ -124,9 +134,17 @@ public class QuestPerspective
 		return null;
 	}
 
+	public static WorldPoint getRealWorldPointFromLocal(Client client, WorldPoint wp)
+	{
+		LocalPoint lp = LocalPoint.fromWorld(client.getTopLevelWorldView(), wp);
+		if (lp == null) return null;
+
+		return WorldPoint.fromLocalInstance(client, lp);
+	}
+
 	public static Rectangle getWorldMapClipArea(Client client)
 	{
-		Widget widget = client.getWidget(WidgetInfo.WORLD_MAP_VIEW);
+		Widget widget = client.getWidget(ComponentID.WORLD_MAP_MAPVIEW);
 		if (widget == null)
 		{
 			return null;
@@ -137,16 +155,16 @@ public class QuestPerspective
 
 	public static Point mapWorldPointToGraphicsPoint(Client client, WorldPoint worldPoint)
 	{
-		RenderOverview ro = client.getRenderOverview();
-
-		if (!ro.getWorldMapData().surfaceContainsPosition(worldPoint.getX(), worldPoint.getY()))
+		var worldMap = client.getWorldMap();
+		if (worldPoint == null) return null;
+		if (!worldMap.getWorldMapData().surfaceContainsPosition(worldPoint.getX(), worldPoint.getY()))
 		{
 			return null;
 		}
 
-		float pixelsPerTile = ro.getWorldMapZoom();
+		float pixelsPerTile = worldMap.getWorldMapZoom();
 
-		Widget map = client.getWidget(WidgetInfo.WORLD_MAP_VIEW);
+		Widget map = client.getWidget(ComponentID.WORLD_MAP_MAPVIEW);
 		if (map != null)
 		{
 			Rectangle worldMapRect = map.getBounds();
@@ -154,7 +172,7 @@ public class QuestPerspective
 			int widthInTiles = (int) Math.ceil(worldMapRect.getWidth() / pixelsPerTile);
 			int heightInTiles = (int) Math.ceil(worldMapRect.getHeight() / pixelsPerTile);
 
-			Point worldMapPosition = ro.getWorldMapPosition();
+			var worldMapPosition = worldMap.getWorldMapPosition();
 
 			//Offset in tiles from anchor sides
 			int yTileMax = worldMapPosition.getY() - heightInTiles / 2;
@@ -179,9 +197,9 @@ public class QuestPerspective
 
 	public static Point getMinimapPoint(Client client, WorldPoint start, WorldPoint destination)
 	{
-		RenderOverview ro = client.getRenderOverview();
-		if (ro.getWorldMapData().surfaceContainsPosition(start.getX(), start.getY()) !=
-			ro.getWorldMapData().surfaceContainsPosition(destination.getX(), destination.getY()))
+		var worldMapData = client.getWorldMap().getWorldMapData();
+		if (worldMapData.surfaceContainsPosition(start.getX(), start.getY()) !=
+			worldMapData.surfaceContainsPosition(destination.getX(), destination.getY()))
 		{
 			return null;
 		}
@@ -200,16 +218,16 @@ public class QuestPerspective
 		{
 			if (client.getVarbitValue(Varbits.SIDE_PANELS) == 1)
 			{
-				minimapDrawWidget = client.getWidget(WidgetInfo.RESIZABLE_MINIMAP_DRAW_AREA);
+				minimapDrawWidget = client.getWidget(ComponentID.RESIZABLE_VIEWPORT_BOTTOM_LINE_MINIMAP_DRAW_AREA);
 			}
 			else
 			{
-				minimapDrawWidget = client.getWidget(WidgetInfo.RESIZABLE_MINIMAP_STONES_DRAW_AREA);
+				minimapDrawWidget = client.getWidget(ComponentID.RESIZABLE_VIEWPORT_MINIMAP_DRAW_AREA);
 			}
 		}
 		else
 		{
-			minimapDrawWidget = client.getWidget(WidgetInfo.FIXED_VIEWPORT_MINIMAP_DRAW_AREA);
+			minimapDrawWidget = client.getWidget(ComponentID.FIXED_VIEWPORT_MINIMAP_DRAW_AREA);
 		}
 
 		if (minimapDrawWidget == null)
@@ -217,7 +235,7 @@ public class QuestPerspective
 			return null;
 		}
 
-		final int angle = client.getMapAngle() & 0x7FF;
+		final int angle = client.getCameraYawTarget() & 0x7FF;
 
 		final int sin = Perspective.SINE[angle];
 		final int cos = Perspective.COSINE[angle];
@@ -229,5 +247,60 @@ public class QuestPerspective
 		int miniMapX = loc.getX() + xx + minimapDrawWidget.getWidth() / 2;
 		int miniMapY = minimapDrawWidget.getHeight() / 2 + loc.getY() + yy;
 		return new Point(miniMapX, miniMapY);
+	}
+
+	public static Polygon getZonePoly(Client client, Zone zone)
+	{
+		Polygon areaPoly = new Polygon();
+		if (zone == null) return areaPoly;
+
+		for (int x = zone.getMinX(); x < zone.getMaxX(); x++)
+		{
+			addToPoly(client, areaPoly, new WorldPoint(x, zone.getMaxY(), zone.getMinWorldPoint().getPlane()), NW);
+		}
+
+		// NE corner
+		addToPoly(client, areaPoly, new WorldPoint(zone.getMaxX(), zone.getMaxY(), zone.getMinWorldPoint().getPlane()), NW, NE, SE);
+
+		// West side
+		for (int y = zone.getMaxY() - 1; y > zone.getMinY(); y--)
+		{
+			addToPoly(client, areaPoly, new WorldPoint(zone.getMaxX(), y, zone.getMinWorldPoint().getPlane()), SE);
+		}
+
+		// SE corner
+		addToPoly(client, areaPoly, new WorldPoint(zone.getMaxX(), zone.getMinY(), zone.getMinWorldPoint().getPlane()), SE, SW);
+
+		// South side
+		for (int x = zone.getMaxX() - 1; x > zone.getMinX(); x--)
+		{
+			addToPoly(client, areaPoly, new WorldPoint(x, zone.getMinY(), zone.getMinWorldPoint().getPlane()), SW);
+		}
+
+		// SW corner
+		addToPoly(client, areaPoly, new WorldPoint(zone.getMinX(), zone.getMinY(), zone.getMinWorldPoint().getPlane()), SW, NW);
+
+		for (int y = zone.getMinY() + 1; y < zone.getMaxY(); y++)
+		{
+			addToPoly(client, areaPoly, new WorldPoint(zone.getMinX(), y, zone.getMinWorldPoint().getPlane()), NW);
+		}
+
+
+		return areaPoly;
+	}
+
+	private static void addToPoly(Client client, Polygon areaPoly, WorldPoint wp, int... points)
+	{
+		LocalPoint localPoint = LocalPoint.fromWorld(client.getTopLevelWorldView(), wp);
+		if (localPoint == null) return;
+
+		Polygon poly = Perspective.getCanvasTilePoly(client, localPoint);
+		if (poly != null)
+		{
+			for (int point : points)
+			{
+				areaPoly.addPoint(poly.xpoints[point], poly.ypoints[point]);
+			}
+		}
 	}
 }

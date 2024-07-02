@@ -48,7 +48,6 @@ import java.util.function.BooleanSupplier;
 public class FarmingScript extends Script {
 
     public static double version = 1.0;
-
     public List<ItemRequirement> itemsRequired = new ArrayList();
 
     public static FarmingState state = FarmingState.RESET;
