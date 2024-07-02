@@ -148,7 +148,7 @@ public class QuestHelperPlugin extends Plugin
 	private QuestBankManager questBankManager;
 
 	@Inject
-	private QuestManager questManager;
+	public QuestManager questManager;
 
 	@Inject
 	private WorldMapAreaManager worldMapAreaManager;
@@ -425,7 +425,6 @@ public class QuestHelperPlugin extends Plugin
 	{
 		return questBankManager.getBankTagService().getPluginBankTagItemsForSections(false);
 	}
-
 	public QuestHelper getSelectedQuest()
 	{
 		return questManager.getSelectedQuest();
