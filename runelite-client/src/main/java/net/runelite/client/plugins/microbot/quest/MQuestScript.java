@@ -46,12 +46,10 @@ public class MQuestScript extends Script {
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
-                String name = questHelper.getSelectedQuest().toString();
+                String name = questHelper.getSelectedQuest().getQuest().getName();
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
-                if (questHelper.getSelectedQuest() != null){
-                    /**
-                //               if (questHelperPlugin.getSelectedQuest() != null && !Microbot.getClientThread().runOnClientThread(() -> questHelperPlugin.getSelectedQuest().isCompleted())) {
+                if (questHelper.getSelectedQuest() != null && !Microbot.getClientThread().runOnClientThread(() -> questHelper.getSelectedQuest().isCompleted())) {
 //                    Widget widget = Rs2Widget.findWidget("Start ");
 //                    if (Rs2Widget.hasWidget("select an option") && QuestHelperPlugin.getSelectedQuest().getQuest().getId() != Quest.COOKS_ASSISTANT.getId() || (widget != null &&
 //                            Microbot.getClientThread().runOnClientThread(() -> widget.getParent().getId()) != 10616888)) {
@@ -69,7 +67,7 @@ public class MQuestScript extends Script {
                         }
                         sleep(50);
                     }
-                    if (Rs2Widget.getWidget(219, 1) != null) {
+                    if (Rs2Widget.getWidget(219, 1) != null && Rs2Widget.findWidget("[") != null) {
                         // Widget[] choices = Rs2Widget.getWidget(219,1).getDynamicChildren();
                         System.out.println(Rs2Widget.findWidget("[").getText());
                         Rs2Widget.clickWidget(Rs2Widget.findWidget("[").getText());
@@ -84,7 +82,7 @@ public class MQuestScript extends Script {
 
                     }
 
-                    if (Rs2Player.isInteracting()) {
+                    if (Rs2Player.isInteracting() || Rs2Player.isAnimating()) {
                         return;
                     }
 
@@ -93,41 +91,39 @@ public class MQuestScript extends Script {
                         return;
                     }
 
-                    if (questHelperPlugin.getSelectedQuest().getQuest().getId() == Quest.THE_RESTLESS_GHOST.getId()) {
+                    if (questHelper.getSelectedQuest().getQuest().getId() == Quest.THE_RESTLESS_GHOST.getId()) {
                         if (Rs2Inventory.hasItem("ghostspeak amulet")) {
                             Rs2Inventory.wear("ghostspeak amulet");
                         }
                     }
 
-                    if (questHelperPlugin.getSelectedQuest().getQuest().getId() == Quest.RUNE_MYSTERIES.getId()) {
+                    if (questHelper.getSelectedQuest().getQuest().getId() == Quest.RUNE_MYSTERIES.getId()) {
                         NPC aubury = Rs2Npc.getNpc("Aubury");
                         if (Rs2Inventory.hasItem("research package") && aubury != null) {
                             Rs2Npc.interact(aubury, "Talk-to");
                         }
                     }
 
-                    if (questHelperPlugin.getSelectedQuest().getQuest().getId() == Quest.COOKS_ASSISTANT.getId()) {
+                    if (questHelper.getSelectedQuest().getQuest().getId() == Quest.COOKS_ASSISTANT.getId()) {
                         NPC aubury = Rs2Npc.getNpc("Aubury");
                         if (Rs2Inventory.hasItem("research package") && aubury != null) {
                             Rs2Npc.interact(aubury, "Talk-to");
                         }
                     }
-                    QuestStep questStep = questHelperPlugin.getSelectedQuest().getCurrentStep().getActiveStep();
+                    QuestStep questStep = questHelper.getSelectedQuest().getCurrentStep().getActiveStep();
                     if (questStep instanceof DetailedQuestStep && !(questStep instanceof NpcStep || questStep instanceof ObjectStep)) {
-                        boolean result = applyDetailedQuestStep((DetailedQuestStep) questHelperPlugin.getSelectedQuest().getCurrentStep().getActiveStep());
+                        boolean result = applyDetailedQuestStep((DetailedQuestStep) questHelper.getSelectedQuest().getCurrentStep().getActiveStep());
                         if (result) {
                             return;
                         }
                     }
 
-                    if (questHelperPlugin.getSelectedQuest().getCurrentStep() instanceof ConditionalStep) {
-                        QuestStep conditionalStep = questHelperPlugin.getSelectedQuest().getCurrentStep().getActiveStep();
+                    if (questHelper.getSelectedQuest().getCurrentStep() instanceof ConditionalStep) {
+                        QuestStep conditionalStep = questHelper.getSelectedQuest().getCurrentStep().getActiveStep();
                         applyStep(conditionalStep);
-                    } else if (questHelperPlugin.getSelectedQuest().getCurrentStep() instanceof NpcStep) {
-                        applyNpcStep((NpcStep) questHelperPlugin.getSelectedQuest().getCurrentStep());
+                    } else if (questHelper.getSelectedQuest().getCurrentStep() instanceof NpcStep) {
+                        applyNpcStep((NpcStep) questHelper.getSelectedQuest().getCurrentStep());
                     }
-                    */
-
                 }
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
