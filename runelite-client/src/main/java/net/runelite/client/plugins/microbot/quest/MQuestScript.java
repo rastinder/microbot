@@ -18,10 +18,14 @@ import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 import net.runelite.client.plugins.questhelper.QuestHelperPlugin;
+import net.runelite.client.plugins.questhelper.questhelpers.QuestHelper;
 import net.runelite.client.plugins.questhelper.requirements.Requirement;
 import net.runelite.client.plugins.questhelper.requirements.item.ItemRequirement;
 import net.runelite.client.plugins.questhelper.steps.*;
+import net.runelite.client.plugins.questhelper.managers.QuestManager;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,27 +33,25 @@ import java.util.concurrent.TimeUnit;
 
 public class MQuestScript extends Script {
     public static double version = 0.2;
-
-
     public static List<ItemRequirement> itemRequirements = new ArrayList<>();
-
     public static List<ItemRequirement> itemsMissing = new ArrayList<>();
     public static List<ItemRequirement> grandExchangeItems = new ArrayList<>();
-    QuestHelperPlugin questHelperPlugin = new QuestHelperPlugin();
-
-
     private MQuestConfig config;
+    private QuestHelperPlugin questHelper;
 
 
-    public boolean run(MQuestConfig config) {
+    public boolean run(MQuestConfig config,QuestHelperPlugin questHelper) {
         this.config = config;
-
+        this.questHelper = questHelper;
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
+                String name = questHelper.getSelectedQuest().toString();
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
-                if (questHelperPlugin.getSelectedQuest() != null && !Microbot.getClientThread().runOnClientThread(() -> questHelperPlugin.getSelectedQuest().isCompleted())) {
+                if (questHelper.getSelectedQuest() != null){
+                    /**
+                //               if (questHelperPlugin.getSelectedQuest() != null && !Microbot.getClientThread().runOnClientThread(() -> questHelperPlugin.getSelectedQuest().isCompleted())) {
 //                    Widget widget = Rs2Widget.findWidget("Start ");
 //                    if (Rs2Widget.hasWidget("select an option") && QuestHelperPlugin.getSelectedQuest().getQuest().getId() != Quest.COOKS_ASSISTANT.getId() || (widget != null &&
 //                            Microbot.getClientThread().runOnClientThread(() -> widget.getParent().getId()) != 10616888)) {
@@ -110,12 +112,6 @@ public class MQuestScript extends Script {
                             Rs2Npc.interact(aubury, "Talk-to");
                         }
                     }
-
-
-                    /**
-                     * This portion is needed when using item on another item in your inventory.
-                     * If we do not prioritize this, the script will think we are missing items
-                     */
                     QuestStep questStep = questHelperPlugin.getSelectedQuest().getCurrentStep().getActiveStep();
                     if (questStep instanceof DetailedQuestStep && !(questStep instanceof NpcStep || questStep instanceof ObjectStep)) {
                         boolean result = applyDetailedQuestStep((DetailedQuestStep) questHelperPlugin.getSelectedQuest().getCurrentStep().getActiveStep());
@@ -130,6 +126,8 @@ public class MQuestScript extends Script {
                     } else if (questHelperPlugin.getSelectedQuest().getCurrentStep() instanceof NpcStep) {
                         applyNpcStep((NpcStep) questHelperPlugin.getSelectedQuest().getCurrentStep());
                     }
+                    */
+
                 }
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
@@ -232,5 +230,4 @@ public class MQuestScript extends Script {
         }
         return false;
     }
-
 }
