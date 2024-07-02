@@ -22,45 +22,42 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-<<<<<<<< HEAD:runelite-client/src/main/java/net/runelite/client/plugins/questhelper/util/worldmap/WorldPointWithWorldMapArea.java
-package net.runelite.client.plugins.questhelper.util.worldmap;
+package net.runelite.client.plugins.questhelper.overlays;
 
-import lombok.Value;
-import net.runelite.api.coords.WorldPoint;
-
-/**
- * This class is useful for dealing with the world map, where the viewed area is relevant to the placement of a {@link WorldPoint}.
- */
-@Value
-public class WorldPointWithWorldMapArea
-{
-	WorldPoint worldPoint;
-
-	WorldMapArea worldMapArea;
-========
-package net.runelite.client.plugins.questhelper.requirements;
-
-import java.util.function.BooleanSupplier;
-import lombok.Setter;
+import net.runelite.client.plugins.questhelper.QuestHelperPlugin;
 import net.runelite.api.Client;
+import net.runelite.client.ui.overlay.OverlayLayer;
+import net.runelite.client.ui.overlay.OverlayPanel;
+import javax.inject.Inject;
+import java.awt.*;
 
-public class ConfigRequirement extends SimpleRequirement
+public class QuestHelperTooltipOverlay extends OverlayPanel
 {
-	@Setter
-	boolean shouldPass;
+	private final QuestHelperPlugin questHelperPlugin;
+	private final Client client;
 
-	BooleanSupplier booleanSupplier;
-
-	public ConfigRequirement(BooleanSupplier booleanSupplier)
+	@Inject
+	public QuestHelperTooltipOverlay(QuestHelperPlugin questHelperPlugin, Client client)
 	{
-		this.booleanSupplier = booleanSupplier;
+		setPriority(PRIORITY_HIGHEST);
+		setLayer(OverlayLayer.ABOVE_WIDGETS);
+
+		this.questHelperPlugin = questHelperPlugin;
+		this.client = client;
 	}
 
 	@Override
-	public boolean check(Client client)
+	public Dimension render(Graphics2D graphics)
 	{
-		return booleanSupplier.getAsBoolean();
-	}
->>>>>>>> 4545421ab (mquster with updated quest compileable):runelite-client/src/main/java/net/runelite/client/plugins/questhelper/requirements/ConfigRequirement.java
-}
+		if (questHelperPlugin.getSelectedQuest() != null && questHelperPlugin.getSelectedQuest().getCurrentStep() != null)
+		{
+			questHelperPlugin.getSelectedQuest().getCurrentStep().renderQuestStepTooltip(panelComponent, !client.isMenuOpen(), false);
+		}
 
+		questHelperPlugin.getBackgroundHelpers().forEach(((s, questHelper) -> {
+			questHelper.getCurrentStep().renderQuestStepTooltip(panelComponent, !client.isMenuOpen(), true);
+		}));
+
+		return super.render(graphics);
+	}
+}
