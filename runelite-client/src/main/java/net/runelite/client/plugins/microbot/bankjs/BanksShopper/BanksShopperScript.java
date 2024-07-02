@@ -136,7 +136,7 @@ public class BanksShopperScript extends Script {
         Rs2Shop.closeShop();
         sleep(2400, 4800); // this sleep is required to avoid the message: please finish what you're doing before using the world switcher.
         // This is where we need to hop worlds.
-        int world = Login.getRandomWorld(true, null);
+        int world = Login.getRandomWorld(Rs2Player.isMember(), null);
         boolean isHopped = Microbot.hopToWorld(world);
         if (!isHopped) return;
         boolean result = sleepUntil(() -> Rs2Widget.findWidget("Switch World") != null);
