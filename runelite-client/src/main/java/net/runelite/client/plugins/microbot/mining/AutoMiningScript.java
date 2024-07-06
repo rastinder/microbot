@@ -47,12 +47,13 @@ public class AutoMiningScript extends Script {
 
                 if (Rs2GameObject.interact(rock)) {
                     Rs2Player.waitForAnimation();
+                    sleep(510,2000);
                 }
 
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
-        }, 0, 100, TimeUnit.MILLISECONDS);
+        }, 0, 1000, TimeUnit.MILLISECONDS);
         return true;
     }
 }

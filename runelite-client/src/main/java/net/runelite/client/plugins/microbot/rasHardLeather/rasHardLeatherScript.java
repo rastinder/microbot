@@ -14,6 +14,7 @@ import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
@@ -97,10 +98,11 @@ public class rasHardLeatherScript extends Script {
                             Rs2Bank.depositAll("Hard leather");
                             sleepUntil(() -> !Rs2Inventory.hasItem("Hard leather"), 3000);
                             System.out.println("deposited");
-                            if (Rs2Bank.hasBankItem(coins,1000)){
+                            if (Rs2Bank.hasBankItem(coins, 1000)) {
                                 if (!Rs2Inventory.hasItem(coins) || Rs2Inventory.ItemQuantity(coins) < 200L) {
-                                    Rs2Bank.withdrawX(coins,1000);
-                                }}
+                                    Rs2Bank.withdrawX(coins, 1000);
+                                }
+                            }
                             sleep(300, 500);
                             if (!onlyloot) {
                                 Rs2Bank.withdrawAll("Cowhide");
@@ -118,26 +120,30 @@ public class rasHardLeatherScript extends Script {
                     } else if (Rs2Inventory.hasItem(coins) && !Rs2Inventory.isFull()) {
                         if (Rs2GroundItem.loot("Cowhide", 15)) {
                             sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
-                            if (random(0,1) == 1 && config.randomBonePick()) {
-                                if (Rs2GroundItem.pickup("Bones", 0)){
+                            if (new java.util.Random().nextInt(2) == 1 && config.randomBonePick()) {
+                                if (Rs2GroundItem.pickup("Bones", 1)) {
                                     sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 1000);
-                                    sleep(150,250);
-                                    Rs2Inventory.interact("Bones", "Bury");
+                                    sleep(150, 250);
+                                    while (Rs2Inventory.hasItem("Bones")) {
+                                        Rs2Inventory.interact("Bones", "Bury");
+                                        sleep(150);
+                                    }
                                 }
                             }
                             lastLootTime = System.currentTimeMillis();
                         }
                     }
-                } else if (!Rs2Inventory.hasItem("cowhide")){
+                } else if (!Rs2Inventory.hasItem("cowhide")) {
                     if (Rs2Bank.walkToBank()) {
                         Rs2Player.waitForWalking();
                         sleepUntil(() -> Rs2Bank.openBank(), 5000);
                         sleep(500, 800);
                     }
-                    if (Rs2Bank.hasBankItem(coins,1000)){
-                    if (!Rs2Inventory.hasItem(coins) || Rs2Inventory.ItemQuantity(coins) < 200L) {
-                        Rs2Bank.withdrawX(coins,1000);
-                    }}else shutdown();
+                    if (Rs2Bank.hasBankItem(coins, 1000)) {
+                        if (!Rs2Inventory.hasItem(coins) || Rs2Inventory.ItemQuantity(coins) < 200L) {
+                            Rs2Bank.withdrawX(coins, 1000);
+                        }
+                    } else shutdown();
                     if (Rs2Bank.hasItem("Cowhide")) {
                         Rs2Bank.withdrawAll("Cowhide");
                         sleepUntil(() -> Rs2Inventory.hasItem("Cowhide"), 1000);
@@ -145,7 +151,8 @@ public class rasHardLeatherScript extends Script {
                     } else shutdown();
                 }
 
-            } catch (Exception ex) {
+            } catch (
+                    Exception ex) {
                 System.out.println(ex.getMessage());
             }
         }, 0, 1000, TimeUnit.MILLISECONDS);
