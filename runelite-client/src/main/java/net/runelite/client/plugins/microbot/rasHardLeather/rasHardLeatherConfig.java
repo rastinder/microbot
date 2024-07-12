@@ -5,7 +5,7 @@ import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 
-@ConfigGroup("example")
+@ConfigGroup("firstTimeChecks")
 public interface rasHardLeatherConfig extends Config {
     //randomBonePick
     @ConfigSection(

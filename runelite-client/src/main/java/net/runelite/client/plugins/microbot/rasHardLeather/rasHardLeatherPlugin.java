@@ -14,8 +14,8 @@ import java.awt.*;
 
 @PluginDescriptor(
         name = PluginDescriptor.Default + "ras HardLeather",
-        description = "Microbot example plugin",
-        tags = {"example", "microbot"},
+        description = "Microbot firstTimeChecks plugin",
+        tags = {"firstTimeChecks", "microbot"},
         enabledByDefault = false
 )
 @Slf4j

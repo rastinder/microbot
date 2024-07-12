@@ -78,6 +78,7 @@ public class Ras_highalcScript extends Script {
                     return;
                 }
                 while (isTimetobuy() && config.autoBuy()) {
+                    nature_rune_check();
                     ProfitData mostProfitableItem = getMostProfitableItem(itemListString, naturalRunePrice);
                     if (mostProfitableItem != null) {
                         String itemName = mostProfitableItem.getItemName();
@@ -148,35 +149,39 @@ public class Ras_highalcScript extends Script {
         List<String> itemList = Arrays.asList(itemListString.split(","));
         for (String item : itemList) {
             int colonIndex = item.indexOf(':');
-            if (colonIndex != -1) {
-                String itemName = item.substring(0, colonIndex).trim();
-                int buyLimit = Integer.parseInt(item.substring(colonIndex + 1).trim());
-                int itemId = (int) Microbot.getClientThread().runOnClientThread(() ->
-                        Microbot.getItemManager().search(itemName).get(0).getId());
-                if (new_method == 1) {
-                     gePrice = (long) Microbot.getClientThread().runOnClientThread(() ->
-                            Microbot.getItemManager().getItemPrice(itemId));
-                }
-                else {
-                     gePrice = (long) fetcher.getHighPriceForId(itemId);
-                }
-                gePrice++;
-                long alchPrice = (long) Microbot.getClientThread().runOnClientThread(() ->
-                        Microbot.getItemManager().getItemComposition(itemId).getHaPrice());
-                long profit = alchPrice - gePrice - naturalRunePrice;
-                ProfitData profitData = profitDataMap.get(itemName);
-                if (profitData != null) {
-                    profitData.setItemId(itemId);
-                    profitData.setBuyLimit(buyLimit);
-                    profitData.setGePrice(gePrice);
-                    profitData.setAlchPrice(alchPrice);
-                    profitData.setProfit(profit);
+            try {
+                if (colonIndex != -1) {
+                    String itemName = item.substring(0, colonIndex).trim();
+                    int buyLimit = Integer.parseInt(item.substring(colonIndex + 1).trim());
+                    int itemId = (int) Microbot.getClientThread().runOnClientThread(() ->
+                            Microbot.getItemManager().search(itemName).get(0).getId());
+                    if (new_method == 1) {
+                        gePrice = (long) Microbot.getClientThread().runOnClientThread(() ->
+                                Microbot.getItemManager().getItemPrice(itemId));
+                    } else {
+                        gePrice = (long) fetcher.getHighPriceForId(itemId);
+                    }
+                    gePrice = gePrice + 101;//  gePrice++;
+                    long alchPrice = (long) Microbot.getClientThread().runOnClientThread(() ->
+                            Microbot.getItemManager().getItemComposition(itemId).getHaPrice());
+                    long profit = alchPrice - gePrice - naturalRunePrice;
+                    ProfitData profitData = profitDataMap.get(itemName);
+                    if (profitData != null) {
+                        profitData.setItemId(itemId);
+                        profitData.setBuyLimit(buyLimit);
+                        profitData.setGePrice(gePrice);
+                        profitData.setAlchPrice(alchPrice);
+                        profitData.setProfit(profit);
+                    } else {
+                        profitDataMap.put(itemName, new ProfitData(itemName, itemId, buyLimit, gePrice, alchPrice, profit));
+                    }
                 } else {
-                    profitDataMap.put(itemName, new ProfitData(itemName, itemId, buyLimit, gePrice, alchPrice, profit));
+                    System.out.println("Invalid item format: " + item);
                 }
-            } else {
-                System.out.println("Invalid item format: " + item);
             }
+            catch(Exception ex){
+                    System.out.println("item not found: " + item);
+                }
         }
     }
 
@@ -288,7 +293,8 @@ public class Ras_highalcScript extends Script {
                 Rs2Bank.withdrawAll("Nature rune");
                 sleepUntil(() -> Rs2Inventory.hasItem("Nature rune"));
             } else {
-                buy_nature_rune();
+                //buy_nature_rune();
+                nature_rune_check();
             }
         }
         if (!Rs2Equipment.hasEquippedContains("Staff of fire")) {
@@ -309,12 +315,55 @@ public class Ras_highalcScript extends Script {
     private  void buy_nature_rune(){
         long availableMoney = Rs2Inventory.ItemQuantity(995);
         if (availableMoney > 10000) {
-            buyItem("Nature rune", 100, 150);
+            if(Rs2Bank.isOpen()) {Rs2Bank.closeBank();sleepUntil(()->!Rs2Bank.closeBank());}
+            if(!Rs2GrandExchange.isOpen()) {Rs2GrandExchange.openExchange();sleepUntil(()->Rs2GrandExchange.isOpen());}
+            buyItem("Nature rune", howManyToBuy(availableMoney), 150);
             while (!Rs2Inventory.hasItem("Nature rune")) {
                 Rs2GrandExchange.collectToInventory();
                 sleep(1000);
             }
         }
+    }
+    private  void nature_rune_check(){
+        if (!Rs2Inventory.hasItem("Nature rune") || Rs2Inventory.ItemQuantity("Nature rune") < 130) {
+            long availableMoney = Rs2Inventory.ItemQuantity(995);
+            if (availableMoney > 10000) {
+                if(Rs2Bank.isOpen()) {Rs2Bank.closeBank();sleepUntil(()->!Rs2Bank.closeBank());}
+                if(!Rs2GrandExchange.isOpen()) {Rs2GrandExchange.openExchange();sleepUntil(()->Rs2GrandExchange.isOpen());}
+                int result = howManyToBuy(availableMoney);
+                System.out.println("Available Money: " + availableMoney + ", nature rune buying: " + result);
+                buyItem("Nature rune", result, 150);
+                while (!Rs2Inventory.hasItem("Nature rune") || Rs2Inventory.ItemQuantity("Nature rune") < 100) {
+                    Rs2GrandExchange.collectToInventory();
+                    sleep(1000);
+                }
+                if(Rs2GrandExchange.isOpen()) {Rs2GrandExchange.closeExchange();sleepUntil(()->!Rs2GrandExchange.isOpen());}
+            }
+        }
+    }
+    public static int howManyToBuy(long totalSum) {
+        int productCost = 150;
+        int minItems = 100;
+        int maxItems = 10000;
+        double percentageToUse = 0.1; // 1%
+
+        // Calculate the maximum amount we can spend
+        long maxSpend = (long) (totalSum * percentageToUse);
+
+        // Calculate the number of products we can afford
+        int maxAffordableItems = (int) (maxSpend / productCost);
+
+        // If we can afford fewer than the minimum required items, buy as many as we can afford
+        if (maxAffordableItems < minItems) {
+            if (totalSum < productCost) {
+                return 0; // Can't afford any item
+            } else {
+                return (int) (totalSum / productCost); // Buy as many as we can afford
+            }
+        }
+
+        // Otherwise, buy the minimum required items or the maximum we can afford, whichever is less
+        return Math.min(maxItems, maxAffordableItems);
     }
     private void buyItem(String itemName, int buyLimit, int gePrice) {
         Rs2GrandExchange.buyItem(itemName,gePrice,buyLimit);
