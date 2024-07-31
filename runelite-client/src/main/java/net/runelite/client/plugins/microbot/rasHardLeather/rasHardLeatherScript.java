@@ -2,10 +2,13 @@ package net.runelite.client.plugins.microbot.rasHardLeather;
 
 import net.runelite.api.NPC;
 import net.runelite.api.coords.WorldArea;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.Config;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
+import net.runelite.client.plugins.microbot.geHandler.geHandlerScript;
+import net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
@@ -34,16 +37,19 @@ public class rasHardLeatherScript extends Script {
 
     public boolean run(rasHardLeatherConfig config) {
         Microbot.enableAutoRunOn = false;
+        long timeLimit = random(2_400_000,3360000);
+        long startTime = System.currentTimeMillis();
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
                 onlyloot = config.loot();
+                long endTime = System.currentTimeMillis();
                 if (Rs2Inventory.hasItem("Hard leather")) {
                     Rs2Bank.walkToBank();
-                    Rs2Player.waitForWalking();
+                    sleepUntilTrue(() -> Rs2Bank.isNearBank(9),100, 10000);
                     Rs2Bank.openBank();
-                    sleepUntil(() -> Rs2Bank.isOpen(), 10000);
+                    sleepUntilTrue(() -> Rs2Bank.isOpen(),100, 10000);
                     sleep(100, 200);
                     Rs2Bank.depositAllExcept(coins);
                     sleep(100, 200);
@@ -55,6 +61,11 @@ public class rasHardLeatherScript extends Script {
                     }
                     if (Rs2Bank.hasBankItem("Hard leather", 500))
                         sleep(500); // gotograndexchange and sell all
+                    if (endTime - startTime > timeLimit){
+                        geHandlerScript handelGe = new geHandlerScript();
+                        geHandlerScript.goSell(false,5,new int[]{-1},"Hard leather");
+                        shutdown();
+                    }
                     sleepUntil(() -> Rs2Bank.closeBank(), 1000);
                 }
                 if (Rs2Inventory.hasItemAmount("Cowhide", 27)) {
@@ -114,23 +125,37 @@ public class rasHardLeatherScript extends Script {
                 }
                 if (onlyloot) {
                     System.out.println("stray " + Rs2Player.getWorldLocation().distanceTo(collectCowhide));
-                    if (((System.currentTimeMillis() - lastLootTime) > 10000L) && Rs2Player.getWorldLocation().distanceTo(collectCowhide) > 11 && Rs2Inventory.hasItem("coins") && !Rs2Inventory.isFull()) {
+                    if (((System.currentTimeMillis() - lastLootTime) > 10000L) && Rs2Player.getWorldLocation().distanceTo(collectCowhide) > 11 && Rs2Inventory.ItemQuantity(coins) > 102 && !Rs2Inventory.isFull()) {
                         Rs2Walker.walkTo(collectCowhide.toWorldPoint());
                         Rs2Player.waitForWalking();
-                    } else if (Rs2Inventory.hasItem(coins) && !Rs2Inventory.isFull()) {
+                    } else if (Rs2Inventory.ItemQuantity(coins) > 102 && !Rs2Inventory.isFull()) {
                         if (Rs2GroundItem.loot("Cowhide", 15)) {
                             sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
                             if (new java.util.Random().nextInt(2) == 1 && config.randomBonePick()) {
-                                if (Rs2GroundItem.pickup("Bones", 1)) {
-                                    sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 1000);
+                                if (Rs2GroundItem.pickup("Bones", 1) && Rs2Inventory.size() < 24) {
+                                    sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 2000);
                                     sleep(150, 250);
                                     while (Rs2Inventory.hasItem("Bones")) {
                                         Rs2Inventory.interact("Bones", "Bury");
-                                        sleep(150);
+                                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 2000);
                                     }
                                 }
                             }
                             lastLootTime = System.currentTimeMillis();
+                        }
+                    }
+                    else if (Rs2Inventory.ItemQuantity(coins) < 102 && !Rs2Inventory.isFull()){
+                        System.out.println("collecting 90 coins");
+                        long timenow = System.currentTimeMillis();
+                        while (Rs2Inventory.ItemQuantity(coins) < 102){
+                            if (System.currentTimeMillis() - timenow > 290000)
+                                shutdown();
+                            if (Rs2GroundItem.loot(coins)){
+                                Rs2Walker.setTarget(null);
+                                sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 15000);
+                            } else if (Rs2Player.getWorldLocation().distanceTo(new WorldPoint(3250,3232,0)) > 5)
+                                Rs2Walker.walkTo(new WorldPoint(3250,3232,0),random(1,5));
+                            sleep(100, 200); // cpu chill
                         }
                     }
                 } else if (!Rs2Inventory.hasItem("cowhide")) {
@@ -161,6 +186,11 @@ public class rasHardLeatherScript extends Script {
 
     @Override
     public void shutdown() {
+        rasMasterScriptScript masterControl = new rasMasterScriptScript();
+        masterControl.stopPlugin("ras HardLeather");
+        do{sleep(2000);}
+        while (masterControl.isPlugEnabled("ras HardLeather"));
+
         super.shutdown();
     }
 

@@ -302,16 +302,16 @@ public interface QuestHelperConfig extends Config
 
 	@ConfigSection(
 		position = 0,
-		name = "Unfinished quest highlights",
-		description = "Highlight things you will need for quests you have not yet completed"
+		name = "Item highlighting",
+		description = "Determines what items to highlight in the background"
 	)
 	String itemSection = "itemSection";
 
 	@ConfigItem(
 		position = 0,
 		keyName = "highlightItemsBackground",
-		name = "Highlight missing items",
-		description = "Highlight items on the ground you might need for future quests or achievement diaries.<br>The settings below can be used to control if you want to show items from unfinished quests, miniquests, or diaries",
+		name = "Always highlight needed items",
+		description = "Highlight items you need for marked content type at all times",
 		section = itemSection
 	)
 	default boolean highlightItemsBackground()
@@ -322,8 +322,8 @@ public interface QuestHelperConfig extends Config
 	@ConfigItem(
 		position = 1,
 		keyName = "highlightNeededQuestItems",
-		name = "Include quest items",
-		description = "Highlight every uncompleted quest's items you're missing on the floor.<br>Requires the Highlight missing items to be enabled",
+		name = "Highlight active quest items",
+		description = "Highlight all the active quest's items you're missing on the floor",
 		section = itemSection
 	)
 	default boolean highlightNeededQuestItems()
@@ -334,8 +334,8 @@ public interface QuestHelperConfig extends Config
 	@ConfigItem(
 		position = 2,
 		keyName = "highlightNeededMiniquestItems",
-		name = "Include miniquest items",
-		description = "Highlight every uncompleted miniquest's items you're missing on the floor.<br>Requires the Highlight missing items to be enabled",
+		name = "Highlight miniquest items",
+		description = "Highlight all miniquest items you're missing on the floor",
 		section = itemSection
 	)
 	default boolean highlightNeededMiniquestItems()
@@ -346,8 +346,8 @@ public interface QuestHelperConfig extends Config
 	@ConfigItem(
 		position = 3,
 		keyName = "highlightNeededAchievementDiaryItems",
-		name = "Include achievement diary items",
-		description = "Highlight every uncompleted achievement diary's items you're missing on the floor.<br>Requires the Highlight missing items to be enabled",
+		name = "Highlight achievement diary items",
+		description = "Highlight all achievement diary items you're missing on the floor",
 		section = itemSection
 	)
 	default boolean highlightNeededAchievementDiaryItems()

@@ -1,12 +1,10 @@
-package net.runelite.client.plugins.microbot.rasMagicTrain;
+package net.runelite.client.plugins.microbot.geHandler;
 
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.Client;
 import net.runelite.api.events.GameTick;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -15,46 +13,40 @@ import javax.inject.Inject;
 import java.awt.*;
 
 @PluginDescriptor(
-        name = PluginDescriptor.Default + "ras magic train",
+        name = PluginDescriptor.Default + "geHandler",
         description = "Microbot example plugin",
         tags = {"example", "microbot"},
         enabledByDefault = false
 )
 @Slf4j
-public class rasMagicTrainPlugin extends Plugin {
+public class geHandlerPlugin extends Plugin {
     @Inject
-    private Client client;
-
-    @Inject
-    private ItemManager itemManager;
-
-    @Inject
-    private rasMagicTrainConfig config;
+    private geHandlerConfig config;
     @Provides
-    rasMagicTrainConfig provideConfig(ConfigManager configManager) {
-        return configManager.getConfig(rasMagicTrainConfig.class);
+    geHandlerConfig provideConfig(ConfigManager configManager) {
+        return configManager.getConfig(geHandlerConfig.class);
     }
 
     @Inject
     private OverlayManager overlayManager;
     @Inject
-    private rasMagicTrainOverlay exampleOverlay;
+    private geHandlerOverlay geHandlerOverlay;
 
     @Inject
-    rasMagicTrainScript exampleScript;
+    geHandlerScript geHandlerScript;
 
 
     @Override
     protected void startUp() throws AWTException {
         if (overlayManager != null) {
-            overlayManager.add(exampleOverlay);
+            overlayManager.add(geHandlerOverlay);
         }
-        exampleScript.run(config);
+        geHandlerScript.run(config);
     }
 
     protected void shutDown() {
-        exampleScript.shutdown();
-        overlayManager.remove(exampleOverlay);
+        geHandlerScript.shutdown();
+        overlayManager.remove(geHandlerOverlay);
     }
     int ticks = 10;
     @Subscribe

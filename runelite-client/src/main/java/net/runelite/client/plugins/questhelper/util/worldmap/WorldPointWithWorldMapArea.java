@@ -22,7 +22,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-<<<<<<<< HEAD:runelite-client/src/main/java/net/runelite/client/plugins/questhelper/util/worldmap/WorldPointWithWorldMapArea.java
 package net.runelite.client.plugins.questhelper.util.worldmap;
 
 import lombok.Value;
@@ -37,30 +36,5 @@ public class WorldPointWithWorldMapArea
 	WorldPoint worldPoint;
 
 	WorldMapArea worldMapArea;
-========
-package net.runelite.client.plugins.questhelper.requirements;
-
-import java.util.function.BooleanSupplier;
-import lombok.Setter;
-import net.runelite.api.Client;
-
-public class ConfigRequirement extends SimpleRequirement
-{
-	@Setter
-	boolean shouldPass;
-
-	BooleanSupplier booleanSupplier;
-
-	public ConfigRequirement(BooleanSupplier booleanSupplier)
-	{
-		this.booleanSupplier = booleanSupplier;
-	}
-
-	@Override
-	public boolean check(Client client)
-	{
-		return booleanSupplier.getAsBoolean();
-	}
->>>>>>>> 4545421ab (mquster with updated quest compileable):runelite-client/src/main/java/net/runelite/client/plugins/questhelper/requirements/ConfigRequirement.java
 }
 

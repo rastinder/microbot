@@ -43,11 +43,9 @@ public class TutorialIslandScript extends Script {
             try {
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
-
                 CalculateStatus();
 
                 ClickContinue();
-
                 switch (status) {
                     case NAME:
                         String name = new NameGenerator(random(3, 6)).getName() + new NameGenerator(random(3, 6)).getName();
@@ -177,7 +175,7 @@ public class TutorialIslandScript extends Script {
     }
 
     public void RandomizeCharacter() {
-        sleep(1800, 3200);
+        sleep(1800, 2200);
 
         for (int i = 0; i < CharacterCreation_Arrows.length; i++) {
             int item = CharacterCreation_Arrows[i];
@@ -214,8 +212,8 @@ public class TutorialIslandScript extends Script {
 
     //config 281 needed
     public void GettingStarted() {
+        waitAndPressContinue();
         NPC npc = Rs2Npc.getNpc(3308);
-        if (isInDialogue()) return;
         if (Rs2Widget.getWidget(219, 1) != null) {
             sleep(1000);
             Rs2Keyboard.typeString(Integer.toString(random(1, 3)));
@@ -229,6 +227,7 @@ public class TutorialIslandScript extends Script {
             Microbot.getClient().setCameraPitchTarget(460);
             return;
         }
+        if (isInDialogue()) return;
         if (Rs2Npc.interact(npc, "Talk-to")) {
             waitAndPressContinue();
         }
@@ -271,11 +270,11 @@ public class TutorialIslandScript extends Script {
                 } else if (Microbot.getVarbitPlayerValue(281) == 90 && Rs2Inventory.contains("Raw shrimps")) {
                     if (!Rs2Inventory.contains("Logs") && !Rs2GameObject.exists(26185))
                         CutTree();
-                    if (!Rs2GameObject.exists(26185))
+                    if (!Rs2GameObject.exists(26185)) // fire
                         LightFire();
                     Rs2Inventory.use("Raw shrimps");
                     Rs2GameObject.interact(26185, "Use");
-                    sleepUntil(() -> Rs2Inventory.contains("Shrimps"));
+                    sleepUntil(() -> Rs2Inventory.contains("Shrimps"),5000);
                 }
             }
         }
@@ -283,11 +282,22 @@ public class TutorialIslandScript extends Script {
     }
 
     public void MageGuide() {
+        if (Rs2Widget.hasWidget("Do you want to go to the mainland?")) {
+            Rs2Widget.clickWidget(14352385);
+            Rs2Keyboard.typeString("1");
+        } else if (Rs2Widget.hasWidget("Select an option")) {
+            if (Rs2Widget.hasWidget("No, I'm not planning to do that")) {
+                Rs2Keyboard.typeString("3");
+            } else {
+                Rs2Widget.clickWidget("Yes, send me to the mainland");
+            }
+        }
         if (isInDialogue()) return;
         if (Microbot.getVarbitPlayerValue(281) == 610 || Microbot.getVarbitPlayerValue(281) == 620) {
-            WorldPoint worldPoint = new WorldPoint(3141, 3086, 0);
+            WorldPoint worldPoint = new WorldPoint(random(3140,3142), 3086, 0);
             if (Microbot.getClient().getLocalPlayer().getWorldLocation().distanceTo(worldPoint) > 2) {
-                Rs2Walker.walkTo(worldPoint);
+                Rs2Walker.walkTo(worldPoint,0);
+                Rs2Player.waitForWalking();
             } else {
                 sleep(2000);
                 Rs2Npc.interact(3309, "Talk-to");
@@ -299,7 +309,11 @@ public class TutorialIslandScript extends Script {
         } else if (Microbot.getVarbitPlayerValue(281) == 640) {
             Rs2Npc.interact(3309, "Talk-to");
         } else if (Microbot.getVarbitPlayerValue(281) == 650) {
+
+
+
             Rs2Magic.castOn(MagicAction.WIND_STRIKE, Rs2Npc.getNpc(3316));
+
         } else if (Microbot.getVarbitPlayerValue(281) == 670) {
             waitAndPressContinue();
             if (isInDialogue()) {
@@ -403,6 +417,9 @@ public class TutorialIslandScript extends Script {
             if (Microbot.getVarbitPlayerValue(281) > 420) {
                 if (Microbot.getClient().getLocalPlayer().isInteracting() || Rs2Player.isAnimating()) return;
                 if (Rs2Equipment.isWearing("Bronze sword")) {
+                    sleep(1000, 2500);
+                    Rs2Widget.clickWidget(164, 52);
+                    sleep(1000, 2500);
                     WorldPoint worldPoint = new WorldPoint(3105, 9517, 0);
                     sleepUntil(() -> Rs2Walker.walkTo(new WorldPoint(3112, 9518, 0)));
                     sleepUntil(() -> Rs2Walker.walkTo(worldPoint));
@@ -570,9 +587,10 @@ public class TutorialIslandScript extends Script {
     public void LightFire() {
         if (Rs2GameObject.findObjectById(26185) == null && Rs2GameObject.findGameObjectByLocation(Microbot.getClient().getLocalPlayer().getWorldLocation()) == null) {
             Rs2Inventory.combine("Logs", "Tinderbox");
-            sleepUntil(() -> !Rs2Inventory.hasItem("Logs"));
+            sleepUntil(() -> !Rs2Inventory.hasItem("Logs"),6000);
         } else {
             Rs2Npc.interact(8503);
+            waitAndPressContinue();
         }
     }
 
@@ -589,7 +607,8 @@ public class TutorialIslandScript extends Script {
     }
 
     public void ClickContinue() {
-        Rs2Dialogue.clickContinue();
+        //Rs2Dialogue.clickContinue();
+        waitAndPressContinue();
     }
 
 
@@ -612,11 +631,14 @@ public class TutorialIslandScript extends Script {
         return Rs2Widget.clickWidget(getFlashyWidget(spriteid));
     }
     public void waitAndPressContinue(){
-        long endTime = System.currentTimeMillis() + 5000;
+        int sleep = random(2300,3600);
+        long endTime = System.currentTimeMillis() + sleep;
         while (System.currentTimeMillis() < endTime) {
             if (Rs2Widget.hasWidget("Click here to continue")) {
+                sleep(110,280);
                 Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
-                endTime = System.currentTimeMillis() + 5000;
+                sleep(110,280);
+                endTime = System.currentTimeMillis() + sleep;
             }
         }
     }

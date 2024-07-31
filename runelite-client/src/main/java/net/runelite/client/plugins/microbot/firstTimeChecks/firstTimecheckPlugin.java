@@ -1,12 +1,10 @@
-package net.runelite.client.plugins.microbot.rasMagicTrain;
+package net.runelite.client.plugins.microbot.firstTimeChecks;
 
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.Client;
 import net.runelite.api.events.GameTick;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -15,46 +13,40 @@ import javax.inject.Inject;
 import java.awt.*;
 
 @PluginDescriptor(
-        name = PluginDescriptor.Default + "ras magic train",
-        description = "Microbot example plugin",
-        tags = {"example", "microbot"},
+        name = PluginDescriptor.Default + "ras firsttime check",
+        description = "Microbot firstTimeChecks plugin",
+        tags = {"firstTimeChecks", "microbot"},
         enabledByDefault = false
 )
 @Slf4j
-public class rasMagicTrainPlugin extends Plugin {
+public class firstTimecheckPlugin extends Plugin {
     @Inject
-    private Client client;
-
-    @Inject
-    private ItemManager itemManager;
-
-    @Inject
-    private rasMagicTrainConfig config;
+    private firstTimecheckConfig config;
     @Provides
-    rasMagicTrainConfig provideConfig(ConfigManager configManager) {
-        return configManager.getConfig(rasMagicTrainConfig.class);
+    firstTimecheckConfig provideConfig(ConfigManager configManager) {
+        return configManager.getConfig(firstTimecheckConfig.class);
     }
 
     @Inject
     private OverlayManager overlayManager;
     @Inject
-    private rasMagicTrainOverlay exampleOverlay;
+    private firstTimecheckOverlay firstTimecheckOverlay;
 
     @Inject
-    rasMagicTrainScript exampleScript;
+    firstTimecheckScript firstTimecheckScript;
 
 
     @Override
     protected void startUp() throws AWTException {
         if (overlayManager != null) {
-            overlayManager.add(exampleOverlay);
+            overlayManager.add(firstTimecheckOverlay);
         }
-        exampleScript.run(config);
+        firstTimecheckScript.run(config);
     }
 
     protected void shutDown() {
-        exampleScript.shutdown();
-        overlayManager.remove(exampleOverlay);
+        firstTimecheckScript.shutdown();
+        overlayManager.remove(firstTimecheckOverlay);
     }
     int ticks = 10;
     @Subscribe

@@ -218,7 +218,7 @@ public class ItemManager
 			});
 	}
 
-	private void loadPrices()
+	public void loadPrices()
 	{
 		try
 		{

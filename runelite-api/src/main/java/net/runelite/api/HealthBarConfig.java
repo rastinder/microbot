@@ -1,9 +1,5 @@
 /*
-<<<<<<<< HEAD:runelite-api/src/main/java/net/runelite/api/HealthBarConfig.java
  * Copyright (c) 2019, Adam <Adam@sigterm.info>
-========
- * Copyright (c) 2024, Zoinkwiz <https://github.com/Zoinkwiz>
->>>>>>>> 4545421ab (mquster with updated quest compileable):runelite-client/src/main/java/net/runelite/client/plugins/questhelper/util/worldmap/WorldPointWithWorldMapArea.java
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +22,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-<<<<<<<< HEAD:runelite-api/src/main/java/net/runelite/api/HealthBarConfig.java
 package net.runelite.api;
 
 public interface HealthBarConfig
@@ -38,21 +33,4 @@ public interface HealthBarConfig
 	int getHealthBarFrontSpriteId();
 
 	void setPadding(int padding);
-========
-package net.runelite.client.plugins.questhelper.util.worldmap;
-
-import lombok.Value;
-import net.runelite.api.coords.WorldPoint;
-
-/**
- * This class is useful for dealing with the world map, where the viewed area is relevant to the placement of a {@link WorldPoint}.
- */
-@Value
-public class WorldPointWithWorldMapArea
-{
-	WorldPoint worldPoint;
-
-	WorldMapArea worldMapArea;
->>>>>>>> 4545421ab (mquster with updated quest compileable):runelite-client/src/main/java/net/runelite/client/plugins/questhelper/util/worldmap/WorldPointWithWorldMapArea.java
 }
-
