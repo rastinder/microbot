@@ -99,4 +99,16 @@ public interface rasCombineConfig extends Config {
         return false;
     }
 
+    @ConfigItem(
+            keyName = "buyMissingItems",
+            name = "buyMissingItems",
+            description = "buyMissingItems",
+            position = 8,
+            section = generalSection
+    )
+    default boolean itemFromGE()
+    {
+        return false;
+    }
+
 }

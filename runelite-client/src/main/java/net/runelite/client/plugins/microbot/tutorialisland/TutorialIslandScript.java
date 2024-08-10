@@ -6,6 +6,7 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
+import net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.dialogues.Rs2Dialogue;
 import net.runelite.client.plugins.microbot.util.equipment.Rs2Equipment;
@@ -21,8 +22,13 @@ import net.runelite.client.plugins.microbot.util.tabs.Rs2Tab;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 import net.runelite.client.plugins.skillcalculator.skills.MagicAction;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.*;
 
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import static net.runelite.client.plugins.microbot.util.dialogues.Rs2Dialogue.clickContinue;
@@ -30,17 +36,21 @@ import static net.runelite.client.plugins.microbot.util.dialogues.Rs2Dialogue.is
 import static net.runelite.client.plugins.microbot.util.math.Random.random;
 import static net.runelite.client.plugins.microbot.util.settings.Rs2Settings.hideRoofs;
 import static net.runelite.client.plugins.microbot.util.settings.Rs2Settings.turnOffMusic;
+import java.util.AbstractMap.SimpleEntry;
+
 
 
 public class TutorialIslandScript extends Script {
 
     public static double version = 1.0;
     public static Status status = Status.NAME;
+    int i= 1;
 
     public boolean run(TutorialIslandConfig config) {
         Microbot.enableAutoRunOn = false;
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
+                rasMasterScriptScript.autoShutdown("TutorialIsland");
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
                 CalculateStatus();
@@ -48,23 +58,48 @@ public class TutorialIslandScript extends Script {
                 ClickContinue();
                 switch (status) {
                     case NAME:
-                        String name = new NameGenerator(random(3, 6)).getName() + new NameGenerator(random(3, 6)).getName();
-                        Rs2Widget.clickWidget(36569095);
-                        Rs2Keyboard.typeString(name);
-                        Rs2Widget.clickWidget("Look up name");
-                        sleepUntil(() -> Rs2Widget.hasWidget("Set name"));
-                        sleep(4000);
-                        if (Rs2Widget.hasWidget("Sorry")) {
-                            Rs2Widget.clickWidget(36569095);
-                            for (int i = 0; i < name.length(); i++) {
-                                Rs2Keyboard.keyPress(KeyEvent.VK_BACK_SPACE);
-                                sleep(300, 600);
+                        NameGenerator nameGenerator = new NameGenerator();
+                        AbstractMap.SimpleEntry<String, String> nameEntry = nameGenerator.NameGenerator();
+
+                        if (nameEntry != null) {
+                            String firstName = nameEntry.getKey();
+                            String lastName = nameEntry.getValue();
+
+                            Rs2Widget.clickWidget(36569095); sleep(400);
+                            Rs2Keyboard.typeString(firstName);
+                            Rs2Widget.clickWidget("Look up name");
+                            sleepUntil(() -> Rs2Widget.hasWidget("Set name"));
+                            sleep(4000);
+
+                            if (Rs2Widget.hasWidget("Sorry")) {
+                                Rs2Widget.clickWidget(36569095);
+                                sleep(200,400);
+                                Rs2Keyboard.typeString(" ");
+                                sleep(90,200);
+                                Rs2Keyboard.typeString(lastName);
+                                Rs2Widget.clickWidget("Look up name");
+                                sleepUntil(() -> Rs2Widget.hasWidget("Set name"));
+                                sleep(4000);
+
+                                if (Rs2Widget.hasWidget("Sorry")) {
+                                    for (int i = 0; i < (firstName + " " + lastName).length(); i++) {
+                                        Rs2Widget.clickWidget(36569095);
+                                        sleep(200,400);
+                                        Rs2Keyboard.keyPress(KeyEvent.VK_BACK_SPACE);
+                                        sleep(300, 600);
+                                    }
+                                } else {
+                                    Rs2Widget.clickWidget("Set name");
+                                    sleep(3000);
+                                    Rs2Widget.clickWidget("Set name");
+                                    sleepUntil(() -> !isLookupNameButtonVisible());
+                                }
+                            }else {
+                                Rs2Widget.clickWidget("Set name");
+                                sleep(3000);
+                                Rs2Widget.clickWidget("Set name");
+                                sleepUntil(() -> !isLookupNameButtonVisible());
                             }
-                        } else {
-                            Rs2Widget.clickWidget("Set name");
-                            sleep(3000);
-                            Rs2Widget.clickWidget("Set name");
-                            sleepUntil(() -> !isLookupNameButtonVisible());
                         }
                         sleep(2000);
                         break;
@@ -111,6 +146,10 @@ public class TutorialIslandScript extends Script {
 
     @Override
     public void shutdown() {
+        rasMasterScriptScript masterControl = new rasMasterScriptScript();
+        masterControl.stopPlugin("TutorialIsland");
+        do{sleep(2000);}
+        while (masterControl.isPlugEnabled("TutorialIsland"));
         super.shutdown();
     }
 
@@ -631,15 +670,23 @@ public class TutorialIslandScript extends Script {
         return Rs2Widget.clickWidget(getFlashyWidget(spriteid));
     }
     public void waitAndPressContinue(){
-        int sleep = random(2300,3600);
+        int sleep = random(1300,1600);
         long endTime = System.currentTimeMillis() + sleep;
         while (System.currentTimeMillis() < endTime) {
             if (Rs2Widget.hasWidget("Click here to continue")) {
-                sleep(110,280);
+                sleep(180,380);
                 Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
-                sleep(110,280);
+                if (random(0,2)==0) {
+                    sleep(80,180);
+                    Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
+                }
+                endTime = System.currentTimeMillis() + sleep;
+            }
+            if (Rs2Widget.hasWidget("Please wait")){
                 endTime = System.currentTimeMillis() + sleep;
             }
         }
     }
 }
+
+

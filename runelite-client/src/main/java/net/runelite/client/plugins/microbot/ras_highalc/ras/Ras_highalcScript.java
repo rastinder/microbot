@@ -13,6 +13,7 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.globval.enums.InterfaceTab;
+import net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.equipment.Rs2Equipment;
 import net.runelite.client.plugins.microbot.util.grandexchange.GrandExchangeSlots;
@@ -37,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import static net.runelite.client.plugins.microbot.util.Global.sleepUntil;
+import static net.runelite.client.plugins.microbot.util.math.Random.random;
 
 public class Ras_highalcScript extends Script {
     public static double version = 1.0;
@@ -58,6 +60,7 @@ public class Ras_highalcScript extends Script {
     private RuneLiteConfig runeLiteConfig;
 
     public boolean run(Ras_highalcConfig config) {
+        long stopTimer = random(1800000,2760000) + System.currentTimeMillis();
         Microbot.enableAutoRunOn = false;
         String itemListString = config.itemList();
         int naturalRunePrice = config.naturalRunePrice();
@@ -65,6 +68,7 @@ public class Ras_highalcScript extends Script {
         ConcurrentHashMap<String, Integer> remainingQuantities = new ConcurrentHashMap<>();
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
+            rasMasterScriptScript.autoShutdown("ras_high alc");
             if (!super.run()) return;
             try {
                 if (!withdrawcoins) {
@@ -107,6 +111,18 @@ public class Ras_highalcScript extends Script {
                 }
                 if (config.autoBuy()) checkForInactivity(config);
                 if (config.highAlch())rs2Magic.alchInventory(config);
+                if (stopTimer < System.currentTimeMillis()){
+                    if (config.autoBuy())
+                        Microbot.getPluginManager().setPluginValue("general", "Autobuy", false);
+                    else if (!config.autoBuy() && config.highAlch() && Rs2Inventory.count() <= 2) {
+                        Rs2Bank.openBank();
+                        sleep(350);
+                        Rs2Bank.depositAll();
+                        sleep(350);
+                        Rs2Bank.closeBank();
+                        shutdown();
+                    }
+                }
                 sleep(800);
             } catch (Exception ex) {
                 System.out.println("crash");
@@ -273,6 +289,11 @@ public class Ras_highalcScript extends Script {
 
     @Override
     public void shutdown() {
+        String pluginName = "ras_high alc";
+        rasMasterScriptScript masterControl = new rasMasterScriptScript();
+        masterControl.stopPlugin(pluginName);
+        do{sleep(2000);}
+        while (masterControl.isPlugEnabled(pluginName));
         super.shutdown();
     }
 

@@ -180,7 +180,7 @@ public class firstTimecheckScript extends Script {
         sleep(450);
         if (Rs2Widget.isWidgetVisible(664, 29))
             Rs2Widget.clickWidget(664, 29);
-        sleep(450);
+        sleep(850);
         Rs2Bank.depositAll();
         sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
         sleep(450);
@@ -248,7 +248,7 @@ public class firstTimecheckScript extends Script {
     }
     private void killOrSettings() {
         List<Runnable> functions = new ArrayList<>();
-        //functions.add(() -> warnings()); testing
+        functions.add(() -> warnings());
         functions.add(() -> kill());
 
         Collections.shuffle(functions, new Random());
@@ -732,7 +732,7 @@ public class firstTimecheckScript extends Script {
     }
     public void stopPlugin(String pluginName) {
         try {
-            Microbot.getPluginManager().setPluginEnabled(getPluginByName(pluginName),true);
+            Microbot.getPluginManager().setPluginEnabled(getPluginByName(pluginName),false);
             sleep(100);
             Microbot.getPluginManager().startPlugins();
 

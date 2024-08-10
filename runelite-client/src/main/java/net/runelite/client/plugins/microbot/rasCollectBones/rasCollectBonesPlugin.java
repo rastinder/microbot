@@ -11,7 +11,7 @@ import javax.inject.Inject;
 import java.awt.*;
 
 @PluginDescriptor(
-        name = PluginDescriptor.Default + "ras range bone collectoer",
+        name = PluginDescriptor.Default + "ras range bone collector",
         description = "Microbot example plugin",
         tags = {"example", "microbot"},
         enabledByDefault = false

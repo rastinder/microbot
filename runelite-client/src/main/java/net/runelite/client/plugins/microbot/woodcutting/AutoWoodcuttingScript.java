@@ -2,6 +2,8 @@ package net.runelite.client.plugins.microbot.woodcutting;
 
 import net.runelite.api.AnimationID;
 import net.runelite.api.GameObject;
+import net.runelite.api.Skill;
+import net.runelite.api.TileObject;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
@@ -9,15 +11,17 @@ import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.combat.Rs2Combat;
 import net.runelite.client.plugins.microbot.util.equipment.Rs2Equipment;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
+import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.math.Random;
+import net.runelite.client.plugins.microbot.util.models.RS2Item;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.tile.Rs2Tile;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
+import net.runelite.client.plugins.microbot.woodcutting.enums.WoodcuttingTree;
 import net.runelite.client.plugins.microbot.woodcutting.enums.WoodcuttingWalkBack;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -66,10 +70,10 @@ public class AutoWoodcuttingScript extends Script {
                             return;
                         }
 
-                        GameObject tree = Rs2GameObject.findObject(config.TREE().getName(), true, config.distanceToStray(), true, getInitialPlayerLocation());
+                        GameObject tree = Rs2GameObject.findObject(getTreeByLevel().getName(), true, config.distanceToStray(), true, getInitialPlayerLocation());
 
                         if (tree != null) {
-                            Rs2GameObject.interact(tree, config.TREE().getAction());
+                            Rs2GameObject.interact(tree, getTreeByLevel().getAction());
                             if (config.walkBack().equals(WoodcuttingWalkBack.LAST_LOCATION)) {
                                 returnPoint = Microbot.getClient().getLocalPlayer().getWorldLocation();
                             }
@@ -101,11 +105,8 @@ public class AutoWoodcuttingScript extends Script {
                 state = State.WOODCUTTING;
                 break;
             case FIREMAKE:
-                do {
+                while (Rs2Inventory.contains(config.TREE().getLog()) || Rs2Inventory.get("log") !=null)
                     burnLog(config);
-                }
-                while (Rs2Inventory.contains(config.TREE().getLog()));
-
                 walkBack(config);
                 state = State.WOODCUTTING;
                 break;
@@ -122,25 +123,47 @@ public class AutoWoodcuttingScript extends Script {
         if (!isFiremake()) {
             Rs2Inventory.use("tinderbox");
             sleep(Random.random(300, 600));
-            Rs2Inventory.use(config.TREE().getLog());
+            if (Rs2Inventory.hasItem(getTreeByLevel().getLog())) {
+                Rs2Inventory.use(getTreeByLevel().getLog());
+            }
+            else if (Rs2Inventory.get("log") !=null) {
+                Rs2Inventory.use(Rs2Inventory.get("log"));
+            }
             sleepUntil(Rs2Inventory::waitForInventoryChanges);
         }
-        sleepUntil(() -> !isFiremake() && !Rs2Player.isStandingOnGameObject() && !Rs2Player.isStandingOnGroundItem(), 2500);
+        sleepUntil(() -> !isFiremake() && !Rs2Player.isStandingOnGameObject() && !Rs2Player.isStandingOnGroundItem(), 3500);
         return true;
     }
 
     private WorldPoint fireSpot(int distance) {
         List<WorldPoint> worldPoints = Rs2Tile.getWalkableTilesAroundPlayer(distance);
+        WorldPoint playerLocation = Rs2Player.getWorldLocation();
+
+        // Create a map to group tiles by their distance from the player
+        Map<Integer, List<WorldPoint>> distanceMap = new HashMap<>();
 
         for (WorldPoint walkablePoint : worldPoints) {
-            if (Rs2GameObject.getGameObject(walkablePoint) == null) {
-                return walkablePoint;
+            if (Rs2GameObject.getGameObject(walkablePoint) == null && Rs2Tile.isTileReachable(walkablePoint)) {
+                int tileDistance = playerLocation.distanceTo(walkablePoint);
+                distanceMap.computeIfAbsent(tileDistance, k -> new ArrayList<>()).add(walkablePoint);
             }
         }
 
-        fireSpot(distance + 1);
+        // Find the minimum distance that has walkable points
+        Optional<Integer> minDistanceOpt = distanceMap.keySet().stream().min(Integer::compare);
 
-        return null;
+        if (minDistanceOpt.isPresent()) {
+            List<WorldPoint> closestPoints = distanceMap.get(minDistanceOpt.get());
+
+            // Return a random point from the closest points
+            if (!closestPoints.isEmpty()) {
+                int randomIndex = Random.random(0, closestPoints.size());
+                return closestPoints.get(randomIndex);
+            }
+        }
+
+        // Recursively increase the distance if no valid point is found
+        return fireSpot(distance + 1);
     }
 
     private boolean isFiremake() {
@@ -158,5 +181,18 @@ public class AutoWoodcuttingScript extends Script {
     private void walkBack(AutoWoodcuttingConfig config) {
         Rs2Walker.walkTo(new WorldPoint(calculateReturnPoint(config).getX() - Random.random(-1, 1), calculateReturnPoint(config).getY() - Random.random(-1, 1), calculateReturnPoint(config).getPlane()));
         sleepUntil(() -> Rs2Player.getWorldLocation().distanceTo(calculateReturnPoint(config)) <= 4);
+    }
+    public static WoodcuttingTree getTreeByLevel() {
+        int level = Rs2Player.getRealSkillLevel(Skill.WOODCUTTING);
+        WoodcuttingTree bestTree = null;
+        for (WoodcuttingTree tree : WoodcuttingTree.values()) {
+            if (tree.getWoodcuttingLevel() <= level) {
+                if (Rs2GameObject.get(tree.getName() ,false)!= null)
+                    bestTree = tree;
+            } else {
+                break;
+            }
+        }
+        return bestTree;
     }
 }

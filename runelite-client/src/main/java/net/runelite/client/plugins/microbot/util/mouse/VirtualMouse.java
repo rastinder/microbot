@@ -35,6 +35,7 @@ public class VirtualMouse extends Mouse {
         mouseEvent(MouseEvent.MOUSE_EXITED, point, rightClick);
         mouseEvent(MouseEvent.MOUSE_MOVED, point, rightClick);
         mouseEvent(MouseEvent.MOUSE_PRESSED, point, rightClick);
+        sleep(0,8);
         mouseEvent(MouseEvent.MOUSE_RELEASED, point, rightClick);
         mouseEvent(MouseEvent.MOUSE_FIRST, point, rightClick);
 

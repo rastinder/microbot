@@ -95,14 +95,14 @@ public class PluginManager
 
 	@Inject
 	@VisibleForTesting
-	PluginManager(
-		@Named("developerMode") final boolean developerMode,
-		@Named("safeMode") final boolean safeMode,
-		@Named("disableWalkerUpdate") final boolean disableWalkerUpdate,
-		final EventBus eventBus,
-		final Scheduler scheduler,
-		final ConfigManager configManager,
-		final Provider<GameEventManager> sceneTileManager)
+    public PluginManager(
+            @Named("developerMode") final boolean developerMode,
+            @Named("safeMode") final boolean safeMode,
+            @Named("disableWalkerUpdate") final boolean disableWalkerUpdate,
+            final EventBus eventBus,
+            final Scheduler scheduler,
+            final ConfigManager configManager,
+            final Provider<GameEventManager> sceneTileManager)
 	{
 		this.developerMode = developerMode;
 		this.safeMode = safeMode;

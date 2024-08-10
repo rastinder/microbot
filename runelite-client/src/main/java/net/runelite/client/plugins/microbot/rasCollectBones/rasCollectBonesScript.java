@@ -1,15 +1,15 @@
 package net.runelite.client.plugins.microbot.rasCollectBones;
 
-import net.runelite.api.AnimationID;
-import net.runelite.api.GameObject;
-import net.runelite.api.GameState;
-import net.runelite.api.NPC;
+import net.runelite.api.*;
 import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
+import net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript;
+import net.runelite.client.plugins.microbot.util.Global;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.combat.Rs2Combat;
+import net.runelite.client.plugins.microbot.util.dialogues.Rs2Dialogue;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2Cannon;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
 import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
@@ -23,14 +23,12 @@ import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
+import static net.runelite.client.plugins.microbot.util.math.Random.random;
 
 
 public class rasCollectBonesScript extends Script {
@@ -43,16 +41,20 @@ public class rasCollectBonesScript extends Script {
     public int centerY = 0;
     public WorldArea center = new WorldArea(1, 1, 1, 1, 0);
     public static long afktimer = System.currentTimeMillis();
-
+    long stopTimer = random(1800000,2760000) + System.currentTimeMillis();
 
     public boolean run(rasCollectBonesConfig config) {
+        stopTimer = random(1800000,2760000) + System.currentTimeMillis();
         Microbot.enableAutoRunOn = false;
         AtomicInteger action = new AtomicInteger(1);
+        centerY = 0;
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
+            rasMasterScriptScript.autoShutdown("ras range bone collector");
             if (!super.run()) {
                 return;
             }
             try {
+                shutdownTimer();
                 if (centerY == 0 && Microbot.getClient().getGameState() == GameState.LOGGED_IN) {
                     centerX = Rs2Player.getWorldLocation().getX();
                     centerY = Rs2Player.getWorldLocation().getY();
@@ -85,24 +87,32 @@ public class rasCollectBonesScript extends Script {
                 }
                 if (config.eatfood()) {
                     int random = new Random().nextInt(41) + 20;
-                    if (!Rs2Player.eatAt(random)) {
+                    Rs2Player.eatAt(random);
+                    double treshHold = (double) (Microbot.getClient().getBoostedSkillLevel(Skill.HITPOINTS) * 100) / Microbot.getClient().getRealSkillLevel(Skill.HITPOINTS);
+                    if (treshHold <= random && !Rs2Player.isFullHealth()) {
                         if (Rs2Inventory.getInventoryFood().isEmpty()) {
                             if (config.cookFood() == rasCollectBonesConfig.cookON.Fire) {
                                 getFireMakingstuff(config);
                                 if (!Rs2Inventory.hasItem("logs")) {
                                     List<String> treesThatGiveLogs = Arrays.asList(
                                             "Tree",
-                                            "Evergreen",
-                                            "Achey Tree",
-                                            "Oak Tree",
-                                            "Willow Tree",
-                                            "Maple Tree",
-                                            "Yew Tree",
-                                            "Magic Tree"
+                                            "tree"
+                                            //"Evergreen",
+                                            //"Achey Tree",
+                                            //"Oak Tree",
+                                            //"Willow Tree",
+                                            //"Maple Tree",
+                                            //"Yew Tree",
+                                            //"Magic Tree"
                                     );
                                     for (String trees : treesThatGiveLogs) {
-                                        GameObject tree = Rs2GameObject.findObject(trees, true, 50,false, center.toWorldPoint());
+                                        GameObject tree = Rs2GameObject.findObject(trees, false, 150,false, center.toWorldPoint());
                                         if (tree != null) {
+                                            while (tree.getWorldLocation().distanceTo(Rs2Player.getWorldLocation())> 6){
+                                                Rs2Walker.walkTo(tree.getWorldLocation(),1);
+                                                Rs2Player.waitForAnimation(500);
+                                                Rs2Player.waitForAnimation(500);
+                                            }
                                             Rs2GameObject.interact(tree.getId(), "cut");
                                             sleepUntil(() -> Rs2Inventory.hasItem("log"), 10000);
                                             break;
@@ -113,7 +123,24 @@ public class rasCollectBonesScript extends Script {
                                     // if standing tile has nothing on it
                                     burnLog();
                                     cookfood();
-                                }else huntfoodsource();
+                                }else {
+                                    huntfoodsource();
+                                    if(!Rs2Inventory.hasItem("Raw")){
+                                        Microbot.getPluginManager().setPluginValue("Bank/inventory", "cook food items", rasCollectBonesConfig.cookON.Cabbage);
+                                    }
+                                }
+                            }else if (config.cookFood() == rasCollectBonesConfig.cookON.Monk) {
+                                NPC headMonk = Rs2Npc.getNpc(2577);
+                                if (headMonk != null) {
+                                    WorldPoint headMonkLocation = new WorldPoint(3058,3485,0);
+                                    Rs2Walker.walkTo(headMonkLocation,random(2,6));
+                                }
+                                else{
+                                        healFromMonk();
+                                }
+                            }else if (config.cookFood() == rasCollectBonesConfig.cookON.Cabbage) {
+                                eatCabbage();
+
                             }
                         }
                     }
@@ -135,6 +162,64 @@ public class rasCollectBonesScript extends Script {
             }
         }, 0, 1000, TimeUnit.MILLISECONDS);
         return true;
+    }
+
+    private void eatCabbage() {
+        WorldPoint cabbage1 = new WorldPoint(3051,3504,0); // monk
+        WorldPoint cabbage2 = new WorldPoint(2950,3257,0); //
+        WorldPoint cabbage3 = new WorldPoint(3051,3291,0); // under galador
+        WorldPoint cabbage4 = new WorldPoint(3228,3386,0); // varock
+        WorldPoint cabbage5 = new WorldPoint(3412,3180,0); // desert
+        WorldPoint playerPosition = Rs2Player.getWorldLocation();
+
+        WorldPoint[] cabbages = {cabbage1, cabbage2, cabbage3, cabbage4, cabbage5};
+
+        int shortestDistance = Integer.MAX_VALUE;
+        WorldPoint closestCabbage = null;
+
+        for (WorldPoint cabbage : cabbages) {
+            int distance = playerPosition.distanceTo(cabbage);
+            if (distance < shortestDistance) {
+                shortestDistance = distance;
+                closestCabbage = cabbage;
+            }
+        }
+        Rs2Walker.walkTo(closestCabbage,5);
+        WorldPoint finalClosestCabbage = closestCabbage;
+        sleepUntilTrue(()->Rs2Player.getWorldLocation().distanceTo(finalClosestCabbage) < 6,200,500000);
+        while (Microbot.getClient().getBoostedSkillLevel(Skill.HITPOINTS) != Microbot.getClient().getRealSkillLevel(Skill.HITPOINTS))
+        {
+            Rs2GameObject.interact("Cabbage","Pick");
+            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+            Rs2Inventory.interact("cabbage","Eat");
+            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+        }
+        Rs2Walker.walkTo(playerPosition,5);
+        sleepUntilTrue(()->Rs2Player.getWorldLocation().distanceTo(playerPosition) < 6,200,500000);
+    }
+
+    private static void healFromMonk() {
+        System.out.print("heal from monk");
+        NPC headMonk = Rs2Npc.getNpc(2577);
+        while (Microbot.getClient().getBoostedSkillLevel(Skill.HITPOINTS) != Microbot.getClient().getRealSkillLevel(Skill.HITPOINTS))
+        {
+            if (Rs2Player.isInteracting())
+                Rs2Npc.interact(headMonk, "Talk-to");
+            else
+                Rs2Npc.interact(2579, "Talk-to");
+            Global.sleepUntilTrue(() -> Rs2Dialogue.isInDialogue(), 100, 15000);
+            sleep(400, 600);
+            Rs2Dialogue.clickContinue();
+            Global.sleepUntilTrue(() -> Rs2Widget.hasWidget("Select an option"), 100, 15000);
+            sleep(300, 500);
+            Rs2Keyboard.typeString("1");
+            waitAndPressContinue();
+        }
+    }
+
+    private void shutdownTimer() {
+        if (System.currentTimeMillis() > stopTimer)
+            shutdown();
     }
 
 
@@ -188,6 +273,7 @@ public class rasCollectBonesScript extends Script {
             if (npc.isInteracting() && npc.getInteracting() != Microbot.getClient().getLocalPlayer() && !Rs2Player.isInMulti()) // npc array bnao 2nd npc vekho
                 continue;
             afktimer = System.currentTimeMillis();
+            if (Objects.requireNonNull(npc.getName()).contains("Monk")){ healFromMonk();}
             return Rs2Npc.interact(npc, "attack");
         }
         return false;
@@ -203,7 +289,7 @@ public class rasCollectBonesScript extends Script {
             catch(Exception e) {
                 System.out.println(e.getMessage());
             }
-            WorldPoint randomBankPoint = center.toWorldPointList().get(net.runelite.client.plugins.microbot.util.math.Random.random(0, center.toWorldPointList().size() - 2));
+            WorldPoint randomBankPoint = center.toWorldPointList().get(random(0, center.toWorldPointList().size() - 2));
             try {
                 Rs2Walker.walkFastCanvas(randomBankPoint);
             } catch (Exception ex){
@@ -228,7 +314,7 @@ public class rasCollectBonesScript extends Script {
     private void doBanking(WorldArea center, int maxFoodItems, rasCollectBonesConfig config) {
         String eatAbleItems = "Anchovy,Anchovy Pizza,Banana,Banana Pizza,Bass,Big Bass,Bread,Burning Amulet,Cake,Cheese,Chocolate Bar,Chocolate Cake,Choc-Ice,Chompy,Dark Crab,Eel,Frog Spawn Gumbo,Garlic Bread,Gnome Spice,Gnomebowl,Gnomebowl (Half Made),Gnomecrunch,Gnomecrunch (Half Made),Gnomeglass,Gnomeglory,Gnomeglory (Half Made),Gnomelemon,Gnomelemon (Half Made),Gnomewings,Gnomewings (Half Made),Golden Tench,Hard Cheese,Half A Meat Pie,Half A Redberry Pie,Half A Rabbit Pie,Half A Summer Pie,Half A Wild Pie,Half Full Cake,Herring,Hotfish,Insect Repellent,Jangerberries,Jungle Spider Kebab,Karamjan Rum,Kebbit,King Worm,Lobster,Manta Ray,Meat Pizza,Mind Bomb,Monkey Nuts,Monkfish,Onion,Papaya,Peach,Peach Pizza,Pineapple,Pineapple Pizza,Plain Pizza,Poison Meat,Poisoned Cheese,Purple Sweets,Redberry Pie,Redberry Pizza,Roe,Salmon,Sardine,Seaweed,Shrimp,Spicy Crunchies,Stew,Strawberries,Strawberry Pie,Stuffed Cabbage,Swamp Snake,Tomato,Tuna,Ugthanki,Kebab,Watermelon,Wheat,Wilderness Sword 4";
         String unCooked = "raw";
-        String fire = "tinderbox,pickaxe,log";
+        String fire = "tinderbox,axe,log";
         List<String> edibleItemsList = new ArrayList<>(Arrays.asList(eatAbleItems.split(",")));
         try {
             Rs2Player.toggleRunEnergy(false);
@@ -270,7 +356,7 @@ public class rasCollectBonesScript extends Script {
         }
         if (!isFiremake()) {
             Rs2Inventory.use("tinderbox");
-            sleep(net.runelite.client.plugins.microbot.util.math.Random.random(300, 600));
+            sleep(random(300, 600));
             Rs2Inventory.use("log");
             Rs2Player.waitForAnimation();
         }
@@ -306,8 +392,10 @@ public class rasCollectBonesScript extends Script {
             Rs2Player.waitForAnimation(1000);
         }
         sleep(350);
-        Rs2Inventory.dropAll(Rs2Inventory.get("Burnt").getId());
-        sleepUntil(()-> !Rs2Inventory.hasItem(Rs2Inventory.get("Burnt").getId()),5000);
+        if (Rs2Inventory.hasItem("Burnt")) {
+            Rs2Inventory.dropAll(Rs2Inventory.get("Burnt").getId());
+            sleepUntil(() -> !Rs2Inventory.hasItem(Rs2Inventory.get("Burnt").getId()), 5000);
+        }
 
     }
 
@@ -316,7 +404,7 @@ public class rasCollectBonesScript extends Script {
             doBanking(center, config.maxFood(), config);
             Rs2Bank.openBank();
             sleepUntil(() -> !Rs2Bank.isOpen());
-            Rs2Bank.withdrawX("axe", 1);
+            Rs2Bank.withdrawX("Bronze axe", 1); // it can pick pickaxe, check by id instead
             sleepUntil(() -> Rs2Inventory.hasItem("axe"));
             Rs2Bank.withdrawX("Tinder", 1);
             sleepUntil(() -> Rs2Inventory.hasItem("Tinder"));
@@ -348,19 +436,47 @@ public class rasCollectBonesScript extends Script {
                 outerloop:
                 for (String npc : foodSourceList) {
                     if (Rs2Npc.attack(npc)) {
-                        sleepUntil(() -> Rs2Combat.inCombat(), 50000);
+                        sleepUntil(() -> !Rs2Combat.inCombat(), 5000);
+                        sleepUntilTrue(() -> Rs2Combat.inCombat(), 500,50000);
                         sleep(1200);
-                        Rs2GroundItem.loot("Raw", 8);
-                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 4000);
+                        if (Rs2GroundItem.loot("Raw", 8))
+                            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 4000);
                         startTime = System.currentTimeMillis();
                         break outerloop;
                     }
                 }
-                startTime = System.currentTimeMillis();
+                //startTime = System.currentTimeMillis();
                 if (System.currentTimeMillis() - startTime >= 120000) {
                     break;
                 }
                 sleep(100);
             }
+    }
+    @Override
+    public void shutdown() {
+        String pluginName = "ras range bone collector";
+        rasMasterScriptScript masterControl = new rasMasterScriptScript();
+        masterControl.stopPlugin(pluginName);
+        do{sleep(2000);}
+        while (masterControl.isPlugEnabled(pluginName));
+        super.shutdown();
+    }
+    public static void waitAndPressContinue(){
+        int sleep = random(1300,1600);
+        long endTime = System.currentTimeMillis() + sleep;
+        while (System.currentTimeMillis() < endTime) {
+            if (Rs2Widget.hasWidget("Click here to continue")) {
+                sleep(180,380);
+                Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
+                if (random(0,2)==0) {
+                    sleep(80,180);
+                    Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
+                }
+                endTime = System.currentTimeMillis() + sleep;
+            }
+            if (Rs2Widget.hasWidget("Please wait")){
+                endTime = System.currentTimeMillis() + sleep;
+            }
+        }
     }
 }

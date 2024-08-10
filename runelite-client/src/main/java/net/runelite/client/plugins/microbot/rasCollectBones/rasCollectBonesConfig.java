@@ -211,6 +211,8 @@ public interface rasCollectBonesConfig extends Config {
     }
     enum cookON{
         Fire,
+        Monk,
+        Cabbage,
         not_supported_kitchen
     }
 

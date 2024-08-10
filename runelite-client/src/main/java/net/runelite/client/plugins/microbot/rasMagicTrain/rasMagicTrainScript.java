@@ -8,6 +8,7 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.geHandler.geHandlerScript;
+import net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript;
 import net.runelite.client.plugins.microbot.ras_highalc.ras.Ras_highalcConfig;
 import net.runelite.client.plugins.microbot.ras_highalc.ras.Ras_highalcScript;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
@@ -40,9 +41,11 @@ import java.util.stream.Collectors;
 
 import static net.runelite.client.plugins.microbot.raschoclatebar.raschoclatebarScript.waitForAnimationStop;
 import static net.runelite.client.plugins.microbot.util.Global.*;
+import static net.runelite.client.plugins.microbot.util.math.Random.random;
 
 
 public class rasMagicTrainScript extends Script {
+    long stopTimer = random(1800000,2760000) + System.currentTimeMillis();
     public static double version = 1.0;
     public boolean bankcheck = false;
     public int Law_rune_price = 0;
@@ -59,8 +62,10 @@ public class rasMagicTrainScript extends Script {
 
     public boolean run(rasMagicTrainConfig config) {
         Microbot.enableAutoRunOn = false;
+        stopTimer = random(1800000,2760000) + System.currentTimeMillis();
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
+                rasMasterScriptScript.autoShutdown("ras magic train");
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
                 long startTime = System.currentTimeMillis();
@@ -92,6 +97,9 @@ public class rasMagicTrainScript extends Script {
                 long endTime = System.currentTimeMillis();
                 long totalTime = endTime - startTime;
                 System.out.println("Total time for loop " + totalTime);
+                if (stopTimer < System.currentTimeMillis()){
+                    shutdown();
+                }
 
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
@@ -102,6 +110,11 @@ public class rasMagicTrainScript extends Script {
 
     @Override
     public void shutdown() {
+        String pluginName = "ras magic train";
+        rasMasterScriptScript masterControl = new rasMasterScriptScript();
+        masterControl.stopPlugin(pluginName);
+        do{sleep(2000);}
+        while (masterControl.isPlugEnabled(pluginName));
         super.shutdown();
     }
     public static boolean hasOnlyRunesOrStaff() {
@@ -349,7 +362,7 @@ public class rasMagicTrainScript extends Script {
     }
 
     public void highAlch() {
-
+        Microbot.getPluginManager().setPluginValue("general", "Autobuy", true);
         Ras_highalcConfig confi = new Ras_highalcConfig() {
             @Override
             public boolean autoBuy() {

@@ -4,6 +4,7 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.globval.enums.InterfaceTab;
+import net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
 import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
@@ -24,18 +25,22 @@ public class ExampleScript extends Script {
 
     public boolean run(ExampleConfig config) {
         Microbot.enableAutoRunOn = false;
+
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
-                if (!Microbot.isLoggedIn()) return;
-                if (!super.run()) return;
+                //if (!Microbot.isLoggedIn()) return;
+                //if (!super.run()) return;
                 long startTime = System.currentTimeMillis();
+                System.out.println("working" + startTime);
+                rasMasterScriptScript ras = new rasMasterScriptScript();
+                System.out.println("enabled" + ras.isPlugEnabled("test"));
                     long endTime = System.currentTimeMillis();
                     long totalTime = endTime - startTime;
 
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
-        }, 0, 10, TimeUnit.MILLISECONDS);
+        }, 0, 300, TimeUnit.MILLISECONDS);
         return true;
     }
 

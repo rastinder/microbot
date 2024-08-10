@@ -37,10 +37,10 @@ public class rasHardLeatherScript extends Script {
 
     public boolean run(rasHardLeatherConfig config) {
         Microbot.enableAutoRunOn = false;
-        long timeLimit = random(2_400_000,3360000);
-        long startTime = System.currentTimeMillis();
+        long stopTimer = random(1800000,2760000) + System.currentTimeMillis();
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
+                rasMasterScriptScript.autoShutdown("ras HardLeather");
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
                 onlyloot = config.loot();
@@ -61,14 +61,14 @@ public class rasHardLeatherScript extends Script {
                     }
                     if (Rs2Bank.hasBankItem("Hard leather", 500))
                         sleep(500); // gotograndexchange and sell all
-                    if (endTime - startTime > timeLimit){
-                        geHandlerScript handelGe = new geHandlerScript();
+                    if (stopTimer < System.currentTimeMillis()){
+                        System.out.println("shutting down");
                         geHandlerScript.goSell(false,5,new int[]{-1},"Hard leather");
                         shutdown();
                     }
                     sleepUntil(() -> Rs2Bank.closeBank(), 1000);
                 }
-                if (Rs2Inventory.hasItemAmount("Cowhide", 27)) {
+                if ( Rs2Inventory.isFull() && Rs2Inventory.hasItemAmount("Cowhide", 1)) {
                     if (Rs2Inventory.ItemQuantity(coins) < 155 && allCoinsInInv) {
                         lootfromGoblins();
                     } else if (Rs2Inventory.ItemQuantity(coins) < 155 && !allCoinsInInv) {
@@ -131,13 +131,14 @@ public class rasHardLeatherScript extends Script {
                     } else if (Rs2Inventory.ItemQuantity(coins) > 102 && !Rs2Inventory.isFull()) {
                         if (Rs2GroundItem.loot("Cowhide", 15)) {
                             sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
-                            if (new java.util.Random().nextInt(2) == 1 && config.randomBonePick()) {
-                                if (Rs2GroundItem.pickup("Bones", 1) && Rs2Inventory.size() < 24) {
+                            if (new java.util.Random().nextInt(2) == 1 && config.randomBonePick() && Rs2Inventory.size() < 20) {
+                                if (Rs2GroundItem.pickup("Bones", 1)) {
                                     sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 2000);
                                     sleep(150, 250);
                                     while (Rs2Inventory.hasItem("Bones")) {
                                         Rs2Inventory.interact("Bones", "Bury");
-                                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 2000);
+                                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 10, 2000);
+                                        sleep(10, 25);
                                     }
                                 }
                             }
@@ -187,10 +188,9 @@ public class rasHardLeatherScript extends Script {
     @Override
     public void shutdown() {
         rasMasterScriptScript masterControl = new rasMasterScriptScript();
-        masterControl.stopPlugin("ras HardLeather");
+        rasMasterScriptScript.stopPlugin("ras HardLeather");
         do{sleep(2000);}
         while (masterControl.isPlugEnabled("ras HardLeather"));
-
         super.shutdown();
     }
 

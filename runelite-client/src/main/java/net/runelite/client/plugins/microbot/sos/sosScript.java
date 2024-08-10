@@ -48,8 +48,11 @@ public class sosScript extends Script {
 
     public boolean run(sosConfig config) {
         Microbot.enableAutoRunOn = false;
+        long startTime = System.currentTimeMillis();
+        long stopTimer = random(1800000,2760000) + System.currentTimeMillis();
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
+                rasMasterScriptScript.autoShutdown("sos");
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
                 if (onenable) {
@@ -57,7 +60,6 @@ public class sosScript extends Script {
                     changeWorld();
                     Microbot.getPluginManager().setPluginValue("shortestpath", "useTeleportationPortals", false);
                 }
-                long startTime = System.currentTimeMillis();
                 if (runInisiated) {
                     Rs2Player.eatAt(80);
                     if (Rs2Dialogue.isInDialogue() || Rs2Widget.hasWidget("Warning") || Rs2Widget.hasWidget("boots you")){ if (solveansers()) return;} else {
@@ -117,7 +119,7 @@ public class sosScript extends Script {
                                 Rs2Walker.walkTo(new WorldPoint(2343, 5214, 0), 1);
                                 waitForAnimationStop();
                                 return;
-                            } else if (!Rs2Inventory.hasItem("boot") && !Rs2Widget.isWidgetVisible(162, 53) && Rs2GameObject.interact(23731)) {
+                            } else if (!Rs2Inventory.hasItem("boot") && !Rs2Widget.hasWidget("Please wait")&& !Rs2Dialogue.hasContinue() && Rs2GameObject.interact(23731)) {
                                 if (Rs2Inventory.isFull())
                                     Rs2Player.eatAt(100);
                                 waitForAnimationStop();
@@ -128,6 +130,7 @@ public class sosScript extends Script {
                                 sleepUntil(()->Rs2Tab.getCurrentTab() == InterfaceTab.MAGIC);
                                 sleep(280,500);
                                 Rs2Widget.clickWidget("Lumbridge Home");
+                                Rs2Player.waitForAnimation(2000);
                                 shutdown();
                             }
                         }
@@ -163,7 +166,7 @@ public class sosScript extends Script {
                             Rs2Walker.walkTo(getfishPoint);
                             waitForAnimationStop();
                         }
-                    } else if (Rs2Inventory.isFull()){
+                    } else if (Rs2Inventory.isFull() || (Rs2Inventory.size() > 20 && System.currentTimeMillis() - startTime > 720000)){
                         runInisiated = true;
                     }
                 }
@@ -175,14 +178,13 @@ public class sosScript extends Script {
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
-        }, 0, 100, TimeUnit.MILLISECONDS);
+        }, 0, 1, TimeUnit.MILLISECONDS);
         return true;
     }
 
     @Override
     public void shutdown() {
-        rasMasterScriptScript masterControl = new rasMasterScriptScript();
-        masterControl.stopPlugin("sos");
+        rasMasterScriptScript.stopPlugin("sos");
         super.shutdown();
     }
 
@@ -242,7 +244,8 @@ public class sosScript extends Script {
     public void waitForAnimationStop() {
         long lastAnimationStopTime = System.currentTimeMillis();
         while (true) {
-            sleep(100);
+            Rs2Player.eatAt(80);
+            sleep(10);
             if (Rs2Player.isAnimating()) {
                 lastAnimationStopTime = System.currentTimeMillis();
             }
@@ -256,6 +259,8 @@ public class sosScript extends Script {
     public void changeWorld(){
         int world = getWorldWithMostPlayers(Rs2Player.isMember());
         boolean isHopped = Microbot.hopToWorld(world);
+        if (!isHopped) return;
+        isHopped = Microbot.hopToWorld(world);
         if (!isHopped) return;
         boolean result = sleepUntil(() -> Rs2Widget.findWidget("Switch World") != null);
         if (result) {
