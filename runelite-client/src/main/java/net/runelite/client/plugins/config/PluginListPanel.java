@@ -304,7 +304,7 @@ class PluginListPanel extends PluginPanel
 		}
 	}
 
-	void stopPlugin(Plugin plugin)
+	public void stopPlugin(Plugin plugin)
 	{
 		pluginManager.setPluginEnabled(plugin, false);
 

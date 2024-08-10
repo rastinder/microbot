@@ -69,7 +69,7 @@ public interface AutoWoodcuttingConfig extends Config {
     )
     default WoodcuttingResetOptions resetOptions()
     {
-        return WoodcuttingResetOptions.DROP;
+        return WoodcuttingResetOptions.FIREMAKE;
     }
 
     @ConfigItem(

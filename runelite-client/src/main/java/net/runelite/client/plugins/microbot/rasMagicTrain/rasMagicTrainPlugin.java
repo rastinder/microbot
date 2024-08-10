@@ -2,9 +2,11 @@ package net.runelite.client.plugins.microbot.rasMagicTrain;
 
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Client;
 import net.runelite.api.events.GameTick;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -20,6 +22,12 @@ import java.awt.*;
 )
 @Slf4j
 public class rasMagicTrainPlugin extends Plugin {
+    @Inject
+    private Client client;
+
+    @Inject
+    private ItemManager itemManager;
+
     @Inject
     private rasMagicTrainConfig config;
     @Provides

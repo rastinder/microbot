@@ -110,7 +110,7 @@ public class Rs2GrandExchange {
             Pair<GrandExchangeSlots, Integer> slot = getAvailableSlot();
             if (slot.getLeft() == null) {
                 if (hasBoughtOffer()) {
-                    collectToBank();
+                    collectToInventory();
                 }
                 return false;
             }
@@ -166,7 +166,7 @@ public class Rs2GrandExchange {
             Widget quantityButtonX = getQuantityButton_X();
             Microbot.getMouse().click(quantityButtonX.getBounds());
             sleepUntil(() -> Rs2Widget.getWidget(162, 41) != null); //GE Enter Price/Quantity
-            sleep(600, 1000);
+            sleep(700, 1000);
             Rs2Keyboard.typeString(Integer.toString(quantity));
             sleep(500, 750);
             Rs2Keyboard.enter();

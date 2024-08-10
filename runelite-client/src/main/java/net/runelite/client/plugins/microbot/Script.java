@@ -36,7 +36,7 @@ public abstract class Script implements IScript {
     @Getter
     protected static WorldPoint initialPlayerLocation;
 
-    public void sleep(int time) {
+    public static void sleep(int time) {
         try {
             Thread.sleep(time);
         } catch (InterruptedException e) {
@@ -44,7 +44,7 @@ public abstract class Script implements IScript {
         }
     }
 
-    public void sleep(int start, int end) {
+    public static void sleep(int start, int end) {
         int randTime = Random.random(start, end);
         try {
             Thread.sleep(randTime);
@@ -56,7 +56,7 @@ public abstract class Script implements IScript {
         return sleepUntil(awaitedCondition, 5000);
     }
 
-    public boolean sleepUntil(BooleanSupplier awaitedCondition, int time) {
+    public static boolean sleepUntil(BooleanSupplier awaitedCondition, int time) {
         boolean done;
         long startTime = System.currentTimeMillis();
         do {

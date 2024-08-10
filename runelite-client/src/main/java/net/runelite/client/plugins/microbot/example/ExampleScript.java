@@ -2,8 +2,11 @@ package net.runelite.client.plugins.microbot.example;
 
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
+import net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript;
 
 import java.util.concurrent.TimeUnit;
+
+import static net.runelite.client.plugins.microbot.util.math.Random.random;
 
 
 public class ExampleScript extends Script {
@@ -11,6 +14,10 @@ public class ExampleScript extends Script {
 
     public boolean run(ExampleConfig config) {
         Microbot.enableAutoRunOn = false;
+        if (rasMasterScriptScript.autoShutdown("example"))
+            return true;
+        long stopTimer = random(1800000,2760000) + System.currentTimeMillis();
+
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
                 if (!Microbot.isLoggedIn()) return;
