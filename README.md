@@ -5,8 +5,6 @@ Microbot is an opensource automated oldschool runescape client based on runelite
  
 If you have any questions, please join our [Discord](https://discord.gg/zaGrfqFEWE) server.
 
-Find our blogpost on: https://microbot.atlassian.net/wiki/spaces/~60200544692da10070cdeb29/blogs
-
 
 ## ☕ Buy Me a Coffee
 
@@ -15,7 +13,6 @@ If you enjoy my open source work and would like to support me, consider buying m
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-donate-yellow)](https://www.paypal.com/paypalme/MicrobotBE?country.x=BE)
 
 Thank you for your support! 😊
-
 
 # I Want To Bot
 
@@ -42,6 +39,11 @@ Make sure to follow this guide if it's your first time running the project
 
 https://github.com/runelite/runelite/wiki/Building-with-IntelliJ-IDEA
 
+## Microbot ChatGpt Chatbot
+
+![image](https://github.com/user-attachments/assets/363cec80-675b-4b36-be7a-4ddd56fdf216)
+
+use your AI Chatbot to learn to write scripts in microbot: https://chatgpt.com/g/g-LM0fGeeXB-microbot-documentation
 
 ## Project Layout
 
@@ -54,7 +56,6 @@ If you can't find a specific thing in a utility class you can always call the Mi
 ```java 
 Microbot.getClient().getLocalPlayer().getWorldLocation()
 ```
-
 
 ![img.png](img.png)
 
