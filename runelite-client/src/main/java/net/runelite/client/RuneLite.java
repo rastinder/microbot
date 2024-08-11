@@ -81,6 +81,7 @@ import java.net.PasswordAuthentication;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -88,11 +89,13 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static java.nio.file.Files.deleteIfExists;
 import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
 
 @Singleton
 @Slf4j
-public class RuneLite {
+public class RuneLite
+{
     public static final File RUNELITE_DIR = new File(System.getProperty("user.home"), ".runelite");
     public static final File CACHE_DIR = new File(RUNELITE_DIR, "cache");
     public static final File PLUGINS_DIR = new File(RUNELITE_DIR, "plugins");
@@ -158,7 +161,8 @@ public class RuneLite {
     @Inject
     private MicrobotPluginManager microbotPluginManager;
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws Exception
+    {
         Locale.setDefault(Locale.ENGLISH);
 
         final OptionParser parser = new OptionParser(false);
@@ -184,37 +188,75 @@ public class RuneLite {
                 .withValuesConvertedBy(new ConfigFileConverter())
                 .defaultsTo(DEFAULT_SESSION_FILE);
 
-		final ArgumentAcceptingOptionSpec<ClientUpdateCheckMode> updateMode = parser
-			.accepts("rs", "Select client type")
-			.withRequiredArg()
-			.ofType(ClientUpdateCheckMode.class)
-			.defaultsTo(ClientUpdateCheckMode.AUTO)
-			.withValuesConvertedBy(new EnumConverter<>(ClientUpdateCheckMode.class)
-			{
-				@Override
-				public ClientUpdateCheckMode convert(String v)
-				{
-					return super.convert(v.toUpperCase());
-				}
-			});
+        final ArgumentAcceptingOptionSpec<ClientUpdateCheckMode> updateMode = parser
+                .accepts("rs", "Select client type")
+                .withRequiredArg()
+                .ofType(ClientUpdateCheckMode.class)
+                .defaultsTo(ClientUpdateCheckMode.AUTO)
+                .withValuesConvertedBy(new EnumConverter<>(ClientUpdateCheckMode.class)
+                {
+                    @Override
+                    public ClientUpdateCheckMode convert(String v)
+                    {
+                        return super.convert(v.toUpperCase());
+                    }
+                });
 
         final OptionSpec<Void> insecureWriteCredentials = parser.accepts("insecure-write-credentials", "Dump authentication tokens from the Jagex Launcher to a text file to be used for development");
 
         parser.accepts("help", "Show this text").forHelp();
         OptionSet options = parser.parse(args);
 
-        if (options.has("clean-jagex-launcher")) {
+        // Account Switching Logic
+        if (options.has("login"))
+        {
+            String accountName = (String) options.valueOf("login");
+            Path accountPath = Paths.get(System.getProperty("user.home"), ".runelite", "MyAccounts", accountName);
+            Path runelitePath = Paths.get(System.getProperty("user.home"), ".runelite");
+
+            if (Files.exists(accountPath) && Files.isDirectory(accountPath))
+            {
+                deleteIfExists(runelitePath.resolve("logs"));
+                deleteIfExists(runelitePath.resolve("credentials.properties"));
+                deleteIfExists(runelitePath.resolve("jagex_cl_oldschool_LIVE.dat"));
+                deleteIfExists(runelitePath.resolve("random.dat"));
+
+                Files.walk(accountPath).forEach(source ->
+                {
+                    try
+                    {
+                        Files.copy(source, runelitePath.resolve(accountPath.relativize(source)), StandardCopyOption.REPLACE_EXISTING);
+                    }
+                    catch (IOException e)
+                    {
+                        e.printStackTrace();
+                    }
+                });
+                System.out.println("Switched to account: " + accountName);
+            }
+            else
+            {
+                System.out.println("Account directory does not exist: " + accountName);
+            }
+        }
+
+        if (options.has("clean-jagex-launcher"))
+        {
             System.out.println("clean-jagex-launcher option is enabled. This will delete your credentials.properties file to allow logging in with a username/password");
             System.out.println("You can disable this in your run configuration by removing -clean-jagex-launcher");
             File myObj = new File(System.getProperty("user.home") + "/.runelite/credentials.properties");
-            if (myObj.delete()) {
+            if (myObj.delete())
+            {
                 System.out.println("Succesfully Deleted the file: " + myObj.getName());
-            } else {
+            }
+            else
+            {
                 System.out.println("Credentials.properties file was not found.");
             }
         }
 
-        if (options.has("help")) {
+        if (options.has("help"))
+        {
             parser.printHelpOn(System.out);
             System.exit(0);
         }
@@ -222,49 +264,59 @@ public class RuneLite {
         final Logger logger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         logger.setLevel(Level.INFO);
 
-        if (options.has("debug")) {
+        if (options.has("debug"))
+        {
             logger.setLevel(Level.DEBUG);
         }
 
-        if (options.has("microbot-debug")) {
+        if (options.has("microbot-debug"))
+        {
             Microbot.debug = true;
         }
 
-        //More information about java proxies can be found here
-        //https://docs.oracle.com/javase/8/docs/technotes/guides/net/proxies.html
-        //usage: -proxy=IP:PORT:USER:PASS -proxytype=SOCKS
-        //OR
-        //usage: -proxy=IP:PORT:USER:PASS -proxytype=HTTP
-        if (options.has("proxy")) {
+        // More information about java proxies can be found here
+        // https://docs.oracle.com/javase/8/docs/technotes/guides/net/proxies.html
+        // usage: -proxy=IP:PORT:USER:PASS -proxytype=SOCKS
+        // OR
+        // usage: -proxy=IP:PORT:USER:PASS -proxytype=HTTP
+        if (options.has("proxy"))
+        {
             String[] proxy = options.valueOf(proxyInfo).split(":");
             boolean httpProxy = false;
-            boolean socksProxy = true; //default we take socks proxy
-            if (options.has("proxy-type")) {
+            boolean socksProxy = true; // default we take socks proxy
+            if (options.has("proxy-type"))
+            {
                 socksProxy = options.valueOf("proxy-type").toString().equalsIgnoreCase("SOCKS");
                 httpProxy = options.valueOf("proxy-type").toString().equalsIgnoreCase("HTTP");
             }
 
             ClientUI.proxyMessage = (socksProxy ? "SOCKS" : "HTTP") + " Proxy with address " + options.valueOf(proxyInfo);
 
-            if (httpProxy && proxy.length >= 2) {
+            if (httpProxy && proxy.length >= 2)
+            {
                 System.setProperty("http.proxyHost", proxy[0]);
                 System.setProperty("http.proxyPort", proxy[1]);
-            } else if (socksProxy && proxy.length >= 2) {
+            }
+            else if (socksProxy && proxy.length >= 2)
+            {
                 System.setProperty("socksProxyHost", proxy[0]);
                 System.setProperty("socksProxyPort", proxy[1]);
             }
 
-            if (socksProxy && proxy.length >= 4) {
+            if (socksProxy && proxy.length >= 4)
+            {
                 System.setProperty("java.net.socks.username", proxy[2]);
                 System.setProperty("java.net.socks.password", proxy[3]);
 
                 final String user = proxy[2];
                 final char[] pass = proxy[3].toCharArray();
 
-                Authenticator.setDefault(new Authenticator() {
+                Authenticator.setDefault(new Authenticator()
+                {
                     private final PasswordAuthentication auth = new PasswordAuthentication(user, pass);
 
-                    protected PasswordAuthentication getPasswordAuthentication() {
+                    protected PasswordAuthentication getPasswordAuthentication()
+                    {
                         return auth;
                     }
                 });
@@ -274,11 +326,11 @@ public class RuneLite {
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) ->
         {
             log.error("Uncaught exception:", throwable);
-            if (throwable instanceof AbstractMethodError) {
+            if (throwable instanceof AbstractMethodError)
+            {
                 log.error("Classes are out of date; Build with maven again.");
             }
         });
-
 
         final OkHttpClient okHttpClient = buildHttpClient(options.has("insecure-skip-tls-verification"));
         RuneLiteAPI.CLIENT = okHttpClient;
@@ -286,7 +338,8 @@ public class RuneLite {
         SplashScreen.init();
         SplashScreen.stage(0, "Retrieving client", "");
 
-        try {
+        try
+        {
             final RuntimeConfigLoader runtimeConfigLoader = new RuntimeConfigLoader(okHttpClient);
             final ClientLoader clientLoader = new ClientLoader(okHttpClient, options.valueOf(updateMode), runtimeConfigLoader, (String) options.valueOf("jav_config"));
 
@@ -298,10 +351,12 @@ public class RuneLite {
 
             final boolean developerMode = options.has("developer-mode") && RuneLiteProperties.getLauncherVersion() == null;
 
-            if (developerMode) {
+            if (developerMode)
+            {
                 boolean assertions = false;
                 assert assertions = true;
-                if (!assertions) {
+                if (!assertions)
+                {
                     SwingUtilities.invokeLater(() ->
                             new FatalErrorDialog("Developers should enable assertions; Add `-ea` to your JVM arguments`")
                                     .addHelpButtons()
@@ -340,22 +395,28 @@ public class RuneLite {
             final long end = System.currentTimeMillis();
             final long uptime = runtime.getUptime();
             log.info("Client initialization took {}ms. Uptime: {}ms", end - start, uptime);
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             log.error("Failure during startup", e);
             SwingUtilities.invokeLater(() ->
                     new FatalErrorDialog("RuneLite has encountered an unexpected error during startup.")
                             .addHelpButtons()
                             .open());
-        } finally {
+        }
+        finally
+        {
             SplashScreen.stop();
         }
     }
 
-    public void start() throws Exception {
+    public void start() throws Exception
+    {
         // Load RuneLite or Vanilla client
         final boolean isOutdated = client == null;
 
-        if (!isOutdated) {
+        if (!isOutdated)
+        {
             // Inject members into client
             injector.injectMembers(client);
         }
@@ -363,7 +424,8 @@ public class RuneLite {
         setupSystemProps();
 
         // Start the applet
-        if (applet != null) {
+        if (applet != null)
+        {
             copyJagexCache();
 
             // Client size must be set prior to init
@@ -425,7 +487,8 @@ public class RuneLite {
         eventBus.register(configManager);
         eventBus.register(discordService);
 
-        if (!isOutdated) {
+        if (!isOutdated)
+        {
             // Add core overlays
             WidgetOverlay.createOverlays(overlayManager, client).forEach(overlayManager::add);
             overlayManager.add(worldMapOverlay.get());
@@ -439,7 +502,8 @@ public class RuneLite {
 
         clientUI.show();
 
-        if (telemetryClient != null) {
+        if (telemetryClient != null)
+        {
             telemetryClient.submitTelemetry();
             telemetryClient.submitVmErrors(LOGS_DIR);
         }
@@ -449,24 +513,31 @@ public class RuneLite {
     }
 
     @VisibleForTesting
-    public static void setInjector(Injector injector) {
+    public static void setInjector(Injector injector)
+    {
         RuneLite.injector = injector;
     }
 
-    private static class ConfigFileConverter implements ValueConverter<File> {
+    private static class ConfigFileConverter implements ValueConverter<File>
+    {
         @Override
-        public File convert(String fileName) {
+        public File convert(String fileName)
+        {
             final File file;
 
             if (Paths.get(fileName).isAbsolute()
                     || fileName.startsWith("./")
-                    || fileName.startsWith(".\\")) {
+                    || fileName.startsWith(".\\"))
+            {
                 file = new File(fileName);
-            } else {
+            }
+            else
+            {
                 file = new File(RuneLite.RUNELITE_DIR, fileName);
             }
 
-            if (file.exists() && (!file.isFile() || !file.canWrite())) {
+            if (file.exists() && (!file.isFile() || !file.canWrite()))
+            {
                 throw new ValueConversionException(String.format("File %s is not accessible", file.getAbsolutePath()));
             }
 
@@ -474,24 +545,28 @@ public class RuneLite {
         }
 
         @Override
-        public Class<? extends File> valueType() {
+        public Class<? extends File> valueType()
+        {
             return File.class;
         }
 
         @Override
-        public String valuePattern() {
+        public String valuePattern()
+        {
             return null;
         }
     }
 
     @VisibleForTesting
-    static OkHttpClient buildHttpClient(boolean insecureSkipTlsVerification) {
+    static OkHttpClient buildHttpClient(boolean insecureSkipTlsVerification)
+    {
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
                 .pingInterval(30, TimeUnit.SECONDS)
                 .addInterceptor(chain ->
                 {
                     Request request = chain.request();
-                    if (request.header("User-Agent") != null) {
+                    if (request.header("User-Agent") != null)
+                    {
                         return chain.proceed(request);
                     }
 
@@ -507,7 +582,8 @@ public class RuneLite {
                 {
                     // This has to be a network interceptor so it gets hit before the cache tries to store stuff
                     Response res = chain.proceed(chain.request());
-                    if (res.code() >= 400 && "GET".equals(res.request().method())) {
+                    if (res.code() >= 400 && "GET".equals(res.request().method()))
+                    {
                         // if the request 404'd we don't want to cache it because its probably temporary
                         res = res.newBuilder()
                                 .header("Cache-Control", "no-store")
@@ -516,49 +592,66 @@ public class RuneLite {
                     return res;
                 });
 
-        try {
-            if (insecureSkipTlsVerification || RuneLiteProperties.isInsecureSkipTlsVerification()) {
+        try
+        {
+            if (insecureSkipTlsVerification || RuneLiteProperties.isInsecureSkipTlsVerification())
+            {
                 setupInsecureTrustManager(builder);
-            } else {
+            }
+            else
+            {
                 setupTrustManager(builder);
             }
-        } catch (KeyStoreException | KeyManagementException | NoSuchAlgorithmException e) {
+        }
+        catch (KeyStoreException | KeyManagementException | NoSuchAlgorithmException e)
+        {
             log.warn("error setting up trust manager", e);
         }
 
         return builder.build();
     }
 
-    private static void copyJagexCache() {
+    private static void copyJagexCache()
+    {
         Path from = Paths.get(System.getProperty("user.home"), "jagexcache");
         Path to = Paths.get(System.getProperty("user.home"), ".runelite", "jagexcache");
-        if (Files.exists(to) || !Files.exists(from)) {
+        if (Files.exists(to) || !Files.exists(from))
+        {
             return;
         }
 
         log.info("Copying jagexcache from {} to {}", from, to);
 
         // Recursively copy path https://stackoverflow.com/a/50418060
-        try (Stream<Path> stream = Files.walk(from)) {
+        try (Stream<Path> stream = Files.walk(from))
+        {
             stream.forEach(source ->
             {
-                try {
+                try
+                {
                     Files.copy(source, to.resolve(from.relativize(source)), COPY_ATTRIBUTES);
-                } catch (IOException e) {
+                }
+                catch (IOException e)
+                {
                     throw new RuntimeException(e);
                 }
             });
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             log.warn("unable to copy jagexcache", e);
         }
     }
 
-    private void setupSystemProps() {
-        if (runtimeConfig == null || runtimeConfig.getSysProps() == null) {
+    private void setupSystemProps()
+    {
+        if (runtimeConfig == null || runtimeConfig.getSysProps() == null)
+        {
             return;
         }
 
-        for (Map.Entry<String, String> entry : runtimeConfig.getSysProps().entrySet()) {
+        for (Map.Entry<String, String> entry : runtimeConfig.getSysProps().entrySet())
+        {
             String key = entry.getKey(), value = entry.getValue();
             log.debug("Setting property {}={}", key, value);
             System.setProperty(key, value);
@@ -566,12 +659,16 @@ public class RuneLite {
     }
 
     // region trust manager
-    private static TrustManager[] loadTrustManagers(String trustStoreType) throws KeyStoreException, NoSuchAlgorithmException {
+    private static TrustManager[] loadTrustManagers(String trustStoreType) throws KeyStoreException, NoSuchAlgorithmException
+    {
         // javax.net.ssl.trustStoreType controls which keystore implementation the TrustStoreManager uses
         String old;
-        if (trustStoreType != null) {
+        if (trustStoreType != null)
+        {
             old = System.setProperty("javax.net.ssl.trustStoreType", trustStoreType);
-        } else {
+        }
+        else
+        {
             old = System.clearProperty("javax.net.ssl.trustStoreType");
         }
 
@@ -581,17 +678,22 @@ public class RuneLite {
         TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
 
         // restore old value
-        if (old == null) {
+        if (old == null)
+        {
             System.clearProperty("javax.net.ssl.trustStoreType");
-        } else {
+        }
+        else
+        {
             System.setProperty("javax.net.ssl.trustStoreType", old);
         }
 
         return trustManagers;
     }
 
-    private static void setupTrustManager(OkHttpClient.Builder okHttpClientBuilder) throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
-        if (OSType.getOSType() != OSType.Windows) {
+    private static void setupTrustManager(OkHttpClient.Builder okHttpClientBuilder) throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException
+    {
+        if (OSType.getOSType() != OSType.Windows)
+        {
             return;
         }
 
@@ -607,23 +709,31 @@ public class RuneLite {
 
         // Even though SSLContext.init() accepts TrustManager[], Sun's SSLContextImpl only picks the first
         // X509TrustManager and uses that.
-        X509TrustManager combiningTrustManager = new X509TrustManager() {
+        X509TrustManager combiningTrustManager = new X509TrustManager()
+        {
             @Override
-            public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException
+            {
                 CertificateException exception = null;
-                for (TrustManager trustManager : trustManagers) {
-                    if (trustManager instanceof X509TrustManager) {
-                        try {
+                for (TrustManager trustManager : trustManagers)
+                {
+                    if (trustManager instanceof X509TrustManager)
+                    {
+                        try
+                        {
                             ((X509TrustManager) trustManager).checkClientTrusted(chain, authType);
                             // accept if any of the trust managers accept the certificate
                             return;
-                        } catch (CertificateException ex) {
+                        }
+                        catch (CertificateException ex)
+                        {
                             exception = ex;
                         }
                     }
                 }
 
-                if (exception != null) {
+                if (exception != null)
+                {
                     throw exception;
                 }
 
@@ -631,21 +741,28 @@ public class RuneLite {
             }
 
             @Override
-            public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException
+            {
                 CertificateException exception = null;
-                for (TrustManager trustManager : trustManagers) {
-                    if (trustManager instanceof X509TrustManager) {
-                        try {
+                for (TrustManager trustManager : trustManagers)
+                {
+                    if (trustManager instanceof X509TrustManager)
+                    {
+                        try
+                        {
                             ((X509TrustManager) trustManager).checkServerTrusted(chain, authType);
                             // accept if any of the trust managers accept the certificate
                             return;
-                        } catch (CertificateException ex) {
+                        }
+                        catch (CertificateException ex)
+                        {
                             exception = ex;
                         }
                     }
                 }
 
-                if (exception != null) {
+                if (exception != null)
+                {
                     throw exception;
                 }
 
@@ -653,10 +770,13 @@ public class RuneLite {
             }
 
             @Override
-            public X509Certificate[] getAcceptedIssuers() {
+            public X509Certificate[] getAcceptedIssuers()
+            {
                 List<X509Certificate> certificates = new ArrayList<>();
-                for (TrustManager trustManager : trustManagers) {
-                    if (trustManager instanceof X509TrustManager) {
+                for (TrustManager trustManager : trustManagers)
+                {
+                    if (trustManager instanceof X509TrustManager)
+                    {
                         certificates.addAll(Arrays.asList(((X509TrustManager) trustManager).getAcceptedIssuers()));
                     }
                 }
@@ -669,19 +789,24 @@ public class RuneLite {
         okHttpClientBuilder.sslSocketFactory(sc.getSocketFactory(), combiningTrustManager);
     }
 
-    private static void setupInsecureTrustManager(OkHttpClient.Builder okHttpClientBuilder) throws NoSuchAlgorithmException, KeyManagementException {
+    private static void setupInsecureTrustManager(OkHttpClient.Builder okHttpClientBuilder) throws NoSuchAlgorithmException, KeyManagementException
+    {
         // the insecure trust manager trusts everything
-        X509TrustManager trustManager = new X509TrustManager() {
+        X509TrustManager trustManager = new X509TrustManager()
+        {
             @Override
-            public void checkClientTrusted(X509Certificate[] chain, String authType) {
+            public void checkClientTrusted(X509Certificate[] chain, String authType)
+            {
             }
 
             @Override
-            public void checkServerTrusted(X509Certificate[] chain, String authType) {
+            public void checkServerTrusted(X509Certificate[] chain, String authType)
+            {
             }
 
             @Override
-            public X509Certificate[] getAcceptedIssuers() {
+            public X509Certificate[] getAcceptedIssuers()
+            {
                 return new X509Certificate[0];
             }
         };

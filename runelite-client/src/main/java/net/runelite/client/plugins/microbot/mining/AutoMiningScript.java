@@ -54,6 +54,7 @@ public class AutoMiningScript extends Script {
                         if (rock != null) {
                             if (Rs2GameObject.interact(rock)) {
                                 Rs2Player.waitForAnimation();
+                                sleep(510, 2000);
                             }
                         }
                         break;
@@ -66,10 +67,6 @@ public class AutoMiningScript extends Script {
                         } else {
                             Rs2Inventory.dropAllExcept("pickaxe");
                         }
-
-                if (Rs2GameObject.interact(rock)) {
-                    Rs2Player.waitForAnimation();
-                    sleep(510,2000);
                 }
             } catch (Exception ex) {
                 Microbot.log(ex.getMessage());
