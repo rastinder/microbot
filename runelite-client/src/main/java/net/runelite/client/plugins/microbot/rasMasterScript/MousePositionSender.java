@@ -84,13 +84,9 @@ public class MousePositionSender {
 
             // Send the formatted string encoded in UTF-8
 
-            for (int i =0; i < 100; i++) {
-                String message = "a,8," + random(-100,100) + "," + random(-100,100)+"|";
+                String message = "a,8," + x + "," + y+"|";
                 outputStream.write(message.getBytes(StandardCharsets.UTF_8));
                 outputStream.flush();
-                int delay = random(100,1000); // random.nextInt(201) gives 0 to 200, subtract 100 to get -100 to 100
-                Thread.sleep(delay);
-            }
 
             // Close the socket connection
             outputStream.close();

@@ -33,8 +33,8 @@ public class VirtualMouse extends Mouse {
 
         if (point == null) return this;
 
-        mouseEvent(MouseEvent.MOUSE_ENTERED, jitterPoint(point), rightClick);
-        mouseEvent(MouseEvent.MOUSE_EXITED, jitterPoint(point), rightClick);
+        mouseEvent(MouseEvent.MOUSE_ENTERED, point, rightClick);
+        mouseEvent(MouseEvent.MOUSE_EXITED, point, rightClick);
         mouseEvent(MouseEvent.MOUSE_MOVED, jitterPoint(point), rightClick);
         sleep(random(10, 30));  // Human-like delay
 
@@ -46,9 +46,9 @@ public class VirtualMouse extends Mouse {
         }
 
         sleep(random(80, 120)); // Simulate hold time before release
-        mouseEvent(MouseEvent.MOUSE_RELEASED, jitterPoint(point), rightClick);
+        mouseEvent(MouseEvent.MOUSE_RELEASED, point, rightClick);
         sleep(random(20, 50));  // Slight delay before the last event
-        mouseEvent(MouseEvent.MOUSE_FIRST, jitterPoint(point), rightClick);
+        mouseEvent(MouseEvent.MOUSE_FIRST, point, rightClick);
 
         return this;
     }

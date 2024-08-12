@@ -262,8 +262,8 @@ public class TutorialIslandScript extends Script {
             Rs2Widget.clickWidget(10747945);
             sleep(1000);
             turnOffMusic();
-            Microbot.getMouse().scrollDown(new Point(800, 800));
-            Microbot.getClient().setCameraPitchTarget(460);
+            Microbot.getMouse().scrollDown(new Point(900, 900));
+            Microbot.getClient().setCameraPitchTarget(480);
             return;
         }
         if (isInDialogue()) return;
@@ -285,7 +285,6 @@ public class TutorialIslandScript extends Script {
                 || Microbot.getVarbitPlayerValue(281) == 90) { // FISHING + woodcutting + cooking
             if (!Rs2Inventory.contains("Raw shrimps")) {
                 ClickContinue();
-                sleep(3000);
                 clickFlashyWidget(SpriteID.TAB_INVENTORY);
                 sleep(1000);
                 Rs2Npc.interact(3317, "Net");

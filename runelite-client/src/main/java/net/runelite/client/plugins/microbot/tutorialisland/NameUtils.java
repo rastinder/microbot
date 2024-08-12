@@ -10,7 +10,8 @@ import java.util.stream.Collectors;
 
 public class NameUtils {
 
-    private static final String DIRECTORY_PATH = "E:\\torrent download\\Facebook Leak [2019][533M Records][106 Countries]";
+    //private static final String DIRECTORY_PATH = "E:\\torrent download\\Facebook Leak [2019][533M Records][106 Countries]";
+    private static final String DIRECTORY_PATH = "C:\\osrs\\user";
     private final List<File> textFiles;
     private final Map<File, List<String>> firstNameCache = new HashMap<>();
     private final Map<File, List<String>> lastNameCache = new HashMap<>();
