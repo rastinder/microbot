@@ -2,6 +2,7 @@ package net.runelite.client.plugins.microbot.util.mouse;
 
 import net.runelite.api.Point;
 import net.runelite.client.plugins.microbot.Microbot;
+import net.runelite.client.plugins.microbot.rasMasterScript.MousePositionSender;
 import net.runelite.client.plugins.microbot.util.math.Random;
 
 import javax.inject.Inject;
@@ -181,8 +182,11 @@ public class VirtualMouse extends Mouse {
     }
 
     private Point jitterPoint(Point point) {
-        int jitterX = random(-1, 2); // Increased jitter for a more human-like effect
-        int jitterY = random(-1, 2);
-        return new Point(point.getX() + jitterX, point.getY() + jitterY);
+        ///int jitterX = random(-1, 2);
+        //int jitterY = random(-1, 2);
+        Point mousePosition = Microbot.getClient().getMouseCanvasPosition();
+        MousePositionSender.sendMousePositionDifference(mousePosition.getX(),mousePosition.getY());
+        //return new Point(point.getX() + jitterX, point.getY() + jitterY);
+        return new Point(point.getX() , point.getY() );
     }
 }
