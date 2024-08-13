@@ -35,7 +35,7 @@ public class VirtualMouse extends Mouse {
 
         mouseEvent(MouseEvent.MOUSE_ENTERED, point, rightClick);
         mouseEvent(MouseEvent.MOUSE_EXITED, point, rightClick);
-        mouseEvent(MouseEvent.MOUSE_MOVED, jitterPoint(point), rightClick);
+        mouseEvent(MouseEvent.MOUSE_MOVED, point, rightClick);
         sleep(random(10, 30));  // Human-like delay
 
         mouseEvent(MouseEvent.MOUSE_PRESSED, point, rightClick);
@@ -106,8 +106,7 @@ public class VirtualMouse extends Mouse {
     public Mouse move(Rectangle rect) {
         long time = System.currentTimeMillis();
 
-        Point jitteredPoint = jitterPoint(new Point((int) rect.getCenterX(), (int) rect.getCenterY()));
-        MouseEvent mouseMove = new MouseEvent(getCanvas(), MouseEvent.MOUSE_MOVED, time, 0, jitteredPoint.getX(), jitteredPoint.getY(), 1, false, MouseEvent.BUTTON1);
+        MouseEvent mouseMove = new MouseEvent(getCanvas(), MouseEvent.MOUSE_MOVED, time, 0, (int) rect.getCenterX(), (int) rect.getCenterY(), 1, false, MouseEvent.BUTTON1);
 
         getCanvas().dispatchEvent(mouseMove);
 
@@ -118,10 +117,10 @@ public class VirtualMouse extends Mouse {
         long time = System.currentTimeMillis();
         Point point = new Point((int) polygon.getBounds().getCenterX(), (int) polygon.getBounds().getCenterY());
 
-        Point jitteredPoint = jitterPoint(point);
-        MouseEvent mouseMove = new MouseEvent(getCanvas(), MouseEvent.MOUSE_MOVED, time, 0, jitteredPoint.getX(), jitteredPoint.getY(), 1, false, MouseEvent.BUTTON1);
+        MouseEvent mouseMove = new MouseEvent(getCanvas(), MouseEvent.MOUSE_MOVED, time, 0, point.getX(), point.getY(), 1, false, MouseEvent.BUTTON1);
 
         getCanvas().dispatchEvent(mouseMove);
+
 
         return this;
     }
@@ -132,8 +131,7 @@ public class VirtualMouse extends Mouse {
         move(point);
 
         scheduledExecutorService.schedule(() -> {
-            Point jitteredPoint = jitterPoint(point);
-            MouseEvent mouseScroll = new MouseWheelEvent(getCanvas(), MouseEvent.MOUSE_WHEEL, time, 0, jitteredPoint.getX(), jitteredPoint.getY(), 0, false,
+            MouseEvent mouseScroll = new MouseWheelEvent(getCanvas(), MouseEvent.MOUSE_WHEEL, time, 0, point.getX(), point.getY(), 0, false,
                     0, 10, 2);
 
             getCanvas().dispatchEvent(mouseScroll);
@@ -144,9 +142,7 @@ public class VirtualMouse extends Mouse {
 
     public Mouse scrollUp(Point point) {
         long time = System.currentTimeMillis();
-
-        Point jitteredPoint = jitterPoint(point);
-        MouseEvent mouseScroll = new MouseWheelEvent(getCanvas(), MouseEvent.MOUSE_WHEEL, time, 0, jitteredPoint.getX(), jitteredPoint.getY(), 0, false,
+        MouseEvent mouseScroll = new MouseWheelEvent(getCanvas(), MouseEvent.MOUSE_WHEEL, time, 0, point.getX(), point.getY(), 0, false,
                 0, -10, -2);
 
         getCanvas().dispatchEvent(mouseScroll);

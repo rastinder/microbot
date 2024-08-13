@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.Random;
 
 import static net.runelite.client.plugins.microbot.util.Global.sleep;
 import static net.runelite.client.plugins.microbot.util.math.Random.random;
@@ -73,27 +74,73 @@ public class MousePositionSender {
             throw new RuntimeException("Sleep interrupted", e);
         }
     }
+    //private static final String SERVER_ADDRESS = "192.168.1.103";
+    private static final String SERVER_ADDRESS = "127.0.0.1";
+    private static final int SERVER_PORT = 4456;
+    private static final int MAX_RETRIES = 5;
+    private static final int RETRY_DELAY_MS = 1000; // 1 second
+
     public static void tcpIp(int x, int y) {
-        try {
-            // Format the string similar to Python's f-string
-            //String message = "a,8," + x + "," + "0|";
-            //System.out.print(message);
-            // Create a socket connection to the server
-            Socket socket = new Socket("192.168.1.103", 4455);
-            OutputStream outputStream = socket.getOutputStream();
+        Random random = new Random();
+        int delay = random.nextInt(6) + 5; // Random delay between 5 and 10 milliseconds
 
-            // Send the formatted string encoded in UTF-8
+        int retries = 0;
+        boolean connected = false;
 
-                String message = "a,8," + x + "," + y+"|";
+        while (!connected && retries < MAX_RETRIES) {
+            Socket socket = null;
+            OutputStream outputStream = null;
+
+            try {
+                // Create a socket connection to the server
+                socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+                outputStream = socket.getOutputStream();
+
+                // Send the formatted string encoded in UTF-8
+                String message = "a,8," + x + "," + y ;
+                System.out.println("Sending message: " + message);
                 outputStream.write(message.getBytes(StandardCharsets.UTF_8));
                 outputStream.flush();
 
-            // Close the socket connection
-            outputStream.close();
-            socket.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+                System.out.println("Message sent successfully.");
+                connected = true; // Connection was successful
+
+                // Wait before closing the connection
+                Thread.sleep(delay);
+            } catch (Exception e) {
+                System.err.println("Connection failed or error occurred: " + e.getMessage());
+                e.printStackTrace();
+                retries++;
+
+                if (retries < MAX_RETRIES) {
+                    System.out.println("Retrying connection in 1 second... (" + retries + "/" + MAX_RETRIES + ")");
+                    try {
+                        Thread.sleep(RETRY_DELAY_MS); // Wait before retrying
+                    } catch (InterruptedException ie) {
+                        System.err.println("Interrupted during retry delay: " + ie.getMessage());
+                        Thread.currentThread().interrupt(); // Restore interrupted status
+                    }
+                } else {
+                    System.err.println("Max retries reached. Unable to connect.");
+                }
+            } finally {
+                // Ensure resources are closed
+                try {
+                    if (outputStream != null) {
+                        outputStream.close();
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error closing OutputStream: " + e.getMessage());
+                }
+
+                try {
+                    if (socket != null && !socket.isClosed()) {
+                        socket.close();
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error closing Socket: " + e.getMessage());
+                }
+            }
         }
     }
-
 }
