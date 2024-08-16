@@ -10,7 +10,6 @@ import static net.runelite.client.plugins.microbot.util.math.Random.random;
 
 
 public class ExampleScript extends Script {
-    public static double version = 1.0;
 
     public boolean run(ExampleConfig config) {
         Microbot.enableAutoRunOn = false;
