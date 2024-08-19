@@ -75,7 +75,7 @@ public class rasCollectFoodScript extends Script {
 
                 long endTime = System.currentTimeMillis();
                 long totalTime = endTime - startTime;
-                System.out.println("Total time for loop " + totalTime);
+                //System.out.println("Total time for loop " + totalTime);
 
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
@@ -86,7 +86,7 @@ public class rasCollectFoodScript extends Script {
 
     private void hopworld() {
         int world = Microbot.getClient().getWorld();
-        if (world != 301 || world != 308) {
+        if (world != 301 && world != 308) {
             Microbot.hopToWorld(301);
             boolean result = sleepUntil(() -> Rs2Widget.findWidget("Switch World") != null);
             if (result) {

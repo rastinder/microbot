@@ -70,7 +70,8 @@ public class AutoWoodcuttingScript extends Script {
                             return;
                         }
 
-                        GameObject tree = Rs2GameObject.findObject(getTreeByLevel().getName(), true, config.distanceToStray(), true, getInitialPlayerLocation());
+                        //GameObject tree = Rs2GameObject.findObject(getTreeByLevel().getName(), true, config.distanceToStray(), false, getInitialPlayerLocation());
+                        GameObject tree = Rs2GameObject.findObject(getTreeByLevel().getName(), true, 100, false, getInitialPlayerLocation());
 
                         if (tree != null) {
                             Rs2GameObject.interact(tree, getTreeByLevel().getAction());
@@ -187,8 +188,10 @@ public class AutoWoodcuttingScript extends Script {
         WoodcuttingTree bestTree = null;
         for (WoodcuttingTree tree : WoodcuttingTree.values()) {
             if (tree.getWoodcuttingLevel() <= level) {
-                if (Rs2GameObject.get(tree.getName() ,false)!= null)
-                    bestTree = tree;
+                if (Rs2GameObject.get(tree.getName() ,false)!= null){
+                    if (Rs2GameObject.findObject(tree.getName(),true,100,false,Rs2Player.getWorldLocation())!= null)
+                        bestTree = tree;
+                    }
             } else {
                 break;
             }

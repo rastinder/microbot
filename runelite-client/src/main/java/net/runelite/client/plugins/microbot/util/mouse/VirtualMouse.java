@@ -45,9 +45,8 @@ public class VirtualMouse extends Mouse {
             moveWhilePressed(point);
         }
 
-        sleep(random(80, 120)); // Simulate hold time before release
+        sleep(random(8, 20)); // Simulate hold time before release
         mouseEvent(MouseEvent.MOUSE_RELEASED, point, rightClick);
-        sleep(random(20, 50));  // Slight delay before the last event
         mouseEvent(MouseEvent.MOUSE_FIRST, point, rightClick);
 
         return this;
@@ -58,8 +57,7 @@ public class VirtualMouse extends Mouse {
         int moveTime = random(8, 20); // Randomly move the mouse for 8 to 20 ms
 
         while (System.currentTimeMillis() - time < moveTime) {
-            Point randomMove = jitterPoint(point);
-            MouseEvent mouseMove = new MouseEvent(getCanvas(), MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 0, randomMove.getX(), randomMove.getY(), 1, false, MouseEvent.BUTTON1);
+            MouseEvent mouseMove = new MouseEvent(getCanvas(), MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 0, point.getX() + random(-2,3), point.getY()+ random(-2,3), 1, false, MouseEvent.BUTTON1);
             getCanvas().dispatchEvent(mouseMove);
             sleep(random(1, 5)); // Short sleep to simulate natural movement
         }
@@ -180,7 +178,7 @@ public class VirtualMouse extends Mouse {
     private Point jitterPoint(Point point) {
         ///int jitterX = random(-1, 2);
         //int jitterY = random(-1, 2);
-        MousePositionSender.sendMousePositionDifference(point.getX(),point.getY());
+        //MousePositionSender.sendMousePositionDifference(point.getX(),point.getY());
         //return new Point(point.getX() + jitterX, point.getY() + jitterY);
         return new Point(point.getX() , point.getY() );
     }

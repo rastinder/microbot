@@ -14,6 +14,7 @@ import net.runelite.client.plugins.microbot.util.gameobject.Rs2Cannon;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
 import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
+import net.runelite.client.plugins.microbot.util.inventory.Rs2Item;
 import net.runelite.client.plugins.microbot.util.keyboard.Rs2Keyboard;
 import net.runelite.client.plugins.microbot.util.models.RS2Item;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
@@ -35,16 +36,16 @@ public class rasCollectBonesScript extends Script {
     public static double version = 1.0;
     String Bones = "Big bones,Bones";
     List<String> BonesList = Arrays.asList(Bones.split(","));
-    String foodSource = "Cow,Giant rat,Chicken,Bear,Cave Bug,Cave Crawler,Cow Calf,Crawling Hand,Dwarf,Farmer,Flesh Crawler,Frog,Giant,Giant Spider,Goblin,Guard,Hill Giant,Ice Giant,Jogre,Kalphite Worker,Lesser Demon,Lizardman,Minotaur,Monk,Moss Giant,Ogre,Pyrefiend,Rock Crab,Rockslug,Rogue,Sand Crab,Sea Snake Young,Shadow Warrior,Skeleton,Spider,Suqah,Troll,Wolf,Yeti,Yak";
+    //String foodSource = "Cow,Giant rat,Chicken,Bear,Cave Bug,Cave Crawler,Cow Calf,Crawling Hand,Dwarf,Farmer,Flesh Crawler,Frog,Giant,Goblin,Guard,Hill Giant,Ice Giant,Jogre,Kalphite Worker,Lesser Demon,Lizardman,Minotaur,Monk,Moss Giant,Ogre,Pyrefiend,Rock Crab,Rockslug,Rogue,Sand Crab,Sea Snake Young,Shadow Warrior,Skeleton,Suqah,Troll,Wolf,Yeti,Yak";
+    String foodSource = "Bear,Cow,Chicken,Giant rat";
     List<String> foodSourceList = Arrays.asList(foodSource.split(","));
     public int centerX = 0;
     public int centerY = 0;
     public WorldArea center = new WorldArea(1, 1, 1, 1, 0);
     public static long afktimer = System.currentTimeMillis();
-    long stopTimer = random(1800000,2760000) + System.currentTimeMillis();
+    public static long stopTimer = 1;
 
     public boolean run(rasCollectBonesConfig config) {
-        stopTimer = random(1800000,2760000) + System.currentTimeMillis();
         Microbot.enableAutoRunOn = false;
         AtomicInteger action = new AtomicInteger(1);
         centerY = 0;
@@ -54,11 +55,13 @@ public class rasCollectBonesScript extends Script {
                 return;
             }
             try {
+                if (stopTimer == 1)
+                    stopTimer = random(1800000,2760000) + System.currentTimeMillis();
                 shutdownTimer();
                 if (centerY == 0 && Microbot.getClient().getGameState() == GameState.LOGGED_IN) {
                     centerX = Rs2Player.getWorldLocation().getX();
                     centerY = Rs2Player.getWorldLocation().getY();
-                    center = new WorldArea(Rs2Player.getWorldLocation(), 3, 3);
+                    center = new WorldArea(Rs2Player.getWorldLocation(), 6, 6);
                 }
                 if (!config.toggleCombat() || !config.toggleLootItems()) {
                     if (config.toggleLootItems())
@@ -87,9 +90,10 @@ public class rasCollectBonesScript extends Script {
                 }
                 if (config.eatfood()) {
                     int random = new Random().nextInt(41) + 20;
-                    Rs2Player.eatAt(random);
-                    double treshHold = (double) (Microbot.getClient().getBoostedSkillLevel(Skill.HITPOINTS) * 100) / Microbot.getClient().getRealSkillLevel(Skill.HITPOINTS);
-                    if (treshHold <= random && !Rs2Player.isFullHealth()) {
+                    if (!Rs2Player.eatAt(random)){
+                        double treshHold = (double) (Microbot.getClient().getBoostedSkillLevel(Skill.HITPOINTS) * 100) / Microbot.getClient().getRealSkillLevel(Skill.HITPOINTS);
+                        if (treshHold <= random && !Rs2Player.isFullHealth()) {
+                            sleepUntilTrue(()->!Rs2Combat.inCombat(),100,15000);
                         if (Rs2Inventory.getInventoryFood().isEmpty()) {
                             if (config.cookFood() == rasCollectBonesConfig.cookON.Fire) {
                                 getFireMakingstuff(config);
@@ -143,6 +147,7 @@ public class rasCollectBonesScript extends Script {
 
                             }
                         }
+                    }
                     }
                 }
                 if (Microbot.getClient().getEnergy() > new Random().nextInt((4500 - 2500) + 1) + 2500) {
@@ -290,12 +295,13 @@ public class rasCollectBonesScript extends Script {
                 System.out.println(e.getMessage());
             }
             WorldPoint randomBankPoint = center.toWorldPointList().get(random(0, center.toWorldPointList().size() - 2));
-            try {
+            if (Rs2Player.getWorldLocation().distanceTo(randomBankPoint) > 10){
+                Rs2Walker.walkTo(randomBankPoint);
+            }
+            else {
                 Rs2Walker.walkFastCanvas(randomBankPoint);
-            } catch (Exception ex){
-            Rs2Walker.walkTo(randomBankPoint);
-        }
-            Rs2Player.waitForWalking(60000);
+            }
+            sleepUntilTrue(()-> Rs2Player.getWorldLocation().distanceTo(randomBankPoint) < 8,100,380000);
         }
         //Microbot.getPluginManager().setPluginValue(rasCollectBonesConfig,,true);
     }
@@ -314,7 +320,7 @@ public class rasCollectBonesScript extends Script {
     private void doBanking(WorldArea center, int maxFoodItems, rasCollectBonesConfig config) {
         String eatAbleItems = "Anchovy,Anchovy Pizza,Banana,Banana Pizza,Bass,Big Bass,Bread,Burning Amulet,Cake,Cheese,Chocolate Bar,Chocolate Cake,Choc-Ice,Chompy,Dark Crab,Eel,Frog Spawn Gumbo,Garlic Bread,Gnome Spice,Gnomebowl,Gnomebowl (Half Made),Gnomecrunch,Gnomecrunch (Half Made),Gnomeglass,Gnomeglory,Gnomeglory (Half Made),Gnomelemon,Gnomelemon (Half Made),Gnomewings,Gnomewings (Half Made),Golden Tench,Hard Cheese,Half A Meat Pie,Half A Redberry Pie,Half A Rabbit Pie,Half A Summer Pie,Half A Wild Pie,Half Full Cake,Herring,Hotfish,Insect Repellent,Jangerberries,Jungle Spider Kebab,Karamjan Rum,Kebbit,King Worm,Lobster,Manta Ray,Meat Pizza,Mind Bomb,Monkey Nuts,Monkfish,Onion,Papaya,Peach,Peach Pizza,Pineapple,Pineapple Pizza,Plain Pizza,Poison Meat,Poisoned Cheese,Purple Sweets,Redberry Pie,Redberry Pizza,Roe,Salmon,Sardine,Seaweed,Shrimp,Spicy Crunchies,Stew,Strawberries,Strawberry Pie,Stuffed Cabbage,Swamp Snake,Tomato,Tuna,Ugthanki,Kebab,Watermelon,Wheat,Wilderness Sword 4";
         String unCooked = "raw";
-        String fire = "tinderbox,axe,log";
+        String fire = "tinderbox,axe,logs";
         List<String> edibleItemsList = new ArrayList<>(Arrays.asList(eatAbleItems.split(",")));
         try {
             Rs2Player.toggleRunEnergy(false);
@@ -324,6 +330,7 @@ public class rasCollectBonesScript extends Script {
         }
         Rs2Bank.walkToBank();
         Rs2Player.waitForWalking();
+        sleepUntil(()->Rs2Bank.isNearBank(6),282000);
         Rs2Bank.openBank();
         sleepUntil(()->!Rs2Bank.isOpen(),2000);
         Rs2Bank.depositAllExcept(fire + "," + unCooked + "," + eatAbleItems);
@@ -389,12 +396,14 @@ public class rasCollectBonesScript extends Script {
             Rs2Player.waitForAnimation(1000);
             sleepUntil(() -> Rs2Widget.hasWidget("Choose"), 1000);
             Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
-            Rs2Player.waitForAnimation(1000);
+            Rs2Player.waitForAnimation(100);
+            sleepUntilTrue(() -> !Rs2Player.isAnimating(),100, 1000);
+
         }
         sleep(350);
         if (Rs2Inventory.hasItem("Burnt")) {
             Rs2Inventory.dropAll(Rs2Inventory.get("Burnt").getId());
-            sleepUntil(() -> !Rs2Inventory.hasItem(Rs2Inventory.get("Burnt").getId()), 5000);
+            sleepUntil(() -> !Rs2Inventory.hasItem("Burnt"), 5000);
         }
 
     }
@@ -432,15 +441,25 @@ public class rasCollectBonesScript extends Script {
                 sleep(100); // Adding a small sleep to prevent tight loop
             }
             startTime = System.currentTimeMillis();
-            while (Rs2Inventory.count("Raw") + Rs2Inventory.getInventoryFood().size() < 15) {
+            while (Rs2Inventory.count("Raw") + Rs2Inventory.getInventoryFood().size() < 15 && !Rs2Inventory.isFull()) {
                 outerloop:
                 for (String npc : foodSourceList) {
                     if (Rs2Npc.attack(npc)) {
-                        sleepUntil(() -> !Rs2Combat.inCombat(), 5000);
-                        sleepUntilTrue(() -> Rs2Combat.inCombat(), 500,50000);
+                        sleepUntil(() -> Rs2Combat.inCombat(), 5000);
+                        sleepUntilTrue(() -> !Rs2Combat.inCombat(), 500,50000);
                         sleep(1200);
-                        if (Rs2GroundItem.loot("Raw", 8))
-                            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 4000);
+                        RS2Item[] groundItems = Microbot.getClientThread().runOnClientThread(() ->
+                                Rs2GroundItem.getAll(7));
+
+                        for (RS2Item item : groundItems) {
+                            if (item.getItem().getName().toLowerCase().contains("raw")) {
+                                while (Rs2GroundItem.loot(item.getItem().getId()) && !Rs2Inventory.isFull()){
+                                    sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 4000);
+                                    if (Rs2Inventory.isFull())
+                                        break; // Exit the loop once the item is successfully looted
+                                }
+                            }
+                        }
                         startTime = System.currentTimeMillis();
                         break outerloop;
                     }

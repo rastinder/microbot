@@ -30,6 +30,7 @@ import net.runelite.client.plugins.microbot.woodcutting.enums.WoodcuttingResetOp
 import javax.swing.SwingUtilities;
 
 import javax.inject.Inject;
+import java.time.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -49,7 +50,7 @@ public class rasMasterScriptScript extends Script {
     private long totalTime = endTime - startTime;
     private static String activity = null;
     private static boolean alreadyOn = false;
-    private String currentPluginName;
+    public  static String currentPluginName;
     private String lastPluginName;
     private long pluginStartTime = 0;
     private long lastPrintTime = 0;
@@ -69,14 +70,14 @@ public class rasMasterScriptScript extends Script {
                 }
                 if (activity.equals("running")) {
                     monitorRunningPlugin();
-                    printtimeplugin();
+                    printTimePlugin();
                 } else {
                     executeActivity();
                 }
 
                 endTime = System.currentTimeMillis();
                 totalTime = endTime - startTime;
-                System.out.println("Total time for loop " + totalTime);
+                //System.out.println("Total time for loop " + totalTime);
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
@@ -109,7 +110,7 @@ public class rasMasterScriptScript extends Script {
     }
 
     private void executeActivity() {
-        System.out.print("activity: "+ activity );
+        System.out.print("activity to start: "+ activity );
         switch (activity) {
             case "tutIsland":
                 tutIsland();
@@ -263,6 +264,7 @@ public class rasMasterScriptScript extends Script {
             }
             // Check if the plugin is still enabled before proceeding to the next skill
             if (pluginName != null && isPlugEnabled(pluginName)) {
+                System.out.print("money making: "+ skill );
                 return;
             }
         }
@@ -366,6 +368,7 @@ public class rasMasterScriptScript extends Script {
                     break;
             }
             if (pluginName != null && isPlugEnabled(pluginName)) {
+                System.out.print("skill: "+ skill );
                 return;
             }
         }
@@ -379,7 +382,7 @@ public class rasMasterScriptScript extends Script {
         bankAllAndGet("Bronze axe","Tinderbox");
         WorldPoint fish = new WorldPoint(3015,3171,0);
         Rs2Walker.walkTo(fish);
-        sleepUntilTrue(()->fish.distanceTo(Rs2Player.getWorldLocation()) < 10,100,280000);
+        sleepUntilTrue(()->fish.distanceTo(Rs2Player.getWorldLocation()) < 10,100,380000);
         Microbot.getPluginManager().setPluginValue("reset", "ItemAction", WoodcuttingResetOptions.FIREMAKE);
         startPlugin("Auto Woodcutting");
         sleep(random(1800000,2760000));
@@ -389,14 +392,14 @@ public class rasMasterScriptScript extends Script {
 
     private String chocolateDust() {
         bankAllAndGet("Knife");
-        if (Rs2Inventory.hasItem("Knife"))
-            geHandlerScript.goBuyAndReturn(new int[]{1},10,true,"knife");
-        Microbot.getPluginManager().setPluginValue("general", "item 1", "knife"); // this item should always be lowest count or same count as item2
+        if (!Rs2Inventory.hasItem("Knife"))
+            geHandlerScript.goBuyAndReturn(new int[]{1},10,true,"Knife");
+        Microbot.getPluginManager().setPluginValue("general", "item 1", "Knife"); // this item should always be lowest count or same count as item2
         Microbot.getPluginManager().setPluginValue("general", "item 1 count", 1);
         Microbot.getPluginManager().setPluginValue("general", "item 2", "Chocolate bar");
         Microbot.getPluginManager().setPluginValue("general", "item 2 count", 27);
         Microbot.getPluginManager().setPluginValue("general", "item 3", "");
-        Microbot.getPluginManager().setPluginValue("general", "press space", true);
+        Microbot.getPluginManager().setPluginValue("general", "press space", false);
         Microbot.getPluginManager().setPluginValue("general", "buyMissingItems", true);
         return startPlugin("ras Combine");
     }
@@ -414,6 +417,11 @@ public class rasMasterScriptScript extends Script {
     }
 
     private String RedDie() {
+        if (totalCoins > 100000) {
+            bankAllAndGet(random(3, 11) * 1000, "Coins");
+            return startPlugin("Ras Red die");
+        }
+        System.out.println("no money");
         return null;
     }
 
@@ -533,6 +541,9 @@ public class rasMasterScriptScript extends Script {
             startPlugin("ras CombatTrain");
         else {
             Microbot.getPluginManager().setPluginValue("Bank/inventory", "cook food items", rasCollectBonesConfig.cookON.Cabbage); // default healing method
+            Microbot.getPluginManager().setPluginValue("Combat", "Combat", true);
+            Microbot.getPluginManager().setPluginValue("Loot", "Loot items", false);
+            Microbot.getPluginManager().setPluginValue("Loot", "items to loot", "Bones,Big");
             int chooseLocation = random(0, 5);
             String jattDiTalwar = "";
             int attackLevel = Microbot.getClient().getRealSkillLevel(Skill.ATTACK);
@@ -549,6 +560,9 @@ public class rasMasterScriptScript extends Script {
             }
             WorldPoint enemyLocation = new WorldPoint(3017, 3290, 0);
             if (Microbot.getClient().getRealSkillLevel(Skill.STRENGTH) > 20) {
+                Microbot.getPluginManager().setPluginValue("Bank/inventory", "cook food items", rasCollectBonesConfig.cookON.Fire);
+                Microbot.getPluginManager().setPluginValue("Combat", "enemy name", "Giant frog,Big frog,Giant rat");
+                Microbot.getPluginManager().setPluginValue("Loot", "Loot items", true);
                 chooseLocation = random(0, 2);
                 if (chooseLocation == 0) {
                     enemyLocation = new WorldPoint(3200, 3172, 0); //Giant frogs
@@ -558,6 +572,7 @@ public class rasMasterScriptScript extends Script {
                 }
 
             } else if (Microbot.getClient().getRealSkillLevel(Skill.STRENGTH) > 10) {
+                Microbot.getPluginManager().setPluginValue("Combat", "enemy name", "Cow,Cow calf");
                 chooseLocation = random(0, 6);
                 if (chooseLocation == 0) {
                     enemyLocation = new WorldPoint(3031, 3304, 0); //flador cow
@@ -566,6 +581,7 @@ public class rasMasterScriptScript extends Script {
                     enemyLocation = new WorldPoint(2924, 3285, 0); // crafting guild cow 1
                 }
                 if (chooseLocation == 2) {
+                    Microbot.getPluginManager().setPluginValue("Combat", "enemy name", "Rat,Giant rat");
                     enemyLocation = new WorldPoint(3197, 3202, 0); // Giant rat lumbridge
                 }
                 if (chooseLocation == 3) {
@@ -579,6 +595,7 @@ public class rasMasterScriptScript extends Script {
                 }
             } else if (Microbot.getClient().getRealSkillLevel(Skill.STRENGTH) >= 1) {
                 chooseLocation = random(0, 4);
+                Microbot.getPluginManager().setPluginValue("Combat", "enemy name", "chicken");
                 if (chooseLocation == 0) {
                     enemyLocation = new WorldPoint(3232, 3296, 0); //chicken normal
                 }
@@ -587,6 +604,7 @@ public class rasMasterScriptScript extends Script {
                 }
                 if (chooseLocation == 2) {
                     enemyLocation = new WorldPoint(3052, 3491, 0); // monk
+                    Microbot.getPluginManager().setPluginValue("Combat", "enemy name", "Monk");
                     Microbot.getPluginManager().setPluginValue("Bank/inventory", "cook food items", rasCollectBonesConfig.cookON.Monk);
                 }
                 if (chooseLocation == 3) {
@@ -624,14 +642,11 @@ public class rasMasterScriptScript extends Script {
                     }
                 }
             }
-            Rs2Bank.walkToBank();
-            sleepUntilTrue(() -> Rs2Bank.isNearBank(8), 500, 380000);
+            //Rs2Bank.walkToBank();
+            //sleepUntilTrue(() -> Rs2Bank.isNearBank(8), 500, 380000);
             Rs2Walker.walkTo(enemyLocation, random(0, 7));
             WorldPoint finalEnemyLocation = enemyLocation;
-            sleepUntilTrue(() -> Rs2Player.getWorldLocation().distanceTo(finalEnemyLocation) < 10, 500, 380000);
-            Microbot.getPluginManager().setPluginValue("Combat", "Combat", true);
-            Microbot.getPluginManager().setPluginValue("Loot", "Loot items", false);
-            Microbot.getPluginManager().setPluginValue("Loot", "items to loot", "Bones,Big");
+            sleepUntilTrue(() -> Rs2Player.getWorldLocation().distanceTo(finalEnemyLocation) < 10, 500, 380000);;
             startPlugin("ras range bone collector");
         }
     }
@@ -661,13 +676,19 @@ public class rasMasterScriptScript extends Script {
         }
     }
 
-    private void printtimeplugin() {
+    private void printTimePlugin() {
         if (System.currentTimeMillis() - lastPrintTime >= 5000) {
-            long elapsedTime = System.currentTimeMillis() - pluginStartTime;
-            LocalTime timeElapsed = LocalTime.ofSecondOfDay(elapsedTime / 1000);
-            String formattedTime = timeElapsed.format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-            System.out.println("Time passed: " + formattedTime);
-            lastPrintTime = System.currentTimeMillis();
+            try {
+                Duration elapsed = Duration.ofMillis(System.currentTimeMillis() - pluginStartTime);
+                String formattedTime = String.format("%02d:%02d:%02d",
+                        elapsed.toHours(),
+                        elapsed.toMinutesPart(),
+                        elapsed.toSecondsPart());
+                System.out.println("Time passed: " + formattedTime);
+                lastPrintTime = System.currentTimeMillis();
+            } catch (Exception e) {
+                System.out.println("Error in time calculation: " + e.getMessage());
+            }
         }
     }
 
@@ -734,7 +755,7 @@ public class rasMasterScriptScript extends Script {
         for (Plugin plugin : Microbot.getPluginManager().getPlugins()) {
             PluginDescriptor descriptor = plugin.getClass().getAnnotation(PluginDescriptor.class);
             if (descriptor != null && descriptor.name().contains(pluginName)) {
-                System.out.println("plugin enabled: " + descriptor.name());
+                //System.out.println("plugin enabled: " + descriptor.name()); // uncomment for testing
                 return plugin;
             }
         }
@@ -763,7 +784,7 @@ public class rasMasterScriptScript extends Script {
 
     public static long getTotalCoins() {
         WorldPoint location = Rs2Player.getWorldLocation();
-        if (Rs2Bank.isNearBank(6)) {
+        if (!Rs2Bank.isNearBank(6)) {
             Rs2Bank.walkToBank();
             sleepUntilTrue(() -> Rs2Bank.isNearBank(6), 100, 280000);
         }

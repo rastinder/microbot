@@ -24,11 +24,11 @@ import static net.runelite.client.plugins.microbot.util.math.Random.random;
 
 public class rasCombineScript extends Script {
     public static double version = 1.0;
+    public static long stopTimer = 1;
     boolean hasItem = false;
 
     public boolean run(rasCombineConfig config) {
         Microbot.enableAutoRunOn = false;
-        long stopTimer = random(1800000,2760000) + System.currentTimeMillis();
         //String item1 = config.item1();
         //String item2 = config.item2();
         //String item3 = config.item3();
@@ -37,8 +37,11 @@ public class rasCombineScript extends Script {
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             if (!super.run()) return;
+            rasMasterScriptScript.autoShutdown("ras Combine");
+            if (!Microbot.isLoggedIn()) return;
+            if (stopTimer == 1)
+                stopTimer = random(1800000,2760000) + System.currentTimeMillis();
             try {
-                rasMasterScriptScript.autoShutdown("ras Combine");
                 if (!Rs2Inventory.hasItem(config.item1()) || !Rs2Inventory.hasItem(config.item2())) {
                     if (!Rs2Bank.isNearBank(5) && !config.itemFromGE()){
                         Rs2Bank.walkToBank();
@@ -54,6 +57,7 @@ public class rasCombineScript extends Script {
                     }
                     if (Rs2Inventory.hasItem(config.item1()) || Rs2Inventory.hasItem(config.item2())) {
                         Rs2Bank.depositAllExcept(config.item1(), config.item2());
+                        sleep(350, 450);
                     }
                     else if (!Rs2Inventory.isEmpty()){
                         Rs2Bank.depositAll();
@@ -65,6 +69,20 @@ public class rasCombineScript extends Script {
                         Rs2Bank.withdrawX(true, config.item2(), config.item2Count());
                         sleep(350, 450);
                     }
+                    else{
+                        if (Rs2Inventory.ItemQuantity(config.item1()) == config.item1Count()) {
+                            if (Rs2Bank.hasItem(config.item2())) {
+                                Rs2Bank.withdrawX(true, config.item2(), config.item2Count());
+                                sleepUntilTrue(() -> Rs2Inventory.hasItem(config.item2()), 100, 1000); // may not work if already present in less quantity
+                            }
+                        }
+                        else if (Rs2Inventory.ItemQuantity(config.item2()) == config.item2Count()) { // remove else if problem testing
+                            if (Rs2Bank.hasItem(config.item1())) {
+                                Rs2Bank.withdrawX(true, config.item1(), config.item1Count());
+                                sleepUntilTrue(() -> Rs2Inventory.hasItem(config.item1()), 100, 1000); // may not work if already present in less quantity
+                            }
+                        }
+                    }
                     sleep(350, 450);
                     hasItem = !config.item3().isEmpty() && Rs2Bank.hasItem(config.item3());
                     if (((!Rs2Inventory.hasItem(config.item1()) || !Rs2Inventory.hasItem(config.item2())) && !hasItem) && !config.itemFromGE()) {
@@ -75,7 +93,7 @@ public class rasCombineScript extends Script {
                             Rs2Bank.openBank();
                             sleepUntil(() -> Rs2Bank.isOpen());
                         }
-                        if (stopTimer < System.currentTimeMillis())
+                        if (stopTimer < System.currentTimeMillis()) // sell item12
                             shutdown();
                         long coinsInBank = (long) Rs2Bank.count("Coins", true);
                         sleep(350, 450);
@@ -85,7 +103,7 @@ public class rasCombineScript extends Script {
                         sleep(850, 1250);
                         String[] concatenatedItems = {config.item1() , config.item2()};
                         if (config.item1Count() != 1) { //== 14
-                            if (!geHandlerScript.buyItemsWithRatio(coins, new double[]{1, 1}, 500, true, new String[]{config.item1() + "," + config.item2()})) { // break if buylimit exceed
+                            if (!geHandlerScript.buyItemsWithRatio(coins, new double[]{1, 1}, 500, true, config.item1(),config.item2())) { // break if buylimit exceed
                                 // todo , sell spare stuff
                                 shutdown();
                             }
@@ -147,10 +165,11 @@ public class rasCombineScript extends Script {
 
     @Override
     public void shutdown() {
+        stopTimer = 1;
         rasMasterScriptScript masterControl = new rasMasterScriptScript();
-        masterControl.startPlugin("ras combine");
+        rasMasterScriptScript.stopPlugin("ras Combine");
         do{sleep(2000);}
-        while (masterControl.isPlugEnabled("ras combine"));
+        while (masterControl.isPlugEnabled("ras Combine"));
         //Plugin p = DashboardWebSocket.findPlugin("ras combine");
         //Microbot.getPluginManager().stopPlugin(p);
         super.shutdown();
@@ -224,7 +243,11 @@ public class rasCombineScript extends Script {
             }
             sleep(850, 1250);
             for (int i =0 ; i < Rs2Inventory.count();i++){
-                if (!Objects.equals(Rs2Inventory.getNameForSlot(i), item2) && !Objects.equals(Rs2Inventory.getNameForSlot(i), item1) && !Rs2Inventory.getNameForSlot(i).contains("Jug")&& !Rs2Inventory.getNameForSlot(i).contains("Bucket")&& !Rs2Inventory.getNameForSlot(i).contains("Bowl"))
+                if (!Objects.equals(Rs2Inventory.getNameForSlot(i).toLowerCase(), item2.toLowerCase())
+                        && !Objects.equals(Rs2Inventory.getNameForSlot(i).toLowerCase(), item1.toLowerCase())
+                        && !Rs2Inventory.getNameForSlot(i).toLowerCase().contains("jug")
+                        && !Rs2Inventory.getNameForSlot(i).toLowerCase().contains("bucket")
+                        && !Rs2Inventory.getNameForSlot(i).toLowerCase().contains("bowl"))
                     return Rs2Inventory.getNameForSlot(i);
             }
             System.out.println(Rs2Inventory.getNameForSlot(0) + "is not final product.");

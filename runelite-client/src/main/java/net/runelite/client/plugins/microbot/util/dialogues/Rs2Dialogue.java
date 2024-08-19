@@ -15,9 +15,12 @@ public class Rs2Dialogue {
                 || Rs2Widget.isWidgetVisible(193, 0)
                 || hasContinue();
     }
-    public static void clickContinue() {
-        if (Rs2Widget.hasWidget("Click here to continue"))
+    public static boolean clickContinue() {
+        if (Rs2Widget.hasWidget("Click here to continue")) {
             Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
+            return true;
+        }
+        return false;
     }
 
     public static boolean hasContinue(){

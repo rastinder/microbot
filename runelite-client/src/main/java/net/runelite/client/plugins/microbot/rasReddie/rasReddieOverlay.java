@@ -1,4 +1,4 @@
-package net.runelite.client.plugins.microbot.rasCombine;
+package net.runelite.client.plugins.microbot.rasReddie;
 
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.ui.overlay.OverlayPanel;
@@ -11,9 +11,9 @@ import java.awt.*;
 
 import static net.runelite.client.plugins.microbot.rasReddie.rasReddieScript.stopTimer;
 
-public class rasCombineOverlay extends OverlayPanel {
+public class rasReddieOverlay extends OverlayPanel {
     @Inject
-    rasCombineOverlay(rasCombinePlugin plugin)
+    rasReddieOverlay(rasReddiePlugin plugin)
     {
         super(plugin);
         setPosition(OverlayPosition.TOP_LEFT);
@@ -24,7 +24,7 @@ public class rasCombineOverlay extends OverlayPanel {
         try {
             panelComponent.setPreferredSize(new Dimension(200, 300));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text("combine" + rasCombineScript.version)
+                    .text("red die" + rasReddieScript.version)
                     .color(Color.GREEN)
                     .build());
 
@@ -34,7 +34,7 @@ public class rasCombineOverlay extends OverlayPanel {
                     .left(Microbot.status)
                     .build());
             panelComponent.getChildren().add(LineComponent.builder()
-                    .left((stopTimer / 60000 + "mins"))
+                    .left(stopTimer / 60000 + "mins")
                     .build());
 
 

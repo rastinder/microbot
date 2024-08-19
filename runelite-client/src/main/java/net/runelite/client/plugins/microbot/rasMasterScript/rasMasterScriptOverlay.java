@@ -9,6 +9,8 @@ import net.runelite.client.ui.overlay.components.TitleComponent;
 import javax.inject.Inject;
 import java.awt.*;
 
+import static net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript.currentPluginName;
+
 public class rasMasterScriptOverlay extends OverlayPanel {
     @Inject
     rasMasterScriptOverlay(rasMasterScriptPlugin plugin)
@@ -22,14 +24,17 @@ public class rasMasterScriptOverlay extends OverlayPanel {
         try {
             panelComponent.setPreferredSize(new Dimension(200, 300));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text("Micro Example V" + rasMasterScriptScript.version)
+                    .text("Master Script" + rasMasterScriptScript.version)
                     .color(Color.GREEN)
                     .build());
 
             panelComponent.getChildren().add(LineComponent.builder().build());
 
+            //panelComponent.getChildren().add(LineComponent.builder()
+                    //.left(Microbot.status)
+                    //.build());
             panelComponent.getChildren().add(LineComponent.builder()
-                    .left(Microbot.status)
+                    .left("run"+ currentPluginName)
                     .build());
 
 

@@ -59,6 +59,9 @@ public class geHandlerScript extends Script {
         return goBuyAndReturn(amounts,highBuyPercent,false,itemNames);
     }
     public static boolean goBuyAndReturn(int[] amounts, int highBuyPercent,boolean collectInBank, String... itemNames) {
+        return goBuyAndReturn(amounts,false,highBuyPercent,false,itemNames);
+    }
+    public static boolean goBuyAndReturn(int[] amounts,boolean compromiseOnAmount, int highBuyPercent,boolean collectInBank, String... itemNames) {
         boolean yesbought = false;
         WorldPoint savedLocation = Rs2Player.getWorldLocation();
         WorldPoint geLocation = new WorldPoint(3164, 3485, 0); // Coordinates for GE
@@ -80,30 +83,59 @@ public class geHandlerScript extends Script {
                 Rs2GrandExchange.collectToBank();
             else
                 Rs2GrandExchange.collectToInventory();
-            while (!Rs2GrandExchange.hasBoughtOffer()) { // break if buylimit exceed
-                pricePerItem = (int) Math.ceil(pricePerItem + (pricePerItem * highBuyPercent / 100.0));
-                Microbot.log("isAllSlotsEmpty " + Rs2GrandExchange.isAllSlotsEmpty());
-                if (Rs2GrandExchange.isAllSlotsEmpty())
-                    abortAllActiveOffers();
+            int loopCounter = 0;
+            while (!Rs2GrandExchange.hasBoughtOffer()) { // break if buy limit exceeded
+                if (loopCounter > 0) {
+                    pricePerItem = (int) Math.ceil(pricePerItem + (pricePerItem * highBuyPercent / 100.0));
+                }
 
+                System.out.println("price: " + pricePerItem + "  amount: " + amounts[i] + "  item: " + itemNames[i]);
+                Microbot.log("isAllSlotsEmpty " + Rs2GrandExchange.isAllSlotsEmpty());
+
+                if (!Rs2GrandExchange.isAllSlotsEmpty()) { // always returns false
+                    abortAllActiveOffers();
+                    Rs2GrandExchange.collectToBank();
+                }
+                if (loopCounter == 10)
+                    return yesbought;
+
+                // If insufficient coins and compromise is allowed
+                if (coins < (long) pricePerItem * amounts[i]) {
+                    if (compromiseOnAmount) {
+                        // Try reducing the amount until it fits
+                        while (amounts[i] > 1 && coins < (long) pricePerItem * amounts[i]) {
+                            amounts[i]--;
+                        }
+                        if (amounts[i] <= 1) {
+                            Microbot.log("Cannot afford even 1 of " + itemNames[i]);
+                            Rs2GrandExchange.closeExchange();
+                            return yesbought;
+                        }
+                    } else {
+                        Microbot.log("Insufficient coins to buy " + amounts[i] + " of " + itemNames[i]);
+                        Rs2GrandExchange.closeExchange();
+                        return yesbought;
+                    }
+                }
+
+                // Proceed with buying if coins are sufficient
                 if (coins >= (long) pricePerItem * amounts[i]) {
                     Rs2GrandExchange.buyItem(itemNames[i], pricePerItem, amounts[i]);
                     sleepUntilTrue(() -> Rs2GrandExchange.hasBoughtOffer(), 500, 12000);
-                    Widget[] collectButton = Rs2Widget.getWidget(465,6).getDynamicChildren();
-                    if (!collectButton[1].isSelfHidden()) {
-                        if (collectInBank)
+
+                    Widget[] collectButton = Rs2Widget.getWidget(465, 6).getDynamicChildren();
+                    if (!collectButton[1].isSelfHidden() && Rs2GrandExchange.hasBoughtOffer()) {
+                        if (collectInBank) {
                             Rs2GrandExchange.collectToBank();
-                        else
+                        } else {
                             Rs2GrandExchange.collectToInventory();
+                        }
                         yesbought = true;
                         break;
                     }
-                } else {
-                    Microbot.log("Insufficient coins to buy " + amounts[i] + " of " + itemNames[i]);
-                    //break;
-                    Rs2GrandExchange.closeExchange();
-                    return yesbought;
                 }
+
+                loopCounter++;
             }
         }
         Rs2GrandExchange.closeExchange();
@@ -159,7 +191,7 @@ public class geHandlerScript extends Script {
         int itemId = (int) Microbot.getClientThread().runOnClientThread(() -> {
             List<ItemPrice> items = Microbot.getItemManager().search(itemName);
             return items.stream()
-                    .filter(item -> itemName.equals(item.getName()))
+                    .filter(item -> itemName.equalsIgnoreCase(item.getName()))
                     .findFirst()
                     .map(ItemPrice::getId)
                     .orElseGet(() -> {
@@ -177,30 +209,27 @@ public class geHandlerScript extends Script {
 
         return new int[]{pricePerItem, itemId};
     }
-
     public static boolean abortAllActiveOffers() {
         Microbot.status = "Aborting all active offers";
-        if (!Rs2GrandExchange.isOpen()) {
-            Rs2GrandExchange.openExchange();
-        }
-
+        if (!Rs2GrandExchange.isOpen()) Rs2GrandExchange.openExchange();
         boolean abortedAny = false;
         for (GrandExchangeSlots slot : GrandExchangeSlots.values()) {
             Widget offerSlot = Rs2GrandExchange.getSlot(slot);
             if (offerSlot != null && Rs2GrandExchange.isOfferScreenOpen()) {
-                Widget[] Abort = offerSlot.getDynamicChildren();
-                Rs2Widget.clickWidgetFast(offerSlot, 2,2);
-                sleepUntil(() -> Abort[22].getTextColor() == 9371648, 5000); // Assuming child(2) indicates offer state
-                abortedAny = true;
+                Widget[] children = offerSlot.getDynamicChildren();
+                if (children != null && !children[22].isSelfHidden()) {
+                    Rs2Widget.clickWidgetFast(offerSlot, 2, 2);
+                    sleepUntil(() -> children[22].getTextColor() == 9371648, 2000);
+                    abortedAny = true;
+                }
             }
         }
         return abortedAny;
     }
-    public static boolean buyItemsWithRatio(long coins, double[] ratio, int limit,boolean collectInBank, String[] itemNames) {
+    public static boolean buyItemsWithRatio(long coins, double[] ratio, int limit,boolean collectInBank, String... itemNames) {
         if (itemNames.length >1) {
             Map<String, Integer> itemPrices = new HashMap<>();
             Map<String, Integer> itemsBought = new HashMap<>();
-            Random random = new Random();
 
             for (String itemName : itemNames) {
                 int pricePerItem = (int) priceChecker(itemName)[0];
@@ -286,8 +315,9 @@ public class geHandlerScript extends Script {
         else{
            String itemName = itemNames[0];
            int pricePerItem = (int) priceChecker(itemName)[0];
-           int amount = (int) Math.min(Math.floor((double) pricePerItem /coins),limit);
-           return goBuyAndReturn(new int[]{amount}, 5, collectInBank, itemNames);
+           int amount = (int) Math.min(Math.floor((double) coins /pricePerItem),limit);
+            System.out.println("price: " + pricePerItem +" amount: "+amount  +" item: "+itemNames);
+           return goBuyAndReturn(new int[]{amount},true, 5, collectInBank, itemNames);
         }
 
     }
