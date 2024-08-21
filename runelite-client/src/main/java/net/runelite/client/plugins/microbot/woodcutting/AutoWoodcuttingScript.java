@@ -32,11 +32,19 @@ enum State {
 
 public class AutoWoodcuttingScript extends Script {
 
-    public static String version = "1.6.0";
+    public static String version = "1.6.1";
     public boolean cannotLightFire = false;
 
     State state = State.WOODCUTTING;
-    private WorldPoint returnPoint;
+    private static WorldPoint returnPoint;
+
+    public static WorldPoint initPlayerLoc(AutoWoodcuttingConfig config) {
+        if (config.walkBack() == WoodcuttingWalkBack.INITIAL_LOCATION) {
+            return getInitialPlayerLocation();
+        } else {
+            return returnPoint;
+        }
+    }
 
     public boolean run(AutoWoodcuttingConfig config) {
         if (config.hopWhenPlayerDetected()) {
@@ -51,6 +59,16 @@ public class AutoWoodcuttingScript extends Script {
 
                 if (initialPlayerLocation == null) {
                     initialPlayerLocation = Rs2Player.getWorldLocation();
+                }
+
+                if (returnPoint == null) {
+                    returnPoint = Rs2Player.getWorldLocation();
+                }
+
+                if (!config.TREE().hasRequiredLevel()) {
+                    Microbot.showMessage("You do not have the required woodcutting level to cut this tree.");
+                    shutdown();
+                    return;
                 }
 
                 if (Rs2Player.isMoving() || Rs2Player.isAnimating() || Microbot.pauseAllScripts) return;
@@ -85,7 +103,7 @@ public class AutoWoodcuttingScript extends Script {
                         break;
                 }
             } catch (Exception ex) {
-                System.out.println(ex.getMessage());
+                Microbot.log(ex.getMessage());
             }
         }, 0, 1000, TimeUnit.MILLISECONDS);
         return true;
