@@ -7,11 +7,13 @@ import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.dashboard.DashboardPlugin;
 import net.runelite.client.plugins.microbot.dashboard.DashboardWebSocket;
 import net.runelite.client.plugins.microbot.geHandler.geHandlerScript;
+import net.runelite.client.plugins.microbot.globval.enums.InterfaceTab;
 import net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.grandexchange.Rs2GrandExchange;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.keyboard.Rs2Keyboard;
+import net.runelite.client.plugins.microbot.util.tabs.Rs2Tab;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 
 import java.awt.event.KeyEvent;
@@ -61,27 +63,30 @@ public class rasCombineScript extends Script {
                     }
                     else if (!Rs2Inventory.isEmpty()){
                         Rs2Bank.depositAll();
+                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
                     }
                     if (Rs2Bank.hasItem(config.item1()) && Rs2Bank.hasItem(config.item2())) {
                         sleep(350, 450);
                         Rs2Bank.withdrawX(true, config.item1(), config.item1Count());
+                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
                         sleep(350, 450);
                         Rs2Bank.withdrawX(true, config.item2(), config.item2Count());
+                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
                         sleep(350, 450);
                     }
                     else{
-                        if (Rs2Inventory.ItemQuantity(config.item1()) == config.item1Count()) {
+                        //if (Rs2Inventory.ItemQuantity(config.item1()) == config.item1Count()) {
                             if (Rs2Bank.hasItem(config.item2())) {
                                 Rs2Bank.withdrawX(true, config.item2(), config.item2Count());
                                 sleepUntilTrue(() -> Rs2Inventory.hasItem(config.item2()), 100, 1000); // may not work if already present in less quantity
                             }
-                        }
-                        else if (Rs2Inventory.ItemQuantity(config.item2()) == config.item2Count()) { // remove else if problem testing
+                        //}
+                        //else if (Rs2Inventory.ItemQuantity(config.item2()) == config.item2Count()) { // remove else if problem testing
                             if (Rs2Bank.hasItem(config.item1())) {
                                 Rs2Bank.withdrawX(true, config.item1(), config.item1Count());
                                 sleepUntilTrue(() -> Rs2Inventory.hasItem(config.item1()), 100, 1000); // may not work if already present in less quantity
                             }
-                        }
+                       // }
                     }
                     sleep(350, 450);
                     hasItem = !config.item3().isEmpty() && Rs2Bank.hasItem(config.item3());
@@ -89,7 +94,7 @@ public class rasCombineScript extends Script {
                         shutdown();
                     } else if (((!Rs2Inventory.hasItem(config.item1()) || !Rs2Inventory.hasItem(config.item2())) && !hasItem) && config.itemFromGE()) {
                         if (!String.valueOf(item12).isEmpty()) {
-                            geHandlerScript.goSell(false, 5, new int[]{-1}, String.valueOf(item12));
+                            geHandlerScript.goSell(false, 5, new int[]{0}, String.valueOf(item12));
                             Rs2Bank.openBank();
                             sleepUntil(() -> Rs2Bank.isOpen());
                         }
@@ -97,21 +102,30 @@ public class rasCombineScript extends Script {
                             shutdown();
                         long coinsInBank = (long) Rs2Bank.count("Coins", true);
                         sleep(350, 450);
+                        long item1Count = Rs2Bank.count(config.item1()) + Rs2Inventory.ItemQuantity(config.item1());
+                        long item2Count = Rs2Bank.count(config.item2()) + Rs2Inventory.ItemQuantity(config.item2());
                         Rs2Bank.closeBank();
                         sleepUntil(() -> !Rs2Bank.isOpen());
                         long coins = Rs2Inventory.ItemQuantity(995) + coinsInBank;
                         sleep(850, 1250);
-                        String[] concatenatedItems = {config.item1() , config.item2()};
-                        if (config.item1Count() != 1) { //== 14
-                            if (!geHandlerScript.buyItemsWithRatio(coins, new double[]{1, 1}, 500, true, config.item1(),config.item2())) { // break if buylimit exceed
-                                // todo , sell spare stuff
+                        if ((item1Count == 0 ^ item2Count == 0) && config.item1Count() != 1) {
+                            int count = (int) (item1Count == 0 ? item2Count : item1Count);
+                            String itemName = item1Count == 0 ? config.item1() : config.item2();
+                            if (!geHandlerScript.goBuyAndReturn(new int[] {count},true,false,5,true,itemName))
                                 shutdown();
+
+                        } else {
+                            if (config.item1Count() != 1) { //== 14
+                                if (!geHandlerScript.buyItemsWithRatio(coins, new double[]{1, 1}, 500, true, config.item1(), config.item2())) { // break if buylimit exceed
+                                    // todo , sell spare stuff
+                                    shutdown();
+                                }
                             }
-                        }
-                        if (config.item1Count() == 1) {
-                            if (!geHandlerScript.buyItemsWithRatio(coins, new double[]{1}, 3000, true, new String[]{ config.item2()})) { // break if buylimit exceed
-                                // todo , sell spare stuff
-                                shutdown();
+                            if (config.item1Count() == 1) {
+                                if (!geHandlerScript.buyItemsWithRatio(coins, new double[]{1}, 3000, true, new String[]{config.item2()})) { // break if buylimit exceed
+                                    // todo , sell spare stuff
+                                    shutdown();
+                                }
                             }
                         }
                     }
@@ -183,9 +197,10 @@ public class rasCombineScript extends Script {
                 System.out.println("Inventory is empty or not loaded properly.");
                 return null;
             }
-            if (inventory.length < 28) {
-                System.out.println("Inventory does not have enough slots.");
-                return null;
+            if (Rs2Tab.getCurrentTab() != InterfaceTab.INVENTORY) {
+                System.out.println("Inventory not showin.");
+                Rs2Tab.switchToInventoryTab();
+                sleepUntil(() -> Rs2Tab.getCurrentTab() == InterfaceTab.INVENTORY);
             }
             if (spaceBar) {
                 Rs2Inventory.combine(item1, item2);

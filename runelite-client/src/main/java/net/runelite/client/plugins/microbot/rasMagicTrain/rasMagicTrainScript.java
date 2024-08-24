@@ -45,7 +45,7 @@ import static net.runelite.client.plugins.microbot.util.math.Random.random;
 
 
 public class rasMagicTrainScript extends Script {
-    long stopTimer = random(1800000,2760000) + System.currentTimeMillis();
+    public static long stopTimer =1;
     public static double version = 1.0;
     public boolean bankcheck = false;
     public int Law_rune_price = 0;
@@ -62,12 +62,13 @@ public class rasMagicTrainScript extends Script {
 
     public boolean run(rasMagicTrainConfig config) {
         Microbot.enableAutoRunOn = false;
-        stopTimer = random(1800000,2760000) + System.currentTimeMillis();
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
                 rasMasterScriptScript.autoShutdown("ras magic train");
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
+                if (stopTimer == 1)
+                    stopTimer = random(1800000,2760000) + System.currentTimeMillis();
                 long startTime = System.currentTimeMillis();
                 System.out.println("magic level " + Rs2Player.getRealSkillLevel(Skill.MAGIC));
                 if(!Rs2Player.isInteracting()) {
@@ -112,7 +113,7 @@ public class rasMagicTrainScript extends Script {
     public void shutdown() {
         String pluginName = "ras magic train";
         rasMasterScriptScript masterControl = new rasMasterScriptScript();
-        masterControl.stopPlugin(pluginName);
+        rasMasterScriptScript.stopPlugin(pluginName);
         do{sleep(2000);}
         while (masterControl.isPlugEnabled(pluginName));
         super.shutdown();
@@ -409,7 +410,7 @@ public class rasMagicTrainScript extends Script {
             if (!fetchFromBank(spellToCast)) {
                 if (!buyFromShop(spellToCast)) {
                     if (!buyFromGe(spellToCast)) {
-                        moneyMaking();
+                        moneyMaking(); // more like get free
                         return false;
                     }
                 }
@@ -699,6 +700,7 @@ public class rasMagicTrainScript extends Script {
     private void moneyMaking() {
         // Implement money-making strategy here
         Microbot.showMessage("No money or runes. Initiating money-making strategy.");
+        shutdown();
     }
 }
      /*

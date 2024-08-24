@@ -735,7 +735,7 @@ public class OverlayRenderer extends MouseAdapter
 		}
 		catch (Exception ex)
 		{
-			log.warn(DEDUPLICATE, "Error during overlay rendering", ex);
+			//log.warn(DEDUPLICATE, "Error during overlay rendering", ex);
 			return;
 		}
 

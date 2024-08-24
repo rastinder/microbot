@@ -33,6 +33,10 @@ public class ExampleOverlay extends OverlayPanel {
             panelComponent.getChildren().add(LineComponent.builder()
                     .left(Microbot.status)
                     .build());
+            panelComponent.getChildren().add(LineComponent.builder()
+                    .left("Shutdown in: " + (ExampleScript.stopTimer / 60000) + " minutes")
+                    .build());
+
 
 
         } catch(Exception ex) {

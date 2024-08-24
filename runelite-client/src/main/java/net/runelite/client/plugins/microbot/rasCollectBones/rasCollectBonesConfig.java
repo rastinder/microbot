@@ -13,7 +13,8 @@ public interface rasCollectBonesConfig extends Config {
             position = 0,
             closedByDefault = false
     )
-    String combatSection = "Combat";
+    String combatSection = "General";
+    String generalSection = "General";
     @ConfigItem(
             keyName = "Combat",
             name = "Auto attack npc",
@@ -26,11 +27,11 @@ public interface rasCollectBonesConfig extends Config {
         return false;
     }
     @ConfigItem(
-            keyName = "enemy name",
+            keyName = "enemyToAttack",
             name = "enemy name",
             description = "comma separated enemy names ",
             position = 2,
-            section = combatSection
+            section = generalSection
     )
     default String enemyName(){return "";}
     //........
@@ -75,9 +76,6 @@ public interface rasCollectBonesConfig extends Config {
     {
         return false;
     }
-
-
-
 
     @ConfigSection(
             name = "Loot",

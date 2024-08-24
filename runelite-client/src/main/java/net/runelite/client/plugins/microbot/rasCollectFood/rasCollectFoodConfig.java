@@ -26,4 +26,15 @@ public interface rasCollectFoodConfig extends Config {
     {
         return "";
     }
+    @ConfigItem(
+            keyName = "itemsToPick",
+            name = "itemsToPick",
+            description = "itemsToPick",
+            position = 0,
+            section = generalSection
+    )
+    default boolean sellthem()
+    {
+        return false;
+    }
 }

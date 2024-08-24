@@ -1,4 +1,4 @@
-package net.runelite.client.plugins.microbot.rasMasterScript;
+package net.runelite.client.plugins.microbot.rasTinderbox;
 
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.ui.overlay.OverlayPanel;
@@ -9,12 +9,10 @@ import net.runelite.client.ui.overlay.components.TitleComponent;
 import javax.inject.Inject;
 import java.awt.*;
 
-import static net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript.currentPluginName;
-import static net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript.formattedTime;
+public class rasTinderboxOverlay extends OverlayPanel {
 
-public class rasMasterScriptOverlay extends OverlayPanel {
     @Inject
-    rasMasterScriptOverlay(rasMasterScriptPlugin plugin)
+    rasTinderboxOverlay(rasTinderboxPlugin plugin)
     {
         super(plugin);
         setPosition(OverlayPosition.TOP_LEFT);
@@ -25,17 +23,17 @@ public class rasMasterScriptOverlay extends OverlayPanel {
         try {
             panelComponent.setPreferredSize(new Dimension(200, 300));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text("Master Script" + rasMasterScriptScript.version)
+                    .text("rasTinderbox")
                     .color(Color.GREEN)
                     .build());
 
             panelComponent.getChildren().add(LineComponent.builder().build());
 
             panelComponent.getChildren().add(LineComponent.builder()
-                    .left(formattedTime)
+                    .left(Microbot.status)
                     .build());
             panelComponent.getChildren().add(LineComponent.builder()
-                    .left("run "+ currentPluginName)
+                    .left("shutdown in" + rasTinderboxScript.stopTimer/60000 )
                     .build());
 
 

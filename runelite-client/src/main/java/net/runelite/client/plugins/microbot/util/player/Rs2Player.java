@@ -76,7 +76,7 @@ public class Rs2Player {
         return staminaBuffTime > 0;
     }
 
-    private static final Map<Player, Long> playerDetectionTimes = new ConcurrentHashMap<>();
+    public static final Map<Player, Long> playerDetectionTimes = new ConcurrentHashMap<>();
 
     public static void handlePotionTimers(VarbitChanged event) {
         if (event.getVarbitId() == Varbits.ANTIFIRE) {

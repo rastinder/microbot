@@ -28,6 +28,7 @@ package net.runelite.client.plugins.questhelper;
 import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Provides;
+import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.questhelper.bank.banktab.BankTabItems;
 import net.runelite.client.plugins.questhelper.managers.NewVersionManager;
 import net.runelite.client.plugins.questhelper.managers.QuestBankManager;
@@ -92,7 +93,22 @@ import net.runelite.client.plugins.bank.BankSearch;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.components.colorpicker.ColorPickerManager;
+import net.runelite.client.ui.overlay.*;
 import net.runelite.client.util.Text;
+import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.api.Client;
+import net.runelite.api.Point;
+import java.awt.*;
+import javax.inject.Inject;
+import java.awt.*;
+import net.runelite.api.Client;
+import net.runelite.api.Point;
+import net.runelite.client.ui.overlay.Overlay;
+import net.runelite.client.ui.overlay.OverlayLayer;
+import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.ui.overlay.OverlayPriority;
+import javax.inject.Inject;
+import java.awt.*;
 
 @PluginDescriptor(
 	name = "Quest Helper",
@@ -110,6 +126,8 @@ public class QuestHelperPlugin extends Plugin
 	@Getter
 	@Inject
 	private Client client;
+
+
 
 	@Inject
 	private ClientToolbar clientToolbar;
@@ -142,15 +160,21 @@ public class QuestHelperPlugin extends Plugin
 	RuneliteObjectManager runeliteObjectManager;
 
 	@Inject
+	private OverlayManager overlayManager;
+
+	@Inject
 	private QuestOverlayManager questOverlayManager;
 
 	@Inject
 	private QuestBankManager questBankManager;
 
-	@Inject
+	//@Getter
+    @Inject
 	private QuestManager questManager;
-
-	@Inject
+	public QuestManager getQuestManager() {
+		return questManager;
+	}
+    @Inject
 	private WorldMapAreaManager worldMapAreaManager;
 
 	@Inject
@@ -196,6 +220,8 @@ public class QuestHelperPlugin extends Plugin
 	{
 		return configManager.getConfig(QuestHelperConfig.class);
 	}
+
+
 
 	@Override
 	protected void startUp() throws IOException
@@ -250,7 +276,6 @@ public class QuestHelperPlugin extends Plugin
 		clientToolbar.removeNavigation(navButton);
 		questManager.shutDown();
 		questBankManager.shutDown(eventBus);
-
 		GlobalFakeObjects.setInitialized(false);
 	}
 
@@ -259,6 +284,7 @@ public class QuestHelperPlugin extends Plugin
 	{
 		questBankManager.loadInitialStateFromConfig(client);
 		questManager.updateQuestState();
+
 	}
 
 	@Subscribe

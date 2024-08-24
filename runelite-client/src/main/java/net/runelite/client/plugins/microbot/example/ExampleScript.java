@@ -10,17 +10,18 @@ import static net.runelite.client.plugins.microbot.util.math.Random.random;
 
 
 public class ExampleScript extends Script {
+    public static long stopTimer = 1;
 
     public boolean run(ExampleConfig config) {
         Microbot.enableAutoRunOn = false;
         if (rasMasterScriptScript.autoShutdown("example"))
             return true;
-        long stopTimer = random(1800000,2760000) + System.currentTimeMillis();
-
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
+                if (stopTimer == 1)
+                    stopTimer = random(1800000,2760000) + System.currentTimeMillis();
                 long startTime = System.currentTimeMillis();
 
                 //CODE HERE
@@ -38,6 +39,8 @@ public class ExampleScript extends Script {
 
     @Override
     public void shutdown() {
+        stopTimer = 1;
+        rasMasterScriptScript.stopPlugin("ras Combine");
         super.shutdown();
     }
 }

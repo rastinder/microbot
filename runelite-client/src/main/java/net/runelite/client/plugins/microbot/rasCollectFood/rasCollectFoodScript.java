@@ -6,6 +6,7 @@ import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
+import net.runelite.client.plugins.microbot.geHandler.geHandlerScript;
 import net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
@@ -34,6 +35,7 @@ public class rasCollectFoodScript extends Script {
     private WorldPoint edgeville = new WorldPoint(3105,3432,0);
     private WorldArea cabage = new WorldArea(3057,3290,5,5,0);
     private WorldPoint cookedmeat = new WorldPoint(1,1,0);
+    private Set<String> itemNames = new HashSet<>();
     //long stopTimer = random(1800000,2760000) + System.currentTimeMillis();
 
     public boolean run(rasCollectFoodConfig config) {
@@ -57,15 +59,20 @@ public class rasCollectFoodScript extends Script {
                 if (Rs2Player.getWorldLocation().distanceTo(edgeville) > 15) {
                     Rs2Walker.walkTo(edgeville,6);
                 }
-                if (stopTimer < System.currentTimeMillis())
+                if (stopTimer < System.currentTimeMillis()) {
+                    if (config.sellthem())
+                        geHandlerScript.goSell(false, 5, new int[]{0},itemNames.toArray(new String[0]) );
                     shutdown();
+                }
                 if (Rs2Player.getWorldLocation().distanceTo(edgeville) < 15 && !Rs2Inventory.isFull() ){
                     RS2Item[] items = Rs2GroundItem.getAll(15);
                     if( items != null){
                         for (RS2Item item : items){
-                            if (itemsToPickSet.stream().anyMatch(keyword -> item.getItem().getName().toLowerCase().contains(keyword))) {
+                            if (itemsToPickSet.stream().anyMatch(name-> item.getItem().getName().toLowerCase().contains(name)) && !Rs2Inventory.isFull()) {
                                     Rs2GroundItem.interact(item);
                                     sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                                    if(Rs2Inventory.ItemQuantity(item.getItem().getId()) > 0)
+                                        itemNames.add(item.getItem().getName());
                                 }
                         }
                     }

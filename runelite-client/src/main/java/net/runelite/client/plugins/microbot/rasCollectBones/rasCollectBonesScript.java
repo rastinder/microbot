@@ -50,7 +50,9 @@ public class rasCollectBonesScript extends Script {
         AtomicInteger action = new AtomicInteger(1);
         centerY = 0;
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            rasMasterScriptScript.autoShutdown("ras range bone collector");
+            if (rasMasterScriptScript.autoShutdown("ras range bone collector"))
+                return;
+            if (!Microbot.isLoggedIn()) return;
             if (!super.run()) {
                 return;
             }
@@ -390,13 +392,13 @@ public class rasCollectBonesScript extends Script {
     }
 
     private void cookfood() {
-        while (Rs2Inventory.hasItem("Raw")) {
+        while (Rs2Inventory.hasItem("Raw") && Rs2GameObject.get("Fire") != null) {
             Rs2Inventory.use("raw");
             sleepUntil(() -> Rs2GameObject.interact("Fire", "use"));
             Rs2Player.waitForAnimation(1000);
             sleepUntil(() -> Rs2Widget.hasWidget("Choose"), 1000);
             Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
-            Rs2Player.waitForAnimation(100);
+            Rs2Player.waitForAnimation(600);
             sleepUntilTrue(() -> !Rs2Player.isAnimating(),100, 1000);
 
         }

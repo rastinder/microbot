@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import static java.lang.Math.abs;
 import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
 
 
@@ -55,13 +56,19 @@ public class geHandlerScript extends Script {
     public void shutdown() {
         super.shutdown();
     }
+    public static boolean goBuy(int[] amounts, int highBuyPercent, String... itemNames) {
+        return goBuyAndReturn(amounts,false,false,highBuyPercent,true,itemNames);
+    }
+    public static boolean goBuy(int[] amounts, int highBuyPercent,boolean collectInBank, String... itemNames) {
+        return goBuyAndReturn(amounts,false,false,highBuyPercent,collectInBank,itemNames);
+    }
     public static boolean goBuyAndReturn(int[] amounts, int highBuyPercent, String... itemNames) {
         return goBuyAndReturn(amounts,highBuyPercent,false,itemNames);
     }
     public static boolean goBuyAndReturn(int[] amounts, int highBuyPercent,boolean collectInBank, String... itemNames) {
-        return goBuyAndReturn(amounts,false,highBuyPercent,false,itemNames);
+        return goBuyAndReturn(amounts,false,true,highBuyPercent,collectInBank,itemNames);
     }
-    public static boolean goBuyAndReturn(int[] amounts,boolean compromiseOnAmount, int highBuyPercent,boolean collectInBank, String... itemNames) {
+    public static boolean goBuyAndReturn(int[] amounts,boolean compromiseOnAmount,boolean returnalso, int highBuyPercent,boolean collectInBank, String... itemNames) {
         boolean yesbought = false;
         WorldPoint savedLocation = Rs2Player.getWorldLocation();
         WorldPoint geLocation = new WorldPoint(3164, 3485, 0); // Coordinates for GE
@@ -96,7 +103,7 @@ public class geHandlerScript extends Script {
                     abortAllActiveOffers();
                     Rs2GrandExchange.collectToBank();
                 }
-                if (loopCounter == 10)
+                if (loopCounter == 20)
                     return yesbought;
 
                 // If insufficient coins and compromise is allowed
@@ -139,9 +146,11 @@ public class geHandlerScript extends Script {
             }
         }
         Rs2GrandExchange.closeExchange();
-        while (Rs2Player.getWorldLocation().distanceTo(savedLocation) > 5) {
-            Rs2Walker.walkTo(savedLocation, 1);
-            Rs2Player.waitForWalking();
+        if (!returnalso) {
+            while (Rs2Player.getWorldLocation().distanceTo(savedLocation) > 5) {
+                Rs2Walker.walkTo(savedLocation, 1);
+                Rs2Player.waitForWalking();
+            }
         }
         return yesbought;
     }
@@ -160,10 +169,16 @@ public class geHandlerScript extends Script {
 
         for (int i = 0; i < itemNames.length; i++) {
             int finalI = i;
-            if (amounts[i] <= 0) {
+            if (amounts[i] == 0) {
                 Rs2Bank.withdrawAll(itemNames[finalI]);
+            }
+            else if (amounts[i] < 0) {
+                Rs2Bank.withdrawAll(itemNames[finalI]);
+                sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                Rs2Bank.depositX(itemNames[finalI],abs(amounts[i]));
             } else
                 Rs2Bank.withdrawX(itemNames[finalI], amounts[i]);
+            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
         }
         Rs2Bank.closeBank();
         Rs2GrandExchange.openExchange();
@@ -232,7 +247,7 @@ public class geHandlerScript extends Script {
             Map<String, Integer> itemsBought = new HashMap<>();
 
             for (String itemName : itemNames) {
-                int pricePerItem = (int) priceChecker(itemName)[0];
+                int pricePerItem = (int) (priceChecker(itemName)[0] * 1.25); // increase price by 25% for giving room to increase percentage
                 itemPrices.put(itemName, pricePerItem);
                 itemsBought.put(itemName, 0);
             }
@@ -317,7 +332,7 @@ public class geHandlerScript extends Script {
            int pricePerItem = (int) priceChecker(itemName)[0];
            int amount = (int) Math.min(Math.floor((double) coins /pricePerItem),limit);
             System.out.println("price: " + pricePerItem +" amount: "+amount  +" item: "+itemNames);
-           return goBuyAndReturn(new int[]{amount},true, 5, collectInBank, itemNames);
+           return goBuyAndReturn(new int[]{amount},true,true, 5, collectInBank, itemNames);
         }
 
     }

@@ -34,6 +34,7 @@ public class rasHardLeatherScript extends Script {
     int totalHardLeather = 0;
     boolean onlyloot = false;
     int coins = 995;
+    int minCoins = 101;
 
     public boolean run(rasHardLeatherConfig config) {
         Microbot.enableAutoRunOn = false;
@@ -53,32 +54,37 @@ public class rasHardLeatherScript extends Script {
                     sleep(100, 200);
                     Rs2Bank.depositAllExcept(coins);
                     sleep(100, 200);
-                    if (Rs2Inventory.ItemQuantity(coins) < 155) {
+                    if (Rs2Inventory.ItemQuantity(coins) < minCoins) {
                         Rs2Bank.withdrawX(coins, 10000);
+                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 500);
                     }
-                    if (Rs2Bank.hasBankItem(coins, 500)) {
+                    if (Rs2Bank.hasBankItem(coins, minCoins)) {
                         allCoinsInInv = true;
+                    } else {
+                        allCoinsInInv = false;
                     }
                     if (Rs2Bank.hasBankItem("Hard leather", 500))
                         sleep(500); // gotograndexchange and sell all
                     if (stopTimer < System.currentTimeMillis()){
                         System.out.println("shutting down");
-                        geHandlerScript.goSell(false,5,new int[]{-1},"Hard leather");
+                        geHandlerScript.goSell(false,5,new int[]{0},"Hard leather");
                         shutdown();
                     }
                     sleepUntil(() -> Rs2Bank.closeBank(), 1000);
                 }
                 if ( Rs2Inventory.isFull() && Rs2Inventory.hasItemAmount("Cowhide", 1)) {
-                    if (Rs2Inventory.ItemQuantity(coins) < 155 && allCoinsInInv) {
+                    if (Rs2Inventory.ItemQuantity(coins) < minCoins && allCoinsInInv) {
                         lootfromGoblins();
-                    } else if (Rs2Inventory.ItemQuantity(coins) < 155 && !allCoinsInInv) {
+                    } else if (Rs2Inventory.ItemQuantity(coins) < minCoins && !allCoinsInInv) {
                         Rs2Bank.walkToBank();
                         Rs2Player.waitForWalking();
                         sleepUntil(() -> Rs2Bank.openBank(), 10000);
-                        sleep(100, 200);
-                        Rs2Bank.withdrawX(coins, 10000);
-                        sleepUntil(() -> Rs2Bank.closeBank(), 1000);
-                        sleep(500, 800);
+                        if (Rs2Bank.isOpen()) {
+                            sleep(100, 200);
+                            Rs2Bank.withdrawX(coins, 10000);
+                            sleepUntil(() -> Rs2Bank.closeBank(), 1000);
+                            sleep(500, 800);
+                        }
                     }
                     Rs2Walker.walkTo(leatherShop.toWorldPoint());
                     Rs2Player.waitForWalking();
@@ -128,7 +134,7 @@ public class rasHardLeatherScript extends Script {
                     if (((System.currentTimeMillis() - lastLootTime) > 10000L) && Rs2Player.getWorldLocation().distanceTo(collectCowhide) > 11 && Rs2Inventory.ItemQuantity(coins) > 102 && !Rs2Inventory.isFull()) {
                         Rs2Walker.walkTo(collectCowhide.toWorldPoint());
                         Rs2Player.waitForWalking();
-                    } else if (Rs2Inventory.ItemQuantity(coins) > 102 && !Rs2Inventory.isFull()) {
+                    } else if (Rs2Inventory.ItemQuantity(coins) > minCoins && !Rs2Inventory.isFull()) {
                         if (Rs2GroundItem.loot("Cowhide", 15)) {
                             sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
                             if (new java.util.Random().nextInt(2) == 1 && config.randomBonePick() && Rs2Inventory.size() < 20) {
@@ -145,11 +151,11 @@ public class rasHardLeatherScript extends Script {
                             lastLootTime = System.currentTimeMillis();
                         }
                     }
-                    else if (Rs2Inventory.ItemQuantity(coins) < 102 && !Rs2Inventory.isFull()){
-                        System.out.println("collecting 90 coins");
+                    else if (Rs2Inventory.ItemQuantity(coins) < minCoins && !Rs2Inventory.isFull()){
+                        System.out.println("collecting 101 coins");
                         long timenow = System.currentTimeMillis();
-                        while (Rs2Inventory.ItemQuantity(coins) < 102){
-                            if (System.currentTimeMillis() - timenow > 290000)
+                        while (Rs2Inventory.ItemQuantity(coins) < minCoins){
+                            if (System.currentTimeMillis() - timenow > 380000)
                                 shutdown();
                             if (Rs2GroundItem.loot(coins)){
                                 Rs2Walker.setTarget(null);
@@ -195,6 +201,19 @@ public class rasHardLeatherScript extends Script {
     }
 
     private void lootfromGoblins() {
-        sleep(5000);
+        if (Rs2Inventory.ItemQuantity(coins) < minCoins && !Rs2Inventory.isFull()) {
+            System.out.println("collecting 101 coins");
+            long timenow = System.currentTimeMillis();
+            while (Rs2Inventory.ItemQuantity(coins) < minCoins) {
+                if (System.currentTimeMillis() - timenow > 380000)
+                    shutdown();
+                if (Rs2GroundItem.loot(coins)) {
+                    Rs2Walker.setTarget(null);
+                    sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 15000);
+                } else if (Rs2Player.getWorldLocation().distanceTo(new WorldPoint(3250, 3232, 0)) > 5)
+                    Rs2Walker.walkTo(new WorldPoint(3250, 3232, 0), random(1, 5));
+                sleep(100, 200); // cpu chill
+            }
+        }
     }
 }

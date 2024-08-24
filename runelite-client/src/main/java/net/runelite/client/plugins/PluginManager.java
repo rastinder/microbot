@@ -112,7 +112,52 @@ public class PluginManager
 		this.configManager = configManager;
 		this.sceneTileManager = sceneTileManager;
 	}
-
+	public void controlPlugin(String pluginName, boolean enable) throws PluginInstantiationException {
+		System.out.println("Control plugin called with name: " + pluginName + " and enable: " + enable);
+		for (Plugin plugin : plugins) {
+			if (plugin.getClass().getSimpleName().equals(pluginName)) {
+				if (enable && !activePlugins.contains(plugin)) {
+					setPluginEnabled(plugin, true);
+					try {
+						// Sleep for 5 seconds
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						// Handle the exception
+						e.printStackTrace();
+					}
+					SwingUtilities.invokeLater(() -> {
+						try {
+							startPlugin(plugin);
+							System.out.println("Plugin " + pluginName + " is now enabled.");
+						} catch (PluginInstantiationException e) {
+							e.printStackTrace();
+						}
+					});
+				} else if (!enable && activePlugins.contains(plugin)) {
+					setPluginEnabled(plugin, false);
+					try {
+						// Sleep for 5 seconds
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						// Handle the exception
+						e.printStackTrace();
+					}
+					SwingUtilities.invokeLater(() -> {
+						try {
+							stopPlugin(plugin);
+							System.out.println("Plugin " + pluginName + " is now disabled.");
+						} catch (PluginInstantiationException e) {
+							e.printStackTrace();
+						}
+					});
+				} else {
+					System.out.println("Plugin " + pluginName + " is already " + (enable ? "enabled" : "disabled") + ".");
+				}
+				return;
+			}
+		}
+		System.out.println("Plugin not found: " + pluginName);
+	}
 	@Subscribe
 	public void onProfileChanged(ProfileChanged profileChanged)
 	{
