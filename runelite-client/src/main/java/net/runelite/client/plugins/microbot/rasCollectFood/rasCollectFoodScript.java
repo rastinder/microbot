@@ -73,6 +73,7 @@ public class rasCollectFoodScript extends Script {
                                     sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
                                     if(Rs2Inventory.ItemQuantity(item.getItem().getId()) > 0)
                                         itemNames.add(item.getItem().getName());
+                                    break;
                                 }
                         }
                     }

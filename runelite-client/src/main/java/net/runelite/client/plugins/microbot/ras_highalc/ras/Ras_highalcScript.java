@@ -12,6 +12,7 @@ import net.runelite.client.config.RuneLiteConfig;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
+import net.runelite.client.plugins.microbot.geHandler.geHandlerScript;
 import net.runelite.client.plugins.microbot.globval.enums.InterfaceTab;
 import net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
@@ -39,6 +40,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
 import static net.runelite.client.plugins.microbot.util.math.Random.random;
 
 public class Ras_highalcScript extends Script {
@@ -50,7 +52,9 @@ public class Ras_highalcScript extends Script {
     private OSRSPriceFetcher fetcher = new OSRSPriceFetcher();
     boolean withdrawcoins = false;
     public InactivityTimer inactivityTimer = new InactivityTimer();
+    public static String inactiveTime;
     int buylimit = 3000;
+    String itemListString = "";
 
     @Inject
     private ItemManager itemManager;
@@ -64,7 +68,6 @@ public class Ras_highalcScript extends Script {
     public boolean run(Ras_highalcConfig config) {
         System.out.println("Entering run() function");
         Microbot.enableAutoRunOn = false;
-        String itemListString = itemListString();
         int naturalRunePrice = config.naturalRunePrice();
         Rs2Magic rs2Magic = new Rs2Magic();
         ConcurrentHashMap<String, Integer> remainingQuantities = new ConcurrentHashMap<>();
@@ -75,7 +78,9 @@ public class Ras_highalcScript extends Script {
             System.out.println("Entering mainScheduledFuture runnable");
             if (!super.run()) return;
             try {
+                inactiveTime = inactivityTimer.getElapsedTime();
                 if (!withdrawcoins) {
+                    itemListString = itemListString();
                     onetimeChecks();
                     withdrawcoins = true;
                 }
@@ -118,7 +123,7 @@ public class Ras_highalcScript extends Script {
                 if (stopTimer < System.currentTimeMillis()){
                     System.out.println("wrap up started");
                     if (config.autoBuy())
-                        Microbot.getPluginManager().setPluginValue("general", "Autobuy", false);
+                        Microbot.getPluginManager().setPluginValue("general", "Autobuy", true); // supposed to be false testing
                     else if (!config.autoBuy() && config.highAlch() && Rs2Inventory.count() <= 2) {
                         System.out.println("stopping high alch");
                         Rs2Bank.openBank();
@@ -475,6 +480,7 @@ public class Ras_highalcScript extends Script {
         System.out.println("Entering onetimeChecks() function");
         goto_grand_exchange();
         Rs2Bank.openBank();
+        sleepUntilTrue(Rs2Bank::openBank,1000,52000);
         if (Rs2Bank.hasBankItem("coins")) {
             Rs2Bank.withdrawAll("Coins");
             sleepUntil(() -> Rs2Inventory.hasItem("coins"));
@@ -490,7 +496,7 @@ public class Ras_highalcScript extends Script {
             if (Microbot.getClient().getRealSkillLevel(Skill.MAGIC) < 55) {
                 throw new IllegalStateException("Magic level is too low for High Alchemy");
             }
-            for (int j = 0; j < 3; j++) {
+            for (int j = 0; j < 1; j++) {
                 List<Rs2Item> allItems = Rs2Inventory.all();
                 for (Rs2Item item : allItems) {
                     String itemName = item.name.toLowerCase();
@@ -498,15 +504,30 @@ public class Ras_highalcScript extends Script {
                         Rs2GrandExchange.closeExchange();
                         sleep(250, 400);
                         int totalQuantity = (int) Rs2Inventory.ItemQuantity(item.id);
-                        System.out.println("Item: " + item.name + " times" + totalQuantity);
+                        System.out.println("Item: " + item.name + " times " + totalQuantity);
                         for (int i = 0; i < totalQuantity; i++) {
-                            if (!config.highAlch()) return;
-                            if (!super.run()) return;
+                            System.out.println("i < totalQuantity: " +i+" < "+totalQuantity);
+                            if (!config.highAlch()) {
+                                System.out.println("Returning due to config.highAlch() being false");
+                                return;
+                            }
+                            if (!super.run()) {
+                                System.out.println("Returning due to super.run() being false");
+                                //return; testing
+                            }
                             highAlch(item);
                             System.out.println("successful bought " + Rs2GrandExchange.hasBoughtOffer());
-                            if (Rs2GrandExchange.hasBoughtOffer() && Rs2Inventory.count() < 16)
+                            if (Rs2GrandExchange.hasBoughtOffer() && Rs2Inventory.count() < 16) {
+                                System.out.println("Returning due to Rs2GrandExchange.hasBoughtOffer() being true and inventory count < 16");
                                 return;
-                            if (config.autoBuy()){ if (checkForInactivity(config) && Rs2Inventory.count() < 25)return;} // comment if casing problem
+                            }
+                            if (config.autoBuy()) {
+                                if (checkForInactivity(config) && Rs2Inventory.count() < 25) {
+                                    System.out.println("Returning due to inactivity && inventory count < 25");
+                                    return;
+                                }
+                            }
+                            inactiveTime = inactivityTimer.getElapsedTime();
                             randomSleep();
                         }
                         //inactivityTimer.update();
@@ -515,6 +536,7 @@ public class Ras_highalcScript extends Script {
             }
             System.out.println("Exiting alchInventory() function");
         }
+
 
         private void highAlch(Rs2Item item) {
             System.out.println("Entering highAlch() function");
@@ -615,8 +637,9 @@ public class Ras_highalcScript extends Script {
     private boolean checkForInactivity(Ras_highalcConfig config) {
         //System.out.println("Entering checkForInactivity() function");
         System.out.println("last active time " + inactivityTimer.getElapsedTime());
+        System.out.println("getAvailableSlot " + Rs2GrandExchange.getAvailableSlot().getRight());
         getInactivityTimer();
-        if (inactivityTimer.hasExceededInterval((long) config.waitTime() * 60 * 1000)) {
+        if (inactivityTimer.hasExceededInterval((long) config.waitTime() * 60 * 1000) && Rs2GrandExchange.getAvailableSlot().getRight() == 0) {
             abort();
             inactivityTimer.update();
             //System.out.println("Exiting checkForInactivity() function");
@@ -634,7 +657,7 @@ public class Ras_highalcScript extends Script {
     private void abort() {
         System.out.println("Entering abort() function");
         System.out.println("Aborting due to inactivity.");
-        abortAllActiveOffers();
+        geHandlerScript.abortAllActiveOffers();
         System.out.println("Exiting abort() function");
     }
 
@@ -680,27 +703,6 @@ public class Ras_highalcScript extends Script {
         }
     }
 
-    public boolean abortAllActiveOffers() {
-        System.out.println("Entering abortAllActiveOffers() function");
-        Microbot.status = "Aborting all active offers";
-        if (!Rs2GrandExchange.isOpen()) {
-            Rs2GrandExchange.openExchange();
-        }
-
-        boolean abortedAny = false;
-        for (GrandExchangeSlots slot : GrandExchangeSlots.values()) {
-            Widget offerSlot = Rs2GrandExchange.getSlot(slot);
-            if (offerSlot != null && Rs2GrandExchange.isOfferScreenOpen()) {
-                Widget[] Abort = offerSlot.getDynamicChildren();
-                Rs2Widget.clickWidgetFast(offerSlot, 2, 2);
-                sleepUntil(() -> Abort[22].getTextColor() == 9371648, 2000); // Assuming child(2) indicates offer state
-                abortedAny = true;
-            }
-        }
-        System.out.println("Exiting abortAllActiveOffers() function");
-        return abortedAny;
-    }
-
     public String itemListString() {
         System.out.println("Entering itemListString() function");
         if (Rs2Player.isMember()) {
@@ -719,7 +721,7 @@ public class Ras_highalcScript extends Script {
             System.out.println("sleep max 30sec");
             sleep(20000,30000);
 
-        } else if (random(1,1000) == 1) {
+        } else if (random(1,3000) == 1) {
             System.out.println("sleep max 10min");
             sleep(280000, 600000);
         }

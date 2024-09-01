@@ -16,6 +16,7 @@ import net.runelite.client.plugins.microbot.util.math.Random;
 import net.runelite.client.plugins.microbot.util.models.RS2Item;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
+import net.runelite.client.plugins.microbot.util.tabs.Rs2Tab;
 import net.runelite.client.plugins.microbot.util.tile.Rs2Tile;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
@@ -78,14 +79,18 @@ public class rasTinderboxScript extends Script {
 
 
                 }else if(shopArea.contains(Rs2Player.getWorldLocation()) && !Rs2Inventory.isFull()) {
+                    Rs2Tab.switchToInventoryTab();
                     // intract
                     Rs2GameObject.interact(7079,"Open");
+                    Rs2Walker.setTarget(null);
                     sleepUntilTrue(Rs2Dialogue::hasContinue,100,5000);
                     if (!Rs2Widget.hasWidget("tinderboxes")){
                         Rs2Npc.interact(2108,"Talk-to");
-                        sleepUntilTrue(Rs2Dialogue::hasContinue,100,5000);
-                        while (Rs2Player.isInteracting()){
+                        sleepUntilTrue(()->Rs2Widget.hasWidget("Greetings"),100,5000);
+                        while (Rs2Dialogue.isInDialogue()){
                             Rs2Dialogue.clickContinue();
+                            if (Rs2Widget.hasWidget("some other time")||(Rs2Widget.hasWidget("junk,")))
+                                break;
                         }
                         Rs2GameObject.interact(7079,"Open");
                         sleepUntilTrue(Rs2Dialogue::hasContinue,100,5000);

@@ -202,14 +202,14 @@ public class rasMasterScriptScript extends Script {
         }).start();
     }
 
-    private void moneymaking() {
+    public   String moneymaking() {
         String pluginName = null;
         List<String> trainSkill = Arrays.asList("Prayer");
         if (random(0, 1) == 0)
             trainSkill = Arrays.asList("chocolate dust","ras HardLeather", "Ras Jewellery Maker", "ras_high alc", "pie shell", "Reddie", "Collecting ruby rings", "uncooked apple pies", "pastry dough", "Collecting fish food", "Smelting steel bars", "Cuttinglogs", "CollectingGroundItems","Collecting tinderboxes", "Wheat");
         Collections.shuffle(trainSkill);
         for (String skill : trainSkill) {
-            System.out.print("initiate moneymaking: "+ trainSkill );
+            System.out.print("initiate moneymaking: "+ skill );
             switch (skill) {
                 case "ras HardLeather":
                     if (!Objects.equals(lastPluginName, currentPluginName) || Objects.equals(currentPluginName,null))
@@ -274,9 +274,10 @@ public class rasMasterScriptScript extends Script {
             // Check if the plugin is still enabled before proceeding to the next skill
             if (pluginName != null && isPlugEnabled(pluginName)) {
                 System.out.print("money making: "+ skill );
-                return;
+                return pluginName;
             }
         }
+        return null;
     }
 
 
@@ -405,7 +406,10 @@ public class rasMasterScriptScript extends Script {
         WorldPoint fish = new WorldPoint(3015,3171,0);
         Rs2Walker.walkTo(fish);
         sleepUntilTrue(()->fish.distanceTo(Rs2Player.getWorldLocation()) < 10,100,380000);
-        Microbot.getPluginManager().setPluginValue("reset", "ItemAction", WoodcuttingResetOptions.FIREMAKE);
+        if(Rs2Inventory.hasItem("Tinderbox"))
+            Microbot.getPluginManager().setPluginValue("reset", "ItemAction", WoodcuttingResetOptions.FIREMAKE);
+        else
+            Microbot.getPluginManager().setPluginValue("reset", "ItemAction", WoodcuttingResetOptions.BANK);
         startPlugin("Auto Woodcutting");
         sleep(random(1800000,2760000));
         stopPlugin("Auto Woodcutting");
@@ -414,8 +418,12 @@ public class rasMasterScriptScript extends Script {
 
     private String chocolateDust() {
         bankAllAndGet("Knife");
-        if (!Rs2Inventory.hasItem("Knife"))
-            geHandlerScript.goBuyAndReturn(new int[]{1},10,true,"Knife");
+        if (!Rs2Inventory.hasItem("Knife")) {
+            if (totalCoins > 100)
+                geHandlerScript.goBuyAndReturn(new int[]{1}, 10, true, "Knife");
+            else
+                return null;
+        }
         Microbot.getPluginManager().setPluginValue("general", "item 1", "Knife"); // this item should always be lowest count or same count as item2
         Microbot.getPluginManager().setPluginValue("general", "item 1 count", 1);
         Microbot.getPluginManager().setPluginValue("general", "item 2", "Chocolate bar");
@@ -427,15 +435,18 @@ public class rasMasterScriptScript extends Script {
     }
 
     private String PieShell() {
-        Microbot.getPluginManager().setPluginValue("general", "item 1", "Pie dish"); // this item should always be lowest count or same count as item2
-        Microbot.getPluginManager().setPluginValue("general", "item 1 count", 14);
-        Microbot.getPluginManager().setPluginValue("general", "item 2", "Pastry dough");
-        Microbot.getPluginManager().setPluginValue("general", "item 2 count", 14);
-        Microbot.getPluginManager().setPluginValue("general", "item 3", "");
-        Microbot.getPluginManager().setPluginValue("general", "press space", true);
-        Microbot.getPluginManager().setPluginValue("general", "buyMissingItems", true);
-        return startPlugin("ras Combine");
-        //return null;
+        if (totalCoins > 1000) {
+            Microbot.getPluginManager().setPluginValue("general", "item 1", "Pie dish"); // this item should always be lowest count or same count as item2
+            Microbot.getPluginManager().setPluginValue("general", "item 1 count", 14);
+            Microbot.getPluginManager().setPluginValue("general", "item 2", "Pastry dough");
+            Microbot.getPluginManager().setPluginValue("general", "item 2 count", 14);
+            Microbot.getPluginManager().setPluginValue("general", "item 3", "");
+            Microbot.getPluginManager().setPluginValue("general", "press space", true);
+            Microbot.getPluginManager().setPluginValue("general", "buyMissingItems", true);
+            return startPlugin("ras Combine");
+        }
+        else
+            return null;
     }
 
     private String RedDie() {
@@ -545,15 +556,17 @@ public class rasMasterScriptScript extends Script {
     }
 
     private String trainFishing() {
-        bankAllAndGet(30,"Coins","net");
-        WorldPoint fish = new WorldPoint(3266,3149,0);
-        Rs2Walker.walkTo(fish);
-        sleepUntilTrue(()->fish.distanceTo(Rs2Player.getWorldLocation()) < 10,100,280000);
-        Microbot.getPluginManager().setPluginValue("general", "UseBank", true);
-        startPlugin("Auto Fishing");
-        sleep(random(1800000,2760000));
-        stopPlugin("Auto Fishing");
-        bankAllAndGet(30,"Coins");
+        if (totalCoins > 20) {
+            bankAllAndGet(10, "Coins", "net");
+            WorldPoint fish = new WorldPoint(3266, 3149, 0);
+            Rs2Walker.walkTo(fish);
+            sleepUntilTrue(() -> fish.distanceTo(Rs2Player.getWorldLocation()) < 10, 100, 280000);
+            Microbot.getPluginManager().setPluginValue("general", "UseBank", true);
+            startPlugin("Auto Fishing");
+            sleep(random(1800000, 2760000));
+            stopPlugin("Auto Fishing");
+            bankAllAndGet(10, "Coins");
+        }
         return null;
     }
 
@@ -648,11 +661,17 @@ public class rasMasterScriptScript extends Script {
                         Rs2Bank.openBank();
                         if (Rs2Equipment.get(EquipmentInventorySlot.WEAPON) == null || !Rs2Equipment.get(EquipmentInventorySlot.WEAPON).name.contains("scimitar")) {
                             System.out.println(Rs2Equipment.get(EquipmentInventorySlot.WEAPON).name);
-                        }else if (Rs2Bank.hasBankItem("scimitar", false)) {
+                            if (!Rs2Equipment.get(EquipmentInventorySlot.WEAPON).name.contains("scimitar")){
+                                if (Rs2Inventory.hasItem("scimitar",false)){
+                                    Rs2Inventory.interact(jattDiTalwar, "Wield");
+                                    sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                                }
+                            }
+                        }else if (Rs2Bank.hasBankItem("scimitar", false) && !Rs2Equipment.get(EquipmentInventorySlot.WEAPON).name.contains("scimitar")) {
                             Rs2Bank.withdrawX(true, "scimitar", 1, false);
                             sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
                             Rs2Inventory.interact(Rs2Inventory.get("scimitar").getName(), "Wield");
-                        } else {
+                        } else if(!Rs2Equipment.get(EquipmentInventorySlot.WEAPON).name.contains("scimitar")) {
                             if (Rs2Bank.hasBankItem("sword", false)) {
                                 Rs2Bank.withdrawX(true, "sword", 1, false);
                                 sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
@@ -668,8 +687,6 @@ public class rasMasterScriptScript extends Script {
                     }
                 }
             }
-            //Rs2Bank.walkToBank();
-            //sleepUntilTrue(() -> Rs2Bank.isNearBank(8), 500, 380000);
             Rs2Walker.walkTo(enemyLocation, random(0, 3));
             WorldPoint finalEnemyLocation = enemyLocation;
             sleepUntilTrue(() -> Rs2Player.getWorldLocation().distanceTo(finalEnemyLocation) < 5, 500, 380000);
@@ -680,8 +697,10 @@ public class rasMasterScriptScript extends Script {
 
     private void questing() {
         System.out.println("Questing activity is implemented .");
-        //activity = "selectRandom";
-        startPlugin("Allz Quester");
+        if(totalCoins > 20000)
+            startPlugin("Allz Quester");
+        else
+            activity = "selectRandom";
     }
 
     private void randomTimeWaste() {
@@ -699,9 +718,16 @@ public class rasMasterScriptScript extends Script {
             sleep(5000); // so that other plugins can disable themselfs
             new Login(Login.getRandomWorld(false));
             sleep(5000);
-            while (!Microbot.isLoggedIn()) sleep(100);
+            while (!Microbot.isLoggedIn()) sleep(2000);
+            sleep(6000);
             Microbot.getMouse().scrollDown(new Point(800, 800));
+            sleep(1000);
             Microbot.getClient().setCameraPitchTarget(460);
+            if (totalCoins == 0) {
+                if (getTotalCoins() < 100000) {
+                    activity = "moneymaking";
+                }
+            }
         }
     }
 
@@ -823,14 +849,21 @@ public class rasMasterScriptScript extends Script {
             sleepUntilTrue(() -> Rs2Bank.isNearBank(6), 100, 280000);
         }
         Rs2Bank.openBank();
+        sleep(1500);
+        if (Rs2Widget.isWidgetVisible(664, 29)) {
+            Rs2Widget.clickWidget(664, 29);
+            sleep(500);
+        }
         long coinsInBank = (long) Rs2Bank.count("Coins", true);
         Rs2Bank.closeBank();
         totalCoins = Rs2Inventory.ItemQuantity(995) + coinsInBank;
-
+        /*
         if (Rs2Player.getWorldLocation().distanceTo(location) > 6) {
             Rs2Walker.walkTo(location, 2);
             sleepUntilTrue(() -> Rs2Player.getWorldLocation().distanceTo(location) < 6, 100, 280000);
         }
+
+         */
         return totalCoins;
     }
     public static boolean autoShutdown(String pluginName){

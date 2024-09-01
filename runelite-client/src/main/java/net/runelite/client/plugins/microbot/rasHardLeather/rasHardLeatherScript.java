@@ -1,5 +1,6 @@
 package net.runelite.client.plugins.microbot.rasHardLeather;
 
+import net.runelite.api.GameState;
 import net.runelite.api.NPC;
 import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
@@ -12,11 +13,13 @@ import net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScrip
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
+import net.runelite.client.plugins.microbot.util.keyboard.Rs2Keyboard;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 
+import java.awt.event.KeyEvent;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -82,6 +85,12 @@ public class rasHardLeatherScript extends Script {
                         if (Rs2Bank.isOpen()) {
                             sleep(100, 200);
                             Rs2Bank.withdrawX(coins, 10000);
+                            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                            if (Rs2Bank.hasBankItem(coins, minCoins)) {
+                                allCoinsInInv = true;
+                            } else {
+                                allCoinsInInv = false;
+                            }
                             sleepUntil(() -> Rs2Bank.closeBank(), 1000);
                             sleep(500, 800);
                         }
@@ -96,6 +105,7 @@ public class rasHardLeatherScript extends Script {
                     NPC ellis = Rs2Npc.getNpc("Ellis");
                     if (ellis != null && !Rs2Widget.hasWidget("What hides")) {
                         Rs2Npc.interact(ellis, "Trade");
+                        Rs2Walker.setTarget(null);
                         sleepUntil(() -> Rs2Widget.hasWidget("What hides"), 5000);
                         if (Rs2Widget.hasWidget("What hides")) {
                             sleep(100, 200);
@@ -152,18 +162,7 @@ public class rasHardLeatherScript extends Script {
                         }
                     }
                     else if (Rs2Inventory.ItemQuantity(coins) < minCoins && !Rs2Inventory.isFull()){
-                        System.out.println("collecting 101 coins");
-                        long timenow = System.currentTimeMillis();
-                        while (Rs2Inventory.ItemQuantity(coins) < minCoins){
-                            if (System.currentTimeMillis() - timenow > 380000)
-                                shutdown();
-                            if (Rs2GroundItem.loot(coins)){
-                                Rs2Walker.setTarget(null);
-                                sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 15000);
-                            } else if (Rs2Player.getWorldLocation().distanceTo(new WorldPoint(3250,3232,0)) > 5)
-                                Rs2Walker.walkTo(new WorldPoint(3250,3232,0),random(1,5));
-                            sleep(100, 200); // cpu chill
-                        }
+                        lootfromGoblins();
                     }
                 } else if (!Rs2Inventory.hasItem("cowhide")) {
                     if (Rs2Bank.walkToBank()) {
@@ -202,17 +201,40 @@ public class rasHardLeatherScript extends Script {
 
     private void lootfromGoblins() {
         if (Rs2Inventory.ItemQuantity(coins) < minCoins && !Rs2Inventory.isFull()) {
+            hopworld();
             System.out.println("collecting 101 coins");
             long timenow = System.currentTimeMillis();
             while (Rs2Inventory.ItemQuantity(coins) < minCoins) {
                 if (System.currentTimeMillis() - timenow > 380000)
                     shutdown();
-                if (Rs2GroundItem.loot(coins)) {
-                    Rs2Walker.setTarget(null);
-                    sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 15000);
+                if (Rs2Player.getWorldLocation().distanceTo(new WorldPoint(3250, 3232, 0)) < 10 && Rs2GroundItem.loot(coins)) {
+                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 15000);
                 } else if (Rs2Player.getWorldLocation().distanceTo(new WorldPoint(3250, 3232, 0)) > 5)
                     Rs2Walker.walkTo(new WorldPoint(3250, 3232, 0), random(1, 5));
                 sleep(100, 200); // cpu chill
+            }
+        }
+    }
+    private void hopworld() {
+        int world = Microbot.getClient().getWorld();
+        if (world != 301 && world != 308) {
+            Microbot.hopToWorld(301);
+            boolean result = sleepUntil(() -> Rs2Widget.findWidget("Switch World") != null);
+            if (result) {
+                Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
+                sleepUntil(() -> Microbot.getClient().getGameState() == GameState.HOPPING);
+                sleepUntil(() -> Microbot.getClient().getGameState() == GameState.LOGGED_IN);
+            }
+            if (Microbot.getClient().getGameState() == GameState.LOGIN_SCREEN){
+                boolean isHopped = Microbot.hopToWorld(308);
+                if (!isHopped) return;
+                result = sleepUntil(() -> Rs2Widget.findWidget("Switch World") != null);
+                if (result) {
+                    Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
+                    sleepUntil(() -> Microbot.getClient().getGameState() == GameState.HOPPING);
+                    sleepUntil(() -> Microbot.getClient().getGameState() == GameState.LOGGED_IN);
+                }
+
             }
         }
     }

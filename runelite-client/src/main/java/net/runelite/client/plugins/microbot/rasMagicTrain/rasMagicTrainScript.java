@@ -76,17 +76,19 @@ public class rasMagicTrainScript extends Script {
                         highAlch();
                     } else if ((Rs2Player.getRealSkillLevel(Skill.MAGIC)) > 42 && Rs2Player.getRealSkillLevel(Skill.SMITHING) > 29) {
                         superHeat();
-                    } else if (Rs2Player.getRealSkillLevel(Skill.MAGIC) > 32) {
-                        if (!Rs2Inventory.hasItem("Law rune")) {
-                            sellalreadygrabbediyemsandbuylawrunes();
-                        }
-                        if (!Rs2Equipment.hasEquippedContains("Staff of air"))
-                            fetchFromBank(MagicAction.TELEKINETIC_GRAB);
+                    } else if (Rs2Player.getRealSkillLevel(Skill.MAGIC) > 32 && Law_rune_price < 140) {
                         if (Law_rune_price == 0){
-                             Law_rune_price = (int) Microbot.getClientThread().runOnClientThread(() ->
+                            Law_rune_price = (int) Microbot.getClientThread().runOnClientThread(() ->
                                     Microbot.getItemManager().getItemPrice(563));
                         }
-                        teleGrab();
+                        if (Law_rune_price < 140) {
+                            if (!Rs2Inventory.hasItem("Law rune")) {
+                                sellalreadygrabbediyemsandbuylawrunes();
+                            }
+                            if (!Rs2Equipment.hasEquippedContains("Staff of air"))
+                                fetchFromBank(MagicAction.TELEKINETIC_GRAB);
+                            teleGrab();
+                        }
                     } else if (Rs2Player.getRealSkillLevel(Skill.MAGIC) > 0) {
                         if (!bankcheck){
                             bankcheck = true;
@@ -99,7 +101,7 @@ public class rasMagicTrainScript extends Script {
                 long totalTime = endTime - startTime;
                 System.out.println("Total time for loop " + totalTime);
                 if (stopTimer < System.currentTimeMillis()){
-                    shutdown();
+                    //shutdown();
                 }
 
             } catch (Exception ex) {
@@ -143,18 +145,24 @@ public class rasMagicTrainScript extends Script {
         }
     }
     public boolean autoCast(String spellname){
-        Rs2Tab.switchToCombatOptionsTab();
-        sleep(200);
-        Rs2Widget.clickWidget(593,26);
-        sleep(200);
-        Widget[] spell = Rs2Widget.getWidget(201,1).getDynamicChildren();
-        sleep(200);
-        if (spellname.contains("Wind")) {
-            Microbot.click(spell[1].getBounds());
-            return true;
-        }else {
-            Microbot.click(spell[4].getBounds());
-            return true;
+        try {
+            Rs2Tab.switchToCombatOptionsTab();
+            sleep(800);
+            Rs2Widget.clickWidget(593, 26);
+            sleep(800);
+            Widget[] spell = Rs2Widget.getWidget(201, 1).getDynamicChildren();
+            sleep(800);
+            if (spellname.contains("Wind")) {
+                Microbot.click(spell[1].getBounds());
+                return true;
+            } else {
+                Microbot.click(spell[4].getBounds());
+                return true;
+            }
+        }catch (Exception e){
+            System.out.println("problem in autoCast");
+            Microbot.showMessage("problem in autoCast");
+            return false;
         }
     }
     public void hopWorld() {
@@ -419,17 +427,17 @@ public class rasMagicTrainScript extends Script {
 
         if (CURRENT_STRIKE == null || !CURRENT_STRIKE.equals(spellToCast.getName())) {
             if (autoCast(spellToCast.getName()))
-            CURRENT_STRIKE = spellToCast.getName();
+                CURRENT_STRIKE = spellToCast.getName();
         }
         if (!attackLocationFound) {
             attackLocationFound = true;
             // Add entries to the map with their associated functions
+            worldPointMap.put("demonjailed", new WorldPointFunctionMap.WorldPointEntry(new WorldPoint(3110, 3159, 2), WorldPointFunctionMap::interrogateDemon, spellToCast));
             worldPointMap.put("knights", new WorldPointFunctionMap.WorldPointEntry(new WorldPoint(3017, 3509, 0), WorldPointFunctionMap::killKnights, spellToCast));
             worldPointMap.put("Zamorak", new WorldPointFunctionMap.WorldPointEntry(new WorldPoint(2943, 3517, 0), WorldPointFunctionMap::worshipZamorak, spellToCast));
             worldPointMap.put("wildernessLineSkelton", new WorldPointFunctionMap.WorldPointEntry(new WorldPoint(3116, 3520, 0), WorldPointFunctionMap::guardSkeleton, spellToCast));
             worldPointMap.put("varrockSewer", new WorldPointFunctionMap.WorldPointEntry(new WorldPoint(3228, 9900, 0), WorldPointFunctionMap::exploreSewer, spellToCast));
             worldPointMap.put("Zamorakjailed", new WorldPointFunctionMap.WorldPointEntry(new WorldPoint(3214, 3476, 0), WorldPointFunctionMap::freeZamorak, spellToCast));
-            worldPointMap.put("demonjailed", new WorldPointFunctionMap.WorldPointEntry(new WorldPoint(3110, 3159, 2), WorldPointFunctionMap::interrogateDemon, spellToCast));
             worldPointMap.put("faladorCow", new WorldPointFunctionMap.WorldPointEntry(new WorldPoint(3033, 3314, 0), WorldPointFunctionMap::milkCow, spellToCast));
             worldPointMap.put("guildCow", new WorldPointFunctionMap.WorldPointEntry(new WorldPoint(2922, 3292, 0), WorldPointFunctionMap::protectCow, spellToCast));
             worldPointMap.put("CowNearMill", new WorldPointFunctionMap.WorldPointEntry(new WorldPoint(3201, 3302, 0), WorldPointFunctionMap::feedCow, spellToCast));
@@ -590,6 +598,10 @@ public class rasMagicTrainScript extends Script {
         int currentLevel = Microbot.getClient().getRealSkillLevel(Skill.MAGIC);
         int targetLevel1 = 13;
         int targetLevel2 = 33;
+        if (Law_rune_price > 140)
+            targetLevel2 =43;
+        if (currentLevel > 42 && Rs2Player.getRealSkillLevel(Skill.SMITHING) < 29)
+            targetLevel2 =55;
 
         // Calculate the runes needed for each spell
         int[] runesNeeded;
@@ -610,8 +622,8 @@ public class rasMagicTrainScript extends Script {
             return false; // Unsupported spell
         }
 
-        geHandlerScript.goBuyAndReturn(runesNeeded,5, itemsToBuy);
-        return true;
+        return geHandlerScript.goBuyAndReturn(runesNeeded,5, itemsToBuy);
+        //return true;
     }
 
     private int[] calculateRunesNeeded(int currentLevel, int targetLevel1, int targetLevel2, MagicAction spell) {
@@ -698,9 +710,15 @@ public class rasMagicTrainScript extends Script {
     }
 
     private void moneyMaking() {
+        rasMasterScriptScript master = new rasMasterScriptScript();
+        long starttime = System.currentTimeMillis();
+        String somemethod = master.moneymaking();
+        do {sleep(2000);}
+        while (master.isPlugEnabled(somemethod));
+
         // Implement money-making strategy here
         Microbot.showMessage("No money or runes. Initiating money-making strategy.");
-        shutdown();
+        //shutdown();
     }
 }
      /*

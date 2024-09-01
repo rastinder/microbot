@@ -9,13 +9,18 @@ import net.runelite.client.ui.overlay.components.TitleComponent;
 import javax.inject.Inject;
 import java.awt.*;
 
+import static net.runelite.client.plugins.microbot.ras_highalc.ras.Ras_highalcScript.inactiveTime;
+
 public class Ras_highalcOverlay extends OverlayPanel {
     private final Ras_highalcScript script;
     @Inject
-    Ras_highalcOverlay(Ras_highalcPlugin plugin, Ras_highalcScript script)
+    private Ras_highalcConfig config;
+    @Inject
+    Ras_highalcOverlay(Ras_highalcPlugin plugin, Ras_highalcScript script,Ras_highalcConfig config)
     {
         super(plugin);
         this.script = script;
+        this.config = config;
         setPosition(OverlayPosition.TOP_LEFT);
         setNaughty();
     }
@@ -37,7 +42,7 @@ public class Ras_highalcOverlay extends OverlayPanel {
             String lastActiveTimeFormatted = getElapsedTime(lastActiveTime);
 
             panelComponent.getChildren().add(LineComponent.builder()
-                    .left(lastActiveTimeFormatted)
+                    .left(inactiveTime+ "/" + config.waitTime()+"mins")
                     .build());
 
             panelComponent.getChildren().add(LineComponent.builder()

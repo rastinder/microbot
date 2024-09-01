@@ -91,13 +91,14 @@ public class WorldPointFunctionMap extends Script {
     public static void freeZamorak(WorldPoint wp,MagicAction spellToCast) {
         System.out.println("Executing freeZamorak at " + wp+ " with: "+ spellToCast);
         walkto(wp);
-        attackEnemies(null,spellToCast);
+        List<String> targetNames = Arrays.asList("Monk of Zamorak");
+        attackEnemies(targetNames,spellToCast);
     }
 
     public static void interrogateDemon(WorldPoint wp,MagicAction spellToCast) {
         System.out.println("Executing interrogateDemon at " + wp+ " with: "+ spellToCast);
         walkto(wp);
-        List<String> targetNames = Arrays.asList("Greater demon");
+        List<String> targetNames = Arrays.asList("Lesser demon");
         attackEnemies(targetNames,spellToCast);
     }
 
@@ -157,7 +158,7 @@ public class WorldPointFunctionMap extends Script {
     public static void attackEnemies(List<String> targetNames, MagicAction spellToCast) {
         attackEnemies(targetNames,spellToCast,10,false);
     }
-    public static void attackEnemies(List<String> targetNames, MagicAction spellToCast,int range, boolean lineofsight) {
+    public static void attackEnemiesOld(List<String> targetNames, MagicAction spellToCast,int range, boolean lineofsight) {
         List<NPC> enemies;
         if (targetNames == null) {
             enemies = Rs2Npc.getAttackableNpcs().collect(Collectors.toList());
@@ -178,9 +179,62 @@ public class WorldPointFunctionMap extends Script {
             if (nearestEnemy != null) {
                 if(!randomSleep())
                     sleep(200,1200);
+                //Rs2Npc.interact(nearestEnemy,"Attack");
                 Rs2Magic.castOn(spellToCast, nearestEnemy);
                 sleep(1000);
             }
+        }
+    }
+    public static void attackEnemies(List<String> targetNames, MagicAction spellToCast, int range, boolean lineofsight) {
+        List<NPC> enemies;
+
+        if (targetNames == null) {
+            enemies = Rs2Npc.getAttackableNpcs().collect(Collectors.toList());
+        } else {
+            enemies = Rs2Npc.getAttackableNpcs()
+                    .filter(npc -> targetNames.contains(npc.getName()))
+                    .collect(Collectors.toList());
+        }
+
+        System.out.println("Enemies after initial filtering: " + enemies.size());
+
+        if (!enemies.isEmpty() && !Rs2Player.isInteracting() && !Rs2Player.isAnimating()) {
+            NPC nearestEnemy = enemies.stream()
+                    .filter(enemy -> {
+                        boolean isDead = enemy.isDead();
+                        System.out.println("Checking if enemy is dead: " + enemy.getName() + " - " + isDead);
+                        return !isDead;
+                    })
+                    .filter(enemy -> {
+                        boolean isInteracting = enemy.isInteracting();
+                        System.out.println("Checking if enemy is interacting: " + enemy.getName() + " - " + isInteracting);
+                        return !isInteracting;
+                    })
+                    .filter(enemy -> {
+                        int distance = Rs2Player.getWorldLocation().distanceTo(enemy.getWorldLocation());
+                        System.out.println("Checking distance to enemy: " + enemy.getName() + " - " + distance);
+                        return distance <= range;
+                    })
+                    .filter(enemy -> {
+                        boolean hasLOS = !lineofsight || Rs2Npc.hasLineOfSight(enemy);
+                        System.out.println("Checking line of sight to enemy: " + enemy.getName() + " - " + hasLOS);
+                        return hasLOS;
+                    })
+                    .min(Comparator.comparingInt(enemy -> Rs2Player.getWorldLocation().distanceTo(enemy.getWorldLocation())))
+                    .orElse(null);
+
+            if (nearestEnemy != null) {
+                if (!randomSleep())
+                    sleep(200, 1200);
+
+                System.out.println("Attacking enemy: " + nearestEnemy.getName());
+                Rs2Magic.castOn(spellToCast, nearestEnemy);
+                sleep(1000);
+            } else {
+                System.out.println("No valid enemy found after filtering.");
+            }
+        } else {
+            System.out.println("No enemies available or player is interacting/animating.");
         }
     }
     public static boolean randomSleep(){
