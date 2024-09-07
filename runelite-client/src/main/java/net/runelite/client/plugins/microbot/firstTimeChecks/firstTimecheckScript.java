@@ -42,7 +42,7 @@ import static net.runelite.client.plugins.microbot.util.math.Random.random;
 
 public class firstTimecheckScript extends Script {
     public static double version = 1.0;
-    public String randmills = randommil();
+    public static String randmills = randommil();
     public int attackStyleIs = 1;
     public int enemylevels = 0;
     public int progress = 0;;
@@ -75,14 +75,15 @@ public class firstTimecheckScript extends Script {
                     progress++;
                 }
                 if (progress == 4) {
-                    killOrSettings();
+                    //killOrSettings();
+                    warnings();
                     progress++;
                 }
                 if (progress == 5) {
-                    rasMasterScriptScript masterControl = new rasMasterScriptScript();
-                    masterControl.startPlugin("sos");
+                    //rasMasterScriptScript masterControl = new rasMasterScriptScript();
+                    rasMasterScriptScript.startPlugin("sos");
                     do{sleep(2000);}
-                    while (masterControl.isPlugEnabled("sos"));
+                    while (rasMasterScriptScript.isPlugEnabled("sos"));
                     progress++;
                 }
                 if (progress == 6) {
@@ -107,18 +108,22 @@ public class firstTimecheckScript extends Script {
         super.shutdown();
     }
 
-    private void warnings() {
+    public static void warnings() {
         Rs2Tab.switchToSettingsTab();
         sleep(800);
         Rs2Widget.clickWidget(Rs2Widget.findWidget("ALL Settings").getText());
         sleep(800);
         Rs2Widget.clickWidget(Rs2Widget.findWidget("Warnings").getText());
         sleep(800);
+        String alcho = Rs2Widget.getWidget(134,18).getDynamicChildren()[117].getText();
+        System.out.println(alcho);
         //Rectangle widgtrs = Rs2Widget.getWidget(134,14).getDynamicChildren()[5].getBounds();
         Point widgtr = Rs2Widget.findWidget("Teleports").getCanvasLocation();
         Rs2Widget.clickWidget("Disable teleport");
         boolean again = false;
         for (int j = 0; j < 5; j++) {
+            Microbot.getMouse().scrollDown(widgtr);
+            sleep(310);
             Microbot.getMouse().scrollDown(widgtr);
             sleep(310);
             if (Rs2Widget.hasWidget("Disable tablet") && !again){
@@ -209,6 +214,7 @@ public class firstTimecheckScript extends Script {
     }
 
     private void advJon() {
+        Rs2Tab.switchToInventoryTab();
         if (Rs2Player.getWorldLocation().distanceTo(new WorldPoint(3232, 3234, 0)) > 10) {
             Rs2Walker.walkTo(new WorldPoint(3232, 3234, 0), 1);
             sleepUntil(() -> Rs2Player.getWorldLocation().distanceTo(new WorldPoint(3232, 3234, 0)) < 2,15000);
@@ -247,13 +253,13 @@ public class firstTimecheckScript extends Script {
         }
     }
     private void killOrSettings() {
-        List<Runnable> functions = new ArrayList<>();
-        functions.add(() -> warnings());
-        functions.add(() -> kill());
+        List<Runnable> function = new ArrayList<>();
+        function.add(() -> warnings());
+        function.add(() -> kill());
 
-        Collections.shuffle(functions, new Random());
-        for (Runnable function : functions) {
-            function.run();
+        Collections.shuffle(function, new Random());
+        for (Runnable functio : function) {
+            functio.run();
         }
     }
     private void tutortalk() {
@@ -437,9 +443,6 @@ public class firstTimecheckScript extends Script {
                     while (!jon.isDead() && System.currentTimeMillis() < endTime) {
                         sleep(400);
                         if (Rs2Player.getWorldLocation().distanceTo(deathlocation) < 10) {
-                            return true;
-                        }
-                        if (Rs2Player.getWorldLocation().distanceTo(deathlocation1) < 5) {
                             return true;
                         }
                     }

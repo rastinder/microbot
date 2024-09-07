@@ -52,7 +52,7 @@ public abstract class Script implements IScript {
             System.out.println(e.getMessage());
         }
     }
-    public boolean sleepUntil(BooleanSupplier awaitedCondition) {
+    public static boolean sleepUntil(BooleanSupplier awaitedCondition) {
         return sleepUntil(awaitedCondition, 5000);
     }
 

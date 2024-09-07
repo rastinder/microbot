@@ -22,7 +22,7 @@ public class rasMagicTrainOverlay extends OverlayPanel {
         try {
             panelComponent.setPreferredSize(new Dimension(200, 300));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text("Micro Example V" + rasMagicTrainScript.version)
+                    .text("rasMagicTrain" + rasMagicTrainScript.version)
                     .color(Color.GREEN)
                     .build());
 

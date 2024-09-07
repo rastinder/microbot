@@ -37,7 +37,7 @@ public class WheatScript extends Script {
             if (!Microbot.isLoggedIn()) return;
             if (bankingCountDown == 0 || pickingCountdown == 0) {
                 System.out.println("Bot is stuck, logging out: banking " + bankingCountDown + ", picking " + pickingCountdown);
-                Rs2Player.logout();
+                //Rs2Player.logout();
                 shutdown();
             }
             try {
@@ -115,7 +115,7 @@ public class WheatScript extends Script {
             }
         } else {
             WorldPoint randomBankPoint = bankArea.toWorldPointList().get(Random.random(0, bankArea.toWorldPointList().size() - 1));
-            Rs2Walker.walkTo(randomBankPoint);
+            Rs2Walker.walkTo(randomBankPoint,0);
         }
     }
 

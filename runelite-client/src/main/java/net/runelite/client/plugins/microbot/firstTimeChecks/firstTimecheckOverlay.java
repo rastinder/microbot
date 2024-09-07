@@ -22,7 +22,7 @@ public class firstTimecheckOverlay extends OverlayPanel {
         try {
             panelComponent.setPreferredSize(new Dimension(200, 300));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text("Micro Example V" + firstTimecheckScript.version)
+                    .text("firstTimecheck" + firstTimecheckScript.version)
                     .color(Color.GREEN)
                     .build());
 

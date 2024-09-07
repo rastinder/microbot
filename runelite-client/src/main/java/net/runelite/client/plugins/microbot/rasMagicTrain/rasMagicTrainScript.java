@@ -114,10 +114,10 @@ public class rasMagicTrainScript extends Script {
     @Override
     public void shutdown() {
         String pluginName = "ras magic train";
-        rasMasterScriptScript masterControl = new rasMasterScriptScript();
+        //rasMasterScriptScript masterControl = new rasMasterScriptScript();
         rasMasterScriptScript.stopPlugin(pluginName);
         do{sleep(2000);}
-        while (masterControl.isPlugEnabled(pluginName));
+        while (rasMasterScriptScript.isPlugEnabled(pluginName));
         super.shutdown();
     }
     public static boolean hasOnlyRunesOrStaff() {
@@ -176,6 +176,7 @@ public class rasMagicTrainScript extends Script {
             sleepUntil(() -> Microbot.getClient().getGameState() == GameState.LOGGED_IN, 5000);
             sleep(1000, 1500);
         }
+        Rs2Tab.switchToInventoryTab();
     }
 
     public void superHeat() {
@@ -371,7 +372,7 @@ public class rasMagicTrainScript extends Script {
     }
 
     public void highAlch() {
-        Microbot.getPluginManager().setPluginValue("general", "Autobuy", true);
+        Microbot.getPluginManager().setPluginValue("highalc", "Autobuy", true);
         Ras_highalcConfig confi = new Ras_highalcConfig() {
             @Override
             public boolean autoBuy() {
@@ -714,7 +715,7 @@ public class rasMagicTrainScript extends Script {
         long starttime = System.currentTimeMillis();
         String somemethod = master.moneymaking();
         do {sleep(2000);}
-        while (master.isPlugEnabled(somemethod));
+        while (rasMasterScriptScript.isPlugEnabled(somemethod));
 
         // Implement money-making strategy here
         Microbot.showMessage("No money or runes. Initiating money-making strategy.");

@@ -59,6 +59,7 @@ public class rasTinderboxScript extends Script {
                     sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
                     if (stopTimer < System.currentTimeMillis()){
                         geHandlerScript.goSell(false,5,new int[]{-1},"Tinderbox");
+                        shutdown();
                     }
                 }
                 if (Rs2Inventory.isEmpty() && !shopArea.contains(Rs2Player.getWorldLocation())){

@@ -123,7 +123,7 @@ public class Ras_highalcScript extends Script {
                 if (stopTimer < System.currentTimeMillis()){
                     System.out.println("wrap up started");
                     if (config.autoBuy())
-                        Microbot.getPluginManager().setPluginValue("general", "Autobuy", true); // supposed to be false testing
+                        Microbot.getPluginManager().setPluginValue("highalc", "Autobuy", true); // supposed to be false testing
                     else if (!config.autoBuy() && config.highAlch() && Rs2Inventory.count() <= 2) {
                         System.out.println("stopping high alch");
                         Rs2Bank.openBank();
@@ -305,10 +305,10 @@ public class Ras_highalcScript extends Script {
     public void shutdown() {
         System.out.println("Entering shutdown() function");
         String pluginName = "ras_high alc";
-        rasMasterScriptScript masterControl = new rasMasterScriptScript();
-        masterControl.stopPlugin(pluginName);
+        //rasMasterScriptScript masterControl = new rasMasterScriptScript();
+        rasMasterScriptScript.stopPlugin(pluginName);
         do{sleep(2000);}
-        while (masterControl.isPlugEnabled(pluginName));
+        while (rasMasterScriptScript.isPlugEnabled(pluginName));
         super.shutdown();
         System.out.println("Exiting shutdown() function");
     }
@@ -338,7 +338,7 @@ public class Ras_highalcScript extends Script {
             }
         }
         if (!Rs2Equipment.hasEquippedContains("Staff of fire")) {
-            if (!Rs2Inventory.hasItem("Staff of fire")) {
+            if (Rs2Inventory.hasItem("Staff of fire")) {
                 Rs2Inventory.equip("Staff of fire");
             } else {
                 Rs2Bank.openBank();
@@ -526,6 +526,10 @@ public class Ras_highalcScript extends Script {
                                     System.out.println("Returning due to inactivity && inventory count < 25");
                                     return;
                                 }
+                            }
+                            if (Rs2Inventory.ItemQuantity("Nature rune") < 100) {
+                                System.out.println("Returning as nature rune count < 100");
+                                return;
                             }
                             inactiveTime = inactivityTimer.getElapsedTime();
                             randomSleep();

@@ -12,8 +12,9 @@ import net.runelite.client.ui.overlay.OverlayManager;
 import javax.inject.Inject;
 import java.awt.*;
 
+
 @PluginDescriptor(
-        name = PluginDescriptor.Default + "test",
+        name = PluginDescriptor.Default + "test plugin",
         description = "Microbot example plugin",
         tags = {"example", "microbot"},
         enabledByDefault = false

@@ -7,34 +7,34 @@ import net.runelite.client.config.ConfigSection;
 
 @ConfigGroup("firstTimeChecks")
 public interface rasCollectFoodConfig extends Config {
-
     @ConfigSection(
             name = "General",
             description = "General",
             position = 0,
             closedByDefault = false
     )
-    String generalSection = "general";
+    String generalSection = "General";
     @ConfigItem(
             keyName = "itemsToPick",
             name = "itemsToPick",
             description = "itemsToPick",
-            position = 0,
+            position = 1,
             section = generalSection
     )
-    default String itemsToPick()
+     default String itemsToPick()
     {
-        return "";
+        return "Raw,Trout,Salmon";
+
     }
     @ConfigItem(
-            keyName = "itemsToPick",
-            name = "itemsToPick",
-            description = "itemsToPick",
-            position = 0,
+            keyName = "sellthem",
+            name = "sellthem",
+            description = "sellthem",
+            position = 2,
             section = generalSection
     )
     default boolean sellthem()
     {
-        return false;
+        return true;
     }
 }

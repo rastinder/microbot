@@ -22,7 +22,7 @@ public class rasHardLeatherOverlay extends OverlayPanel {
         try {
             panelComponent.setPreferredSize(new Dimension(200, 300));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text("Micro Example V" + rasHardLeatherScript.version)
+                    .text("rasHardLeather" + rasHardLeatherScript.version)
                     .color(Color.GREEN)
                     .build());
 

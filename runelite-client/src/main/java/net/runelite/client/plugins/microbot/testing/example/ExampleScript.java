@@ -1,9 +1,11 @@
 package net.runelite.client.plugins.microbot.testing.example;
 
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.globval.enums.InterfaceTab;
+import net.runelite.client.plugins.microbot.rasCollectFood.rasCollectFoodConfig;
 import net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
 import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
@@ -16,14 +18,29 @@ import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 
 import java.util.concurrent.TimeUnit;
 
+import static net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript.homeTeleport;
 import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
 import static net.runelite.client.plugins.microbot.util.math.Random.random;
+import net.runelite.client.config.ConfigManager;
+import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.PluginManager;
+import net.runelite.client.config.ConfigManager;
+import net.runelite.client.plugins.PluginManager;
+
+import javax.inject.Inject;
 
 
 public class ExampleScript extends Script {
     public static double version = 1.0;
+    @Inject
+    private  ConfigManager configManager;
 
-    public boolean run(ExampleConfig config) {
+    @Inject
+    public ExampleScript(PluginManager pluginManager, ConfigManager configManager) {
+        this.configManager = configManager;
+    }
+
+    public boolean run(ExampleConfig config1) {
         Microbot.enableAutoRunOn = false;
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
@@ -31,17 +48,20 @@ public class ExampleScript extends Script {
                 //if (!Microbot.isLoggedIn()) return;
                 //if (!super.run()) return;
                 long startTime = System.currentTimeMillis();
-                System.out.println("working" + startTime);
-                rasMasterScriptScript ras = new rasMasterScriptScript();
-                System.out.println("enabled" + ras.isPlugEnabled("test"));
-                    long endTime = System.currentTimeMillis();
-                    long totalTime = endTime - startTime;
+                //rasCollectFoodConfig config = configManager.getConfig(rasCollectFoodConfig.class);
+                //String alch = Rs2Widget.getWidget(134,18).getDynamicChildren()[117].getText();
+                //System.out.println(alch);
+                homeTeleport();
+
 
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
-        }, 0, 300, TimeUnit.MILLISECONDS);
+        }, 0, 500, TimeUnit.MILLISECONDS);
         return true;
+    }
+    public void setPluginConfig(String pluginName, String configKey, String configValue) {
+        configManager.setConfiguration(pluginName, configKey, configValue);
     }
 
     @Override

@@ -146,10 +146,10 @@ public class TutorialIslandScript extends Script {
 
     @Override
     public void shutdown() {
-        rasMasterScriptScript masterControl = new rasMasterScriptScript();
-        masterControl.stopPlugin("TutorialIsland");
+        //rasMasterScriptScript masterControl = new rasMasterScriptScript();
+        rasMasterScriptScript.stopPlugin("TutorialIsland");
         do{sleep(2000);}
-        while (masterControl.isPlugEnabled("TutorialIsland"));
+        while (rasMasterScriptScript.isPlugEnabled("TutorialIsland"));
         super.shutdown();
     }
 

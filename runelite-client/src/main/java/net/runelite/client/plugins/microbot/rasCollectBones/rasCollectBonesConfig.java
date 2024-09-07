@@ -5,7 +5,7 @@ import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 
-@ConfigGroup("example")
+@ConfigGroup("collectbones")
 public interface rasCollectBonesConfig extends Config {
     @ConfigSection(
             name = "Combat",

@@ -16,6 +16,7 @@ import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.keyboard.Rs2Keyboard;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
+import net.runelite.client.plugins.microbot.util.tabs.Rs2Tab;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 
@@ -29,6 +30,7 @@ import static net.runelite.client.plugins.microbot.util.math.Random.random;
 
 public class rasHardLeatherScript extends Script {
     public static double version = 1.0;
+    public static long stopTimer = 1;
     public WorldArea collectCowhide = new WorldArea(3254, 3289, 10, 10, 0);
     public WorldArea collectCoins = new WorldArea(3251, 3235, 10, 10, 0);
     public WorldArea leatherShop = new WorldArea(3275, 3191, 1, 1, 0);
@@ -41,12 +43,14 @@ public class rasHardLeatherScript extends Script {
 
     public boolean run(rasHardLeatherConfig config) {
         Microbot.enableAutoRunOn = false;
-        long stopTimer = random(1800000,2760000) + System.currentTimeMillis();
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
                 rasMasterScriptScript.autoShutdown("ras HardLeather");
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
+                if (stopTimer == 1)
+                    stopTimer = random(1800000,2760000) + System.currentTimeMillis();
+                hopworld();
                 onlyloot = config.loot();
                 long endTime = System.currentTimeMillis();
                 if (Rs2Inventory.hasItem("Hard leather")) {
@@ -70,8 +74,7 @@ public class rasHardLeatherScript extends Script {
                         sleep(500); // gotograndexchange and sell all
                     if (stopTimer < System.currentTimeMillis()){
                         System.out.println("shutting down");
-                        geHandlerScript.goSell(false,5,new int[]{0},"Hard leather");
-                        shutdown();
+                        shutdown();return;
                     }
                     sleepUntil(() -> Rs2Bank.closeBank(), 1000);
                 }
@@ -192,10 +195,12 @@ public class rasHardLeatherScript extends Script {
 
     @Override
     public void shutdown() {
-        rasMasterScriptScript masterControl = new rasMasterScriptScript();
+        rasMasterScriptScript.homeTeleport();
+        geHandlerScript.goSell(false,5,new int[]{0},"Hard leather");
+        stopTimer = 1;
         rasMasterScriptScript.stopPlugin("ras HardLeather");
         do{sleep(2000);}
-        while (masterControl.isPlugEnabled("ras HardLeather"));
+        while (rasMasterScriptScript.isPlugEnabled("ras HardLeather"));
         super.shutdown();
     }
 
@@ -217,7 +222,7 @@ public class rasHardLeatherScript extends Script {
     }
     private void hopworld() {
         int world = Microbot.getClient().getWorld();
-        if (world != 301 && world != 308) {
+        while (world != 301 && world != 308) {
             Microbot.hopToWorld(301);
             boolean result = sleepUntil(() -> Rs2Widget.findWidget("Switch World") != null);
             if (result) {
@@ -236,6 +241,8 @@ public class rasHardLeatherScript extends Script {
                 }
 
             }
+            world = Microbot.getClient().getWorld();
         }
+        Rs2Tab.switchToInventoryTab();
     }
 }

@@ -156,6 +156,7 @@ public class geHandlerScript extends Script {
     }
 
     public static void goSell(boolean returnAfterSell, int decreasePricePercent, int[] amounts, String... itemNames) {
+        Rs2Walker.setTarget(null);
         WorldPoint savedLocation = Rs2Player.getWorldLocation();
         WorldPoint geLocation = new WorldPoint(3164, 3485, 0); // Coordinates for GE
         while (Rs2Player.getWorldLocation().distanceTo(geLocation) > 5) {
@@ -164,6 +165,12 @@ public class geHandlerScript extends Script {
         }
         Rs2Bank.openBank();
         sleep(280, 350);
+        if (!Rs2Inventory.isEmpty()) { // if this cause problem then remove
+            Rs2Bank.depositAll();
+            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+            sleep(280, 350);
+        }
+
         Rs2Bank.setWithdrawAsNote();
         sleep(280, 350);
 
@@ -181,17 +188,28 @@ public class geHandlerScript extends Script {
             sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
         }
         Rs2Bank.closeBank();
-        Rs2GrandExchange.openExchange();
+        while (!Rs2GrandExchange.isOpen()) {
+            Rs2GrandExchange.openExchange();
+            sleep(500);
+        }
         Rs2GrandExchange.collectToBank();
 
         for (int i = 0; i < itemNames.length; i++) {
-            int pricePerItem = priceChecker(itemNames[i])[0];
-
-            Rs2GrandExchange.sellItem(Rs2Inventory.get(itemNames[i]).getName(), Rs2Inventory.count(itemNames[i]), 1);
-            //Rs2GrandExchange.sellItem(Rs2Inventory.get(itemNames[finalI]).getName(),Rs2Inventory.count(itemNames[finalI]),pricePerItem);
-            sleepUntilTrue(Rs2GrandExchange::hasSoldOffer, 1000, 250000);
-            Rs2GrandExchange.collectToBank();
-            sleep(280, 350);
+            try {
+                if (Rs2Inventory.hasItem(itemNames[i])) {
+                    int pricePerItem = priceChecker(itemNames[i])[0];
+                    System.out.println("Selling item = " + itemNames[i] + " amount = " + Rs2Inventory.ItemQuantity(itemNames[i]));
+                    Rs2GrandExchange.sellItem(itemNames[i], (int) Rs2Inventory.ItemQuantity(itemNames[i]), 1);
+                    //Rs2GrandExchange.sellItem(Rs2Inventory.get(itemNames[finalI]).getName(),Rs2Inventory.count(itemNames[finalI]),pricePerItem);
+                    sleepUntilTrue(Rs2GrandExchange::hasSoldOffer, 1000, 250000);
+                    Rs2GrandExchange.collectToBank();
+                    sleep(280, 350);
+                }
+            }
+            catch (Exception e)
+            {
+                System.out.println(e);
+            }
         }
         Rs2GrandExchange.closeExchange();
         if (returnAfterSell) {

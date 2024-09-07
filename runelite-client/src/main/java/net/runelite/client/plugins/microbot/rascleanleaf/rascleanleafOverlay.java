@@ -22,7 +22,7 @@ public class rascleanleafOverlay extends OverlayPanel {
         try {
             panelComponent.setPreferredSize(new Dimension(200, 300));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text("Micro Example V" + rascleanleafScript.version)
+                    .text("rascleanleaf" + rascleanleafScript.version)
                     .color(Color.GREEN)
                     .build());
 

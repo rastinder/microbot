@@ -114,16 +114,16 @@ public class ConfigManager
 	private final Map<Type, Serializer<?>> serializers = Collections.synchronizedMap(new WeakHashMap<>());
 
 	@Inject
-	private ConfigManager(
-		@Nullable @Named("profile") String profile,
-		ScheduledExecutorService scheduledExecutorService,
-		EventBus eventBus,
-		@Nullable Client client,
-		Gson gson,
-		@Nonnull ConfigClient configClient,
-		ProfileManager profileManager,
-		SessionManager sessionManager
-	)
+    public ConfigManager(
+            @Nullable @Named("profile") String profile,
+            ScheduledExecutorService scheduledExecutorService,
+            EventBus eventBus,
+            @Nullable Client client,
+            Gson gson,
+            @Nonnull ConfigClient configClient,
+            ProfileManager profileManager,
+            SessionManager sessionManager
+    )
 	{
 		this.configProfileName = profile;
 		this.eventBus = eventBus;

@@ -16,13 +16,12 @@ import net.runelite.client.plugins.microbot.util.inventory.Rs2Item;
 import net.runelite.client.plugins.microbot.util.keyboard.Rs2Keyboard;
 import net.runelite.client.plugins.microbot.util.models.RS2Item;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
+import net.runelite.client.plugins.microbot.util.tabs.Rs2Tab;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 
 import java.awt.event.KeyEvent;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
@@ -36,22 +35,24 @@ public class rasCollectFoodScript extends Script {
     private WorldArea cabage = new WorldArea(3057,3290,5,5,0);
     private WorldPoint cookedmeat = new WorldPoint(1,1,0);
     private Set<String> itemNames = new HashSet<>();
+    public  static long stopTimer =1;
+    private int range = 2 ;
     //long stopTimer = random(1800000,2760000) + System.currentTimeMillis();
 
     public boolean run(rasCollectFoodConfig config) {
-        long stopTimer = random(1800000,2760000) + System.currentTimeMillis();
         Set<String> itemsToPickSet = new HashSet<>(Arrays.asList(config.itemsToPick().toLowerCase().split(",")));
-
-
-
+        List<Integer> amounts = new ArrayList<>();
         Microbot.enableAutoRunOn = false;
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
+                if (stopTimer == 1)
+                    stopTimer = random(1800000,2760000) + System.currentTimeMillis();
                 rasMasterScriptScript.autoShutdown("collect food");
+                hopworld();
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
                 long startTime = System.currentTimeMillis();
-                hopworld();
+                System.out.println("item name: "+ config.itemsToPick());
 
                 if (Rs2Inventory.isFull()){
                     rasMasterScriptScript.bankAllAndGet(0,"ras");
@@ -60,23 +61,41 @@ public class rasCollectFoodScript extends Script {
                     Rs2Walker.walkTo(edgeville,6);
                 }
                 if (stopTimer < System.currentTimeMillis()) {
-                    if (config.sellthem())
-                        geHandlerScript.goSell(false, 5, new int[]{0},itemNames.toArray(new String[0]) );
+                    if (config.sellthem()) {
+                        while (amounts.size() < itemNames.size()) {
+                            amounts.add(0); // Fill with 0s to match the size
+                        }
+                        geHandlerScript.goSell(false, 5, amounts.stream().mapToInt(i -> i).toArray(), itemNames.toArray(new String[0]));
+                    }
                     shutdown();
                 }
                 if (Rs2Player.getWorldLocation().distanceTo(edgeville) < 15 && !Rs2Inventory.isFull() ){
-                    RS2Item[] items = Rs2GroundItem.getAll(15);
-                    if( items != null){
+                    RS2Item[] items = Rs2GroundItem.getAll(range);
+                    if( items != null && items.length > 0){
+                        if ( Rs2Player.getWorldLocation().distanceTo(items[0].getTile().getWorldLocation()) > 3) {
+                            Rs2Walker.walkFastCanvas(items[0].getTile().getWorldLocation());
+                            sleepUntilTrue(() -> Rs2Player.getWorldLocation().distanceTo(items[0].getTile().getWorldLocation()) < 2, 100, 3000);
+                        }
                         for (RS2Item item : items){
                             if (itemsToPickSet.stream().anyMatch(name-> item.getItem().getName().toLowerCase().contains(name)) && !Rs2Inventory.isFull()) {
-                                    Rs2GroundItem.interact(item);
-                                    sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
-                                    if(Rs2Inventory.ItemQuantity(item.getItem().getId()) > 0)
+                                try {
+                                    if (Rs2GroundItem.interact(item)) {
+                                        if (range > 2)
+                                            range--;
+                                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                                    }
+                                }
+                                catch (Exception e){
+                                    System.out.println("item gone");
+                                }
+                                    if(Rs2Inventory.ItemQuantity(item.getItem().getId()) > 0) {
                                         itemNames.add(item.getItem().getName());
-                                    break;
+                                    }
                                 }
                         }
                     }
+                    else if (range < 8)
+                        range++;
                 }
 
 
@@ -94,7 +113,7 @@ public class rasCollectFoodScript extends Script {
 
     private void hopworld() {
         int world = Microbot.getClient().getWorld();
-        if (world != 301 && world != 308) {
+        while (world != 301 && world != 308) {
             Microbot.hopToWorld(301);
             boolean result = sleepUntil(() -> Rs2Widget.findWidget("Switch World") != null);
             if (result) {
@@ -113,16 +132,19 @@ public class rasCollectFoodScript extends Script {
                 }
 
             }
+            world = Microbot.getClient().getWorld();
         }
+        Rs2Tab.switchToInventoryTab();
     }
 
     @Override
     public void shutdown() {
+        stopTimer = 1;
         String pluginName = "collect food";
-        rasMasterScriptScript masterControl = new rasMasterScriptScript();
-        masterControl.stopPlugin(pluginName);
+        //rasMasterScriptScript masterControl = new rasMasterScriptScript();
+        rasMasterScriptScript.stopPlugin(pluginName);
         do{sleep(2000);}
-        while (masterControl.isPlugEnabled(pluginName));
+        while (rasMasterScriptScript.isPlugEnabled(pluginName));
         super.shutdown();
     }
     void getcabage(){

@@ -17,7 +17,7 @@ import net.runelite.client.plugins.microbot.util.tabs.Rs2Tab;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 
 import java.awt.event.KeyEvent;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -41,6 +41,8 @@ public class rasCombineScript extends Script {
             if (!super.run()) return;
             rasMasterScriptScript.autoShutdown("ras Combine");
             if (!Microbot.isLoggedIn()) return;
+            if (config.item1().trim().isEmpty()) // this is temporary
+                shutdown();
             if (stopTimer == 1)
                 stopTimer = random(1800000,2760000) + System.currentTimeMillis();
             try {
@@ -98,8 +100,10 @@ public class rasCombineScript extends Script {
                             Rs2Bank.openBank();
                             sleepUntil(() -> Rs2Bank.isOpen());
                         }
-                        if (stopTimer < System.currentTimeMillis()) // sell item12
+                        if (stopTimer < System.currentTimeMillis()) {
+                            sellLeftOvers();
                             shutdown();
+                        }
                         long coinsInBank = (long) Rs2Bank.count("Coins", true);
                         sleep(350, 450);
                         long item1Count = Rs2Bank.count(config.item1()) + Rs2Inventory.ItemQuantity(config.item1());
@@ -177,13 +181,32 @@ public class rasCombineScript extends Script {
         return true;
     }
 
+    private void sellLeftOvers() {
+        List<Integer> amounts = new ArrayList<>();
+        List<String> itemNamesToPass = new ArrayList<>();
+        Map<String, Integer> itemAmountMap = new HashMap<>() {{
+            put("Pot", 0);
+            put("Jug", 0);
+            put("Bucket", 0);
+            put("Bowl", 0);
+        }};
+
+        itemAmountMap.forEach((item, amount) -> {
+            if (Rs2Bank.hasItem(item, true)) {
+                itemNamesToPass.add(item);
+                amounts.add(amount);
+            }
+        });
+        geHandlerScript.goSell(false, 5, amounts.stream().mapToInt(i -> i).toArray(), itemNamesToPass.toArray(new String[0]));
+    }
+
     @Override
     public void shutdown() {
         stopTimer = 1;
-        rasMasterScriptScript masterControl = new rasMasterScriptScript();
+        //rasMasterScriptScript masterControl = new rasMasterScriptScript();
         rasMasterScriptScript.stopPlugin("ras Combine");
         do{sleep(2000);}
-        while (masterControl.isPlugEnabled("ras Combine"));
+        while (rasMasterScriptScript.isPlugEnabled("ras Combine"));
         //Plugin p = DashboardWebSocket.findPlugin("ras combine");
         //Microbot.getPluginManager().stopPlugin(p);
         super.shutdown();
@@ -217,11 +240,15 @@ public class rasCombineScript extends Script {
                 }
                 for (int i = 1; i <= 27; i++) {
                     if (i != slot) {
-                        Microbot.getMouse().click(inventory[slot].getBounds());
-                        sleep(Math.min(600, Math.max(180, (int) ((i) * 4.285714))), Math.min(600, Math.max(250, (int) ((i) * 21.428571))));
+                        if(inventory[slot].getBounds().x > 0) {
+                            Microbot.getMouse().click(inventory[slot].getBounds());
+                            sleep(Math.min(600, Math.max(180, (int) ((i) * 4.285714))), Math.min(600, Math.max(250, (int) ((i) * 21.428571))));
 
-                        Microbot.getMouse().click(inventory[i].getBounds());
-                        sleep(Math.min(600, Math.max(180, (int) ((i) * 4.285714))), Math.min(600, Math.max(250, (int) ((i) * 21.428571))));
+                            if (inventory[i].getBounds().x > 0) {
+                                Microbot.getMouse().click(inventory[i].getBounds());
+                                sleep(Math.min(600, Math.max(180, (int) ((i) * 4.285714))), Math.min(600, Math.max(250, (int) ((i) * 21.428571))));
+                            }
+                        }
                     }
                 }
             } else {
@@ -262,6 +289,7 @@ public class rasCombineScript extends Script {
                         && !Objects.equals(Rs2Inventory.getNameForSlot(i).toLowerCase(), item1.toLowerCase())
                         && !Rs2Inventory.getNameForSlot(i).toLowerCase().contains("jug")
                         && !Rs2Inventory.getNameForSlot(i).toLowerCase().contains("bucket")
+                        && !Rs2Inventory.getNameForSlot(i).toLowerCase().contains("pot")
                         && !Rs2Inventory.getNameForSlot(i).toLowerCase().contains("bowl"))
                     return Rs2Inventory.getNameForSlot(i);
             }

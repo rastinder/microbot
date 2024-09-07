@@ -22,7 +22,7 @@ public class rasCollectFoodOverlay extends OverlayPanel {
         try {
             panelComponent.setPreferredSize(new Dimension(200, 300));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text("Micro Example V" + rasCollectFoodScript.version)
+                    .text("collect food" + rasCollectFoodScript.version)
                     .color(Color.GREEN)
                     .build());
 

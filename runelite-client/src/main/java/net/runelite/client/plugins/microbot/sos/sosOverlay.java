@@ -22,7 +22,7 @@ public class sosOverlay extends OverlayPanel {
         try {
             panelComponent.setPreferredSize(new Dimension(200, 300));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text("Micro Example V" + sosScript.version)
+                    .text("sosScript" + sosScript.version)
                     .color(Color.GREEN)
                     .build());
 

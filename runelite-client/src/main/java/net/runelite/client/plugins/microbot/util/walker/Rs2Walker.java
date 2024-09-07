@@ -139,7 +139,7 @@ public class Rs2Walker {
                         }
                         long endTime = System.currentTimeMillis();
                         long totalTime = endTime - startTime;
-                        System.out.println("Handling doors took " + totalTime + "ms");
+                        //System.out.println("Handling doors took " + totalTime + "ms");
 
                         if (!Microbot.getClient().isInInstancedRegion()) {
                             Microbot.status = "Checking for transports...";
@@ -147,7 +147,7 @@ public class Rs2Walker {
                             doorOrTransportResult = handleTransports(path, i);
                             endTime = System.currentTimeMillis();
                             totalTime = endTime - startTime;
-                            System.out.println("Handling transports took " + totalTime + "ms");
+                            //System.out.println("Handling transports took " + totalTime + "ms");
                         }
 
                         if (doorOrTransportResult)

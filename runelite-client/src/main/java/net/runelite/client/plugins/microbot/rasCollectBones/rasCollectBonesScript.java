@@ -5,6 +5,7 @@ import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
+import net.runelite.client.plugins.microbot.firstTimeChecks.firstTimecheckScript;
 import net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript;
 import net.runelite.client.plugins.microbot.util.Global;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
@@ -44,11 +45,13 @@ public class rasCollectBonesScript extends Script {
     public WorldArea center = new WorldArea(1, 1, 1, 1, 0);
     public static long afktimer = System.currentTimeMillis();
     public static long stopTimer = 1;
+    WorldPoint deathlocation = new WorldPoint(3176, 5726, 0);
 
     public boolean run(rasCollectBonesConfig config) {
         Microbot.enableAutoRunOn = false;
         AtomicInteger action = new AtomicInteger(1);
         centerY = 0;
+        firstTimecheckScript dialog = new firstTimecheckScript();
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             if (rasMasterScriptScript.autoShutdown("ras range bone collector"))
                 return;
@@ -59,6 +62,9 @@ public class rasCollectBonesScript extends Script {
             try {
                 if (stopTimer == 1)
                     stopTimer = random(1800000,2760000) + System.currentTimeMillis();
+                if (Rs2Player.getWorldLocation().distanceTo(deathlocation) < 10) {
+                    dialog.deathdialog();
+                }
                 shutdownTimer();
                 if (centerY == 0 && Microbot.getClient().getGameState() == GameState.LOGGED_IN) {
                     centerX = Rs2Player.getWorldLocation().getX();
@@ -132,7 +138,7 @@ public class rasCollectBonesScript extends Script {
                                 }else {
                                     huntfoodsource();
                                     if(!Rs2Inventory.hasItem("Raw")){
-                                        Microbot.getPluginManager().setPluginValue("Bank/inventory", "cook food items", rasCollectBonesConfig.cookON.Cabbage);
+                                        Microbot.getPluginManager().setPluginValue("collectbones", "cook food items", rasCollectBonesConfig.cookON.Cabbage);
                                     }
                                 }
                             }else if (config.cookFood() == rasCollectBonesConfig.cookON.Monk) {
@@ -476,10 +482,10 @@ public class rasCollectBonesScript extends Script {
     @Override
     public void shutdown() {
         String pluginName = "ras range bone collector";
-        rasMasterScriptScript masterControl = new rasMasterScriptScript();
-        masterControl.stopPlugin(pluginName);
+        //rasMasterScriptScript masterControl = new rasMasterScriptScript();
+        rasMasterScriptScript.stopPlugin(pluginName);
         do{sleep(2000);}
-        while (masterControl.isPlugEnabled(pluginName));
+        while (rasMasterScriptScript.isPlugEnabled(pluginName));
         super.shutdown();
     }
     public static void waitAndPressContinue(){

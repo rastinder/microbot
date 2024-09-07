@@ -619,7 +619,7 @@ public interface MenuEntrySwapperConfig extends Config
 	)
 	default boolean swapTan()
 	{
-		return false;
+		return true;
 	}
 
 	@ConfigItem(

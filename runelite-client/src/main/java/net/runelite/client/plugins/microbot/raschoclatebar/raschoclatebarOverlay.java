@@ -22,7 +22,7 @@ public class raschoclatebarOverlay extends OverlayPanel {
         try {
             panelComponent.setPreferredSize(new Dimension(200, 300));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text("Micro Example V" + raschoclatebarScript.version)
+                    .text("raschoclatebar" + raschoclatebarScript.version)
                     .color(Color.GREEN)
                     .build());
 
