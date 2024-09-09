@@ -45,13 +45,12 @@ public class ExampleScript extends Script {
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
-                //if (!Microbot.isLoggedIn()) return;
-                //if (!super.run()) return;
-                long startTime = System.currentTimeMillis();
-                //rasCollectFoodConfig config = configManager.getConfig(rasCollectFoodConfig.class);
-                //String alch = Rs2Widget.getWidget(134,18).getDynamicChildren()[117].getText();
-                //System.out.println(alch);
-                homeTeleport();
+                Rs2Tab.switchToQuestTab();
+                Rs2Widget.clickWidget(629,3);
+                String accountName = Rs2Widget.getWidget(712,1).getText();
+                Rs2Widget.clickWidget(String.valueOf(Rs2Widget.getWidget(612,2).getDynamicChildren()[100]));
+                Rs2Widget.clickWidget("again");
+                String timeplayed = Rs2Widget.getWidget(712,1).getText();
 
 
             } catch (Exception ex) {
@@ -61,7 +60,13 @@ public class ExampleScript extends Script {
         return true;
     }
     public void setPluginConfig(String pluginName, String configKey, String configValue) {
-        configManager.setConfiguration(pluginName, configKey, configValue);
+        //if (!Microbot.isLoggedIn()) return;
+        //if (!super.run()) return;
+        //long startTime = System.currentTimeMillis();
+        //rasCollectFoodConfig config = configManager.getConfig(rasCollectFoodConfig.class);
+        //String alch = Rs2Widget.getWidget(134,18).getDynamicChildren()[117].getText();
+        //System.out.println(alch);
+        homeTeleport();
     }
 
     @Override

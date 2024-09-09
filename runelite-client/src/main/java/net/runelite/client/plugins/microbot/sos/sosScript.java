@@ -258,15 +258,19 @@ public class sosScript extends Script {
     }
     public void changeWorld(){
         int world = getWorldWithMostPlayers(Rs2Player.isMember());
-        boolean isHopped = Microbot.hopToWorld(world);
-        if (!isHopped) return;
-        isHopped = Microbot.hopToWorld(world);
-        if (!isHopped) return;
-        boolean result = sleepUntil(() -> Rs2Widget.findWidget("Switch World") != null);
-        if (result) {
-            Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
-            sleepUntil(() -> Microbot.getClient().getGameState() == GameState.HOPPING);
-            sleepUntil(() -> Microbot.getClient().getGameState() == GameState.LOGGED_IN);
+        int cworld = Microbot.getClient().getWorld();
+        while (world != cworld) {
+            boolean isHopped = Microbot.hopToWorld(world);
+            if (!isHopped) return;
+            isHopped = Microbot.hopToWorld(world);
+            if (!isHopped) return;
+            boolean result = sleepUntil(() -> Rs2Widget.findWidget("Switch World") != null);
+            if (result) {
+                Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
+                sleepUntil(() -> Microbot.getClient().getGameState() == GameState.HOPPING);
+                sleepUntil(() -> Microbot.getClient().getGameState() == GameState.LOGGED_IN);
+            }
+            cworld = Microbot.getClient().getWorld();
         }
     }
 

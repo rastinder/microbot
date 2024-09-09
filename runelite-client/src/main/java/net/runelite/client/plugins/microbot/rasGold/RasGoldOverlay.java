@@ -24,7 +24,7 @@ public class RasGoldOverlay extends OverlayPanel {
 
             panelComponent.setPreferredSize(new Dimension(275, 700));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text("Ras's Ruby jewellery Maker")
+                    .text("Ras's Gold jewellery Maker")
                     .color(Color.ORANGE)
                     .build());
 

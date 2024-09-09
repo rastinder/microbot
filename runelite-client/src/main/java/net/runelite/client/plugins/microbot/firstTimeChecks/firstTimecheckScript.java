@@ -45,20 +45,26 @@ public class firstTimecheckScript extends Script {
     public static String randmills = randommil();
     public int attackStyleIs = 1;
     public int enemylevels = 0;
-    public int progress = 0;;
+    public int progress = 0;
     public String enemy = null;
     WorldPoint enemylocation = new WorldPoint(3246, 3238, 0);
     WorldPoint deathlocation = new WorldPoint(3176, 5726, 0);
     WorldPoint deathlocation1 = new WorldPoint(3222, 3218, 0);
+    List<Runnable> function = new ArrayList<>();
+
 
     public boolean run(firstTimecheckConfig config) {
         Microbot.enableAutoRunOn = false;
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
+                rasMasterScriptScript.autoShutdown("ras firsttime check");
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
                 long startTime = System.currentTimeMillis();
                 if (progress == 0) {
+                    function.add(firstTimecheckScript::warnings);
+                    function.add(this::kill);
+                    Collections.shuffle(function, new Random());
                     advJon();
                     progress++;
                 }
@@ -75,12 +81,11 @@ public class firstTimecheckScript extends Script {
                     progress++;
                 }
                 if (progress == 4) {
-                    //killOrSettings();
-                    warnings();
+                    killOrSettings(function);
+                    //warnings();
                     progress++;
                 }
                 if (progress == 5) {
-                    //rasMasterScriptScript masterControl = new rasMasterScriptScript();
                     rasMasterScriptScript.startPlugin("sos");
                     do{sleep(2000);}
                     while (rasMasterScriptScript.isPlugEnabled("sos"));
@@ -181,7 +186,8 @@ public class firstTimecheckScript extends Script {
         Rs2Bank.walkToBank();
         sleepUntil(() -> Rs2Bank.isNearBank(5), 15000);
         Rs2Bank.openBank();
-        sleepUntil(() -> Rs2Bank.isOpen(), 2000);
+        sleepUntilTrue(() -> Rs2Bank.openBank(),100, 10000);
+        sleepUntil(() -> Rs2Widget.isWidgetVisible(664, 29), 2000);
         sleep(450);
         if (Rs2Widget.isWidgetVisible(664, 29))
             Rs2Widget.clickWidget(664, 29);
@@ -252,12 +258,7 @@ public class firstTimecheckScript extends Script {
             }
         }
     }
-    private void killOrSettings() {
-        List<Runnable> function = new ArrayList<>();
-        function.add(() -> warnings());
-        function.add(() -> kill());
-
-        Collections.shuffle(function, new Random());
+    private void killOrSettings(List<Runnable> function) {
         for (Runnable functio : function) {
             functio.run();
         }
@@ -442,7 +443,7 @@ public class firstTimecheckScript extends Script {
                     long endTime = System.currentTimeMillis() + 50000;
                     while (!jon.isDead() && System.currentTimeMillis() < endTime) {
                         sleep(400);
-                        if (Rs2Player.getWorldLocation().distanceTo(deathlocation) < 10) {
+                        if (Rs2Player.getWorldLocation().distanceTo(deathlocation) < 15) {
                             return true;
                         }
                     }
@@ -453,12 +454,11 @@ public class firstTimecheckScript extends Script {
                             Rs2GroundItem.loot(groundItem.getItem().getId());
                             sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
                         }
-                        while (Rs2Inventory.hasItem("Bones")) {
-                            sleep(400, 800);
-                            Rs2Inventory.interact("Bones", "Bury");
-                            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
-
-                        }
+                       // while (Rs2Inventory.hasItem("Bones")) {
+                        //    sleep(400, 800);
+                       //     Rs2Inventory.interact("Bones", "Bury");
+                       //     sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                       // }
                     }
                 }
             }
@@ -531,12 +531,13 @@ public class firstTimecheckScript extends Script {
                             Rs2GroundItem.loot(groundItem.getItem().getId());
                             sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
                         }
+                        /*
                         while (Rs2Inventory.hasItem("Bones")) {
                             sleep(400, 800);
                             Rs2Inventory.interact("Bones", "Bury");
                             sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
-
                         }
+                         */
                     }
                 }
             }
@@ -601,7 +602,7 @@ public class firstTimecheckScript extends Script {
         return false;
     }
 
-    public void switchToTab(String finalTabName) {
+    public static void switchToTab(String finalTabName) {
         Runnable[] tabSwitchers = {
                 Rs2Tab::switchToInventoryTab,
                 Rs2Tab::switchToSkillsTab,
@@ -686,7 +687,8 @@ public class firstTimecheckScript extends Script {
         sleepUntil(() -> Rs2Widget.hasWidget(dialog));
 
         if (Rs2Widget.hasWidget(dialog)) {
-            Rs2Widget.clickWidget(Rs2Widget.findWidget(dialog).getText());
+            //Rs2Widget.clickWidget(Rs2Widget.findWidget(dialog).getText());
+            Rs2Widget.clickWidget(dialog);
         } else {
             throw new Exception("Can't find dialog " + dialog);
         }

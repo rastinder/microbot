@@ -3,6 +3,7 @@ package net.runelite.client.plugins.microbot.rasCollectBones;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.firstTimeChecks.firstTimecheckScript;
@@ -29,6 +30,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static net.runelite.client.plugins.microbot.firstTimeChecks.firstTimecheckScript.switchToTab;
 import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
 import static net.runelite.client.plugins.microbot.util.math.Random.random;
 
@@ -170,6 +172,8 @@ public class rasCollectBonesScript extends Script {
                     doBanking(center, config.maxFood(), config);
                     walkTowardsCenter(center, true, config, true);
                 }
+                if (config.toggleCombat())
+                    changeAttackStyle();
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
@@ -503,6 +507,22 @@ public class rasCollectBonesScript extends Script {
             }
             if (Rs2Widget.hasWidget("Please wait")){
                 endTime = System.currentTimeMillis() + sleep;
+            }
+        }
+    }
+    public static void changeAttackStyle(){
+        if (random(0, 50) == 5 ) {
+            switchToTab("combat");
+            sleep(800, 1400);
+            int attackStyleIs = random(1, 5);
+            if (attackStyleIs == 1) {
+                Rs2Combat.setAttackStyle(WidgetInfo.COMBAT_STYLE_ONE);
+            } else if (attackStyleIs == 2){
+                Rs2Combat.setAttackStyle(WidgetInfo.COMBAT_STYLE_TWO);
+            } else if (attackStyleIs == 3){
+                Rs2Combat.setAttackStyle(WidgetInfo.COMBAT_STYLE_THREE);
+            } else if (attackStyleIs == 4) {
+                Rs2Combat.setAttackStyle(WidgetInfo.COMBAT_STYLE_FOUR);
             }
         }
     }

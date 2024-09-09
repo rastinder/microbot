@@ -17,6 +17,8 @@ import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.TimeUnit;
 
+import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
+
 
 public class RasGoldScript extends Script {
     WorldPoint furnaceLocation = new WorldPoint(3109, 3499, 0);
@@ -46,14 +48,14 @@ public class RasGoldScript extends Script {
                 if (hasBars && hasStone && hasMould && Microbot.getClient().getLocalPlayer().getWorldLocation().distanceTo(furnaceLocation) <= 5) {
                     if (!Rs2Widget.hasWidget("What would")) {
                         Rs2GameObject.interact("Furnace", "Smelt");
-                        sleepUntil(() -> Rs2Widget.hasWidget("What would"), 5000);
+                        sleepUntilTrue(() -> Rs2Widget.hasWidget("What would"),100, 5000);
                     }
                     if (Rs2Widget.hasWidget("What would")) {
                         sleep(200, 400);
                         clcickWidget(config);
                         sleep(400, 800);
                         Rs2Inventory.open();
-                        sleepUntil(() -> !stopedWorking(config), 60000);
+                        sleepUntilTrue(() -> !stopedWorking(config),200, 60000);
                         sleep(400, 800);
                     }
                 }
@@ -65,7 +67,7 @@ public class RasGoldScript extends Script {
                 if (!hasBars && isBankVisible) {
                     if (Rs2Bank.isOpen()) {
                         Rs2Bank.depositAll(config.finishedProductName());
-                        sleepUntil(() -> Rs2Inventory.hasItem(config.finishedProductName()));
+                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
                         sleep(200, 400);
                         if (Rs2Bank.hasItem(config.getBarName())) {
                             Rs2Bank.withdrawX(config.getBarName(), config.getBarCount());

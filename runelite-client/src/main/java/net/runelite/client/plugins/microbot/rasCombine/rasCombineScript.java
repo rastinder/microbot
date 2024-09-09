@@ -285,11 +285,12 @@ public class rasCombineScript extends Script {
             }
             sleep(850, 1250);
             for (int i =0 ; i < Rs2Inventory.count();i++){
+                System.out.println("Checking inventory slot " + i + ": " + Rs2Inventory.getNameForSlot(i));
                 if (!Objects.equals(Rs2Inventory.getNameForSlot(i).toLowerCase(), item2.toLowerCase())
                         && !Objects.equals(Rs2Inventory.getNameForSlot(i).toLowerCase(), item1.toLowerCase())
                         && !Rs2Inventory.getNameForSlot(i).toLowerCase().contains("jug")
                         && !Rs2Inventory.getNameForSlot(i).toLowerCase().contains("bucket")
-                        && !Rs2Inventory.getNameForSlot(i).toLowerCase().contains("pot")
+                        && !Rs2Inventory.getNameForSlot(i).contains("Pot")
                         && !Rs2Inventory.getNameForSlot(i).toLowerCase().contains("bowl"))
                     return Rs2Inventory.getNameForSlot(i);
             }

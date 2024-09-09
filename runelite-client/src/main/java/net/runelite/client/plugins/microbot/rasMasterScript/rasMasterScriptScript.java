@@ -1,10 +1,7 @@
 package net.runelite.client.plugins.microbot.rasMasterScript;
 
 import com.google.inject.Provides;
-import net.runelite.api.EquipmentInventorySlot;
-import net.runelite.api.GameState;
-import net.runelite.api.Point;
-import net.runelite.api.Skill;
+import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -36,8 +33,10 @@ import javax.swing.SwingUtilities;
 
 import javax.inject.Inject;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -810,15 +809,20 @@ public class rasMasterScriptScript extends Script {
             sleep(1000);
             Microbot.getClient().setCameraPitchTarget(460);
             if (totalCoins == 0) {
-                if (Rs2Player.getWorldLocation().getY()  < 3228 && Rs2Player.getWorldLocation().getX() >3267){
-                    Rs2Walker.setTarget(null);
+                if (isinALKhrid())
                     homeTeleport();
-                }
                 if (getTotalCoins() < 100000) {
                     activity = "moneymaking";
                 }
             }
         }
+    }
+
+    public static boolean isinALKhrid() {
+        if (Rs2Player.getWorldLocation().getY()  < 3228 && Rs2Player.getWorldLocation().getX() >3267){
+            return true;
+        }
+        return false;
     }
 
     private void printTimePlugin() {
@@ -969,16 +973,40 @@ public class rasMasterScriptScript extends Script {
         return false;
     }
     public static void homeTeleport() {
-        Rs2Tab.switchToMagicTab();
-        sleepUntil(()->Rs2Tab.getCurrentTab() == InterfaceTab.MAGIC);
-        Rs2Walker.setTarget(null);
-        WorldPoint oldlocation = Rs2Player.getWorldLocation();
-        sleep(500);
-        Rs2Widget.clickWidget("Lumbridge Home");
-        sleepUntilTrue(()-> Rs2Player.getWorldLocation().distanceTo(oldlocation) > 10,500,20000);
-        Rs2Tab.switchToInventoryTab();
-        //Rs2Player.waitForAnimation();
+        if(!isHomeTeleportOnCooldown()) {
+            Rs2Walker.setTarget(null);
+            Rs2Tab.switchToMagicTab();
+            sleepUntil(() -> Rs2Tab.getCurrentTab() == InterfaceTab.MAGIC);
+            Rs2Walker.setTarget(null);
+            WorldPoint oldlocation = Rs2Player.getWorldLocation();
+            sleep(500);
+            Rs2Widget.clickWidget("Lumbridge Home");
+            sleepUntilTrue(() -> Rs2Player.getWorldLocation().distanceTo(oldlocation) > 10, 500, 20000);
+            Rs2Tab.switchToInventoryTab();
+            //Rs2Player.waitForAnimation();
+        }
+        else {
+            WorldPoint outside = new WorldPoint(3283,3331,0);
+            WorldPoint outside1 = new WorldPoint(3251,3318,0);
+            while (Rs2Player.getWorldLocation().distanceTo(outside) > 10) {
+                Rs2Walker.setTarget(outside);
+                Rs2Walker.walkTo(outside);
+                sleepUntilTrue(() -> Rs2Player.getWorldLocation().distanceTo(outside) < 10, 500, 120000);
+            }
+            while (Rs2Player.getWorldLocation().distanceTo(outside1) > 10) {
+                Rs2Walker.setTarget(outside1);
+                Rs2Walker.walkTo(outside1);
+                sleepUntilTrue(() -> Rs2Player.getWorldLocation().distanceTo(outside1) < 10, 500, 120000);
+            }
+        }
 
+    }
+    public static Instant getLastHomeTeleportUsage() {
+        return Instant.ofEpochSecond((long) Microbot.getClient().getVarpValue(VarPlayer.LAST_HOME_TELEPORT) * 60L);
+    }
+
+    public static boolean isHomeTeleportOnCooldown() {
+        return !getLastHomeTeleportUsage().plus(30L, ChronoUnit.MINUTES).isAfter(Instant.now());
     }
     public static void stopAllPlugins() {
         List<String> pluginNames = Arrays.asList(
@@ -1001,6 +1029,5 @@ public class rasMasterScriptScript extends Script {
                 stopPlugin(pluginName);
         }
     }
-
 }
 
