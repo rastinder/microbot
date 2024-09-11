@@ -46,13 +46,12 @@ public class rasCollectFoodScript extends Script {
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
                 if (stopTimer == 1)
-                    stopTimer = random(1800000,2760000) + System.currentTimeMillis();
+                    stopTimer = rasMasterScriptScript.autoStopTimer();
                 rasMasterScriptScript.autoShutdown("collect food");
                 hopworld();
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
                 long startTime = System.currentTimeMillis();
-                System.out.println("item name: "+ config.itemsToPick());
 
                 if (Rs2Inventory.isFull()){
                     rasMasterScriptScript.bankAllAndGet(0,"ras");

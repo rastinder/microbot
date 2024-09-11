@@ -44,7 +44,7 @@ public class rasCombineScript extends Script {
             if (config.item1().trim().isEmpty()) // this is temporary
                 shutdown();
             if (stopTimer == 1)
-                stopTimer = random(1800000,2760000) + System.currentTimeMillis();
+                stopTimer = rasMasterScriptScript.autoStopTimer();
             try {
                 if (!Rs2Inventory.hasItem(config.item1()) || !Rs2Inventory.hasItem(config.item2())) {
                     if (!Rs2Bank.isNearBank(5) && !config.itemFromGE()){

@@ -44,7 +44,7 @@ public class rasReddieScript extends Script {
             if (!super.run()) return;
             rasMasterScriptScript.autoShutdown("ras Combine");
             if (stopTimer == 1)
-                 stopTimer = random(1800000,2760000) + System.currentTimeMillis();
+                 stopTimer = rasMasterScriptScript.autoStopTimer();
             try {
                 if (config.DebugInfofun()) {
                     System.out.println("Redberries " + Rs2Inventory.count("Redberries"));

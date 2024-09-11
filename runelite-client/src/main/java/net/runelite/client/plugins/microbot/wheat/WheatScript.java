@@ -4,6 +4,8 @@ import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
+import net.runelite.client.plugins.microbot.geHandler.geHandlerScript;
+import net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
@@ -19,6 +21,7 @@ public class WheatScript extends Script {
     public static double version = 1.0;
 
     public static WheatConfig config;
+    public static long stopTimer = 1;
 
     private static final WorldArea bankArea = new WorldArea(3092, 3242, 2, 5, 0);
     private static final WorldArea wheatArea = new WorldArea(3107, 3270, 12, 7, 0);
@@ -26,13 +29,14 @@ public class WheatScript extends Script {
     public static int profit;
     private int pickedWheat = 0;
 
-    private static int bankingCountDown = 30;
-    private static int pickingCountdown = 120;
+    private static int bankingCountDown = 50;
+    private static int pickingCountdown = 160;
 
     public boolean run(WheatConfig config) {
         WheatScript.config = config;
         pickedWheat = Rs2Inventory.count(1947);
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
+            rasMasterScriptScript.autoShutdown("Wheat");
             if (!super.run()) return;
             if (!Microbot.isLoggedIn()) return;
             if (bankingCountDown == 0 || pickingCountdown == 0) {
@@ -117,6 +121,15 @@ public class WheatScript extends Script {
             WorldPoint randomBankPoint = bankArea.toWorldPointList().get(Random.random(0, bankArea.toWorldPointList().size() - 1));
             Rs2Walker.walkTo(randomBankPoint,0);
         }
+    }
+
+    @Override
+    public void shutdown() {
+        stopTimer = 1;
+        rasMasterScriptScript.stopPlugin("Wheat");
+        do{sleep(2000);}
+        while (rasMasterScriptScript.isPlugEnabled("Wheat"));
+        super.shutdown();
     }
 
 }

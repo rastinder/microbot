@@ -49,7 +49,7 @@ public class rasHardLeatherScript extends Script {
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
                 if (stopTimer == 1)
-                    stopTimer = random(1800000,2760000) + System.currentTimeMillis();
+                    stopTimer = rasMasterScriptScript.autoStopTimer();
                 hopworld();
                 onlyloot = config.loot();
                 long endTime = System.currentTimeMillis();
@@ -74,16 +74,17 @@ public class rasHardLeatherScript extends Script {
                         sleep(500); // gotograndexchange and sell all
                     if (stopTimer < System.currentTimeMillis()){
                         System.out.println("shutting down");
-                        shutdown();return;
+                        shutdownviaTime();return;
                     }
                     sleepUntil(() -> Rs2Bank.closeBank(), 1000);
                 }
                 if ( Rs2Inventory.isFull() && Rs2Inventory.hasItemAmount("Cowhide", 1)) {
                     if (Rs2Inventory.ItemQuantity(coins) < minCoins && allCoinsInInv) {
-                        if(!rasMasterScriptScript.isinALKhrid() || (rasMasterScriptScript.isinALKhrid() && Rs2Inventory.ItemQuantity(coins) < 10)) {
+                        if(!rasMasterScriptScript.isinALKhrid() ||  Rs2Inventory.ItemQuantity(coins) > 10) {
                             lootfromGoblins();
                         }else {
-                            shutdown();
+                            rasMasterScriptScript.homeTeleport();
+                            lootfromGoblins();
                         }
                     } else if (Rs2Inventory.ItemQuantity(coins) < minCoins && !allCoinsInInv) {
                         Rs2Bank.walkToBank();
@@ -118,10 +119,7 @@ public class rasHardLeatherScript extends Script {
                             sleep(100, 200);
                             Widget tanAll = Rs2Widget.getWidget(324, 93);
                             Microbot.getMouse().click(Rs2Widget.getWidget(324, 93).getBounds());
-                            // getIdentifier=0, getType=WIDGET_TYPE_1, getParam0=0, getParam1=21233789, getItemId=-1, isForceLeftClick=false, getWorldViewId=-1, isDeprioritized=false
-                            //                  getType=WIDGET_TYPE_1, getParam0=0, getParam1=21233789, getItemId=-1, isForceLeftClick=false, getWorldViewId=-1, isDeprioritized=false)
-                            //Rs2Widget.clickWidgetFast(tanAll, 0, -1);
-                            sleep(300, 800);
+                            //sleep(300, 800);
                             System.out.println("go to bank");
                             sleepUntil(() -> Rs2Bank.walkToBank(), 10000);
                             Rs2Player.waitForWalking();
@@ -148,7 +146,7 @@ public class rasHardLeatherScript extends Script {
                 }
                 if (onlyloot) {
                     System.out.println("stray " + Rs2Player.getWorldLocation().distanceTo(collectCowhide));
-                    if (((System.currentTimeMillis() - lastLootTime) > 10000L) && Rs2Player.getWorldLocation().distanceTo(collectCowhide) > 11 && Rs2Inventory.ItemQuantity(coins) > 102 && !Rs2Inventory.isFull()) {
+                    if (((System.currentTimeMillis() - lastLootTime) > 10000L) && Rs2Player.getWorldLocation().distanceTo(collectCowhide) > 11 && Rs2Inventory.ItemQuantity(coins) > minCoins && !Rs2Inventory.isFull()) {
                         Rs2Walker.walkTo(collectCowhide.toWorldPoint());
                         Rs2Player.waitForWalking();
                     } else if (Rs2Inventory.ItemQuantity(coins) > minCoins && !Rs2Inventory.isFull()) {
@@ -168,11 +166,12 @@ public class rasHardLeatherScript extends Script {
                             lastLootTime = System.currentTimeMillis();
                         }
                     }
-                    else if (Rs2Inventory.ItemQuantity(coins) < minCoins && !Rs2Inventory.isFull()){
-                        if(!rasMasterScriptScript.isinALKhrid() || (rasMasterScriptScript.isinALKhrid() && Rs2Inventory.ItemQuantity(coins) < 10)) {
+                    else if (Rs2Inventory.ItemQuantity(coins) <= minCoins && !Rs2Inventory.isFull()){
+                        if(!rasMasterScriptScript.isinALKhrid() ||  Rs2Inventory.ItemQuantity(coins) > 10) {
                             lootfromGoblins();
                         }else {
-                            shutdown();
+                            rasMasterScriptScript.homeTeleport();
+                            lootfromGoblins();
                         }
                     }
                 } else if (!Rs2Inventory.hasItem("cowhide")) {
@@ -185,12 +184,12 @@ public class rasHardLeatherScript extends Script {
                         if (!Rs2Inventory.hasItem(coins) || Rs2Inventory.ItemQuantity(coins) < 200L) {
                             Rs2Bank.withdrawX(coins, 1000);
                         }
-                    } else shutdown();
+                    } else shutdownviaTime();
                     if (Rs2Bank.hasItem("Cowhide")) {
                         Rs2Bank.withdrawAll("Cowhide");
                         sleepUntil(() -> Rs2Inventory.hasItem("Cowhide"), 1000);
                         sleepUntil(() -> Rs2Bank.closeBank(), 1000);
-                    } else shutdown();
+                    } else shutdownviaTime();
                 }
 
             } catch (
@@ -200,13 +199,16 @@ public class rasHardLeatherScript extends Script {
         }, 0, 1000, TimeUnit.MILLISECONDS);
         return true;
     }
-
-    @Override
-    public void shutdown() {
+    public void shutdownviaTime() {
         if (rasMasterScriptScript.isinALKhrid())
             rasMasterScriptScript.homeTeleport();
         geHandlerScript.goSell(false,5,new int[]{0},"Hard leather");
         stopTimer = 1;
+        shutdown();
+
+    }
+    @Override
+    public void shutdown() {
         rasMasterScriptScript.stopPlugin("ras HardLeather");
         do{sleep(2000);}
         while (rasMasterScriptScript.isPlugEnabled("ras HardLeather"));
@@ -214,13 +216,13 @@ public class rasHardLeatherScript extends Script {
     }
 
     private void lootfromGoblins() {
-        if (Rs2Inventory.ItemQuantity(coins) < minCoins && !Rs2Inventory.isFull()) {
+        if (Rs2Inventory.ItemQuantity(coins) <= minCoins && !Rs2Inventory.isFull()) {
             hopworld();
             System.out.println("collecting 101 coins");
             long timenow = System.currentTimeMillis();
-            while (Rs2Inventory.ItemQuantity(coins) < minCoins) {
+            while (Rs2Inventory.ItemQuantity(coins) <= minCoins) {
                 if (System.currentTimeMillis() - timenow > 380000)
-                    shutdown();
+                    shutdownviaTime();
                 if (Rs2Player.getWorldLocation().distanceTo(new WorldPoint(3250, 3232, 0)) < 10 && Rs2GroundItem.loot(coins)) {
                         sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 15000);
                 } else if (Rs2Player.getWorldLocation().distanceTo(new WorldPoint(3250, 3232, 0)) > 5)
@@ -252,6 +254,7 @@ public class rasHardLeatherScript extends Script {
             }
             world = Microbot.getClient().getWorld();
         }
+        sleep(500);
         Rs2Tab.switchToInventoryTab();
     }
 }

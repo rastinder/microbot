@@ -68,7 +68,7 @@ public class rasMagicTrainScript extends Script {
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
                 if (stopTimer == 1)
-                    stopTimer = random(1800000,2760000) + System.currentTimeMillis();
+                    stopTimer = rasMasterScriptScript.autoStopTimer();
                 long startTime = System.currentTimeMillis();
                 System.out.println("magic level " + Rs2Player.getRealSkillLevel(Skill.MAGIC));
                 if(!Rs2Player.isInteracting()) {

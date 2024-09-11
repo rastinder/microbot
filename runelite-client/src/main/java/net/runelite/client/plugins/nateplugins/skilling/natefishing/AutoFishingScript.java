@@ -68,7 +68,7 @@ public class AutoFishingScript extends Script {
                         break;
                     case RESETTING:
                         if (config.useBank()) {
-                            Rs2Bank.walkToBank();
+                            //Rs2Bank.walkToBank();
                             if (!Rs2Bank.bankItemsAndWalkBackToOriginalPosition(itemNames, initialPlayerLocation))
                                 return;
                             state = State.FISHING;

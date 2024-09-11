@@ -21,7 +21,7 @@ public class ExampleScript extends Script {
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
                 if (stopTimer == 1)
-                    stopTimer = random(1800000,2760000) + System.currentTimeMillis();
+                    stopTimer = rasMasterScriptScript.autoStopTimer();
                 long startTime = System.currentTimeMillis();
 
                 //CODE HERE

@@ -208,7 +208,7 @@ public class geHandlerScript extends Script {
             }
             catch (Exception e)
             {
-                System.out.println(e);
+                System.out.println("cant find item in inv that needs to sell"+e);
             }
         }
         Rs2GrandExchange.closeExchange();

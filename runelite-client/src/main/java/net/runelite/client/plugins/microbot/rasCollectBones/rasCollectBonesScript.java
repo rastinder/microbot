@@ -63,7 +63,7 @@ public class rasCollectBonesScript extends Script {
             }
             try {
                 if (stopTimer == 1)
-                    stopTimer = random(1800000,2760000) + System.currentTimeMillis();
+                    stopTimer = rasMasterScriptScript.autoStopTimer();
                 if (Rs2Player.getWorldLocation().distanceTo(deathlocation) < 10) {
                     dialog.deathdialog();
                 }

@@ -45,7 +45,7 @@ public class rasTinderboxScript extends Script {
                 if (rasMasterScriptScript.autoShutdown("ras Tinderbox")) return;
                 if (!super.run()) return;
                 if (stopTimer == 1)
-                    stopTimer = random(1800000, 2760000) + System.currentTimeMillis();
+                    stopTimer = rasMasterScriptScript.autoStopTimer();
                 long startTime = System.currentTimeMillis();
 
                 if (Rs2Inventory.isFull() ){
