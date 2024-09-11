@@ -7,7 +7,6 @@ import net.runelite.api.events.ChatMessage;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
-import net.runelite.client.plugins.cluescrolls.clues.emote.Emote;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.geHandler.geHandlerScript;
@@ -45,7 +44,8 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -187,7 +187,7 @@ public class MQuestScript extends Script {
                 if (getQuestHelperPlugin().getSelectedQuest() != null && !Microbot.getClientThread().runOnClientThread(() -> getQuestHelperPlugin().getSelectedQuest().isCompleted())) {
                     Widget widget = Rs2Widget.findWidget("Start ");
                     if (Rs2Widget.isWidgetVisible(WidgetInfo.DIALOG_OPTION_OPTIONS) && getQuestHelperPlugin().getSelectedQuest().getQuest().getId() != Quest.COOKS_ASSISTANT.getId() || (widget != null &&
-                            Microbot.getClientThread().runOnClientThread(() -> widget.getParent().getId()) != 10616888)) {
+                            Microbot.getClientThread().runOnClientThread(() -> widget.getParent().getId()) != 10616888) && !Rs2Bank.isOpen()) {
                         Rs2Keyboard.keyPress('1');
                         Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
                         return;
@@ -1977,6 +1977,8 @@ List <WorldPoint> Walkto =Rs2Tile.getWalkableTilesAroundPlayer(1);
             WorldPoint stepLocation = object == null ? step.getWorldPoint() : object.getWorldLocation();
             int radius = 0;
             while (targetTile == null) {
+                if (mainScheduledFuture.isCancelled())
+                    break;
                 radius++;
                 TileObject finalObject = object;
                 targetTile = Rs2Tile.getWalkableTilesAroundTile(stepLocation, radius)
