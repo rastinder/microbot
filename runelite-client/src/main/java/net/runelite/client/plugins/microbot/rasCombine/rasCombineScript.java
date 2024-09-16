@@ -31,9 +31,6 @@ public class rasCombineScript extends Script {
 
     public boolean run(rasCombineConfig config) {
         Microbot.enableAutoRunOn = false;
-        //String item1 = config.item1();
-        //String item2 = config.item2();
-        //String item3 = config.item3();
 
         AtomicReference<String> item12 = new AtomicReference<>("");
 
@@ -83,7 +80,7 @@ public class rasCombineScript extends Script {
                                 sleepUntilTrue(() -> Rs2Inventory.hasItem(config.item2()), 100, 1000); // may not work if already present in less quantity
                             }
                         //}
-                        //else if (Rs2Inventory.ItemQuantity(config.item2()) == config.item2Count()) { // remove else if problem testing
+                        //else if (Rs2Inventory.ItemQuantity(config.item2()) == config.item2Count()) { // remove else if problem testingOverlay
                             if (Rs2Bank.hasItem(config.item1())) {
                                 Rs2Bank.withdrawX(true, config.item1(), config.item1Count());
                                 sleepUntilTrue(() -> Rs2Inventory.hasItem(config.item1()), 100, 1000); // may not work if already present in less quantity
@@ -115,9 +112,8 @@ public class rasCombineScript extends Script {
                         if ((item1Count == 0 ^ item2Count == 0) && config.item1Count() != 1) {
                             int count = (int) (item1Count == 0 ? item2Count : item1Count);
                             String itemName = item1Count == 0 ? config.item1() : config.item2();
-                            if (!geHandlerScript.goBuyAndReturn(new int[] {count},true,false,5,true,itemName))
+                            if (!geHandlerScript.goBuyAndReturn(new int[] {count},true,false,10,true,itemName))
                                 shutdown();
-
                         } else {
                             if (config.item1Count() != 1) { //== 14
                                 if (!geHandlerScript.buyItemsWithRatio(coins, new double[]{1, 1}, 500, true, config.item1(), config.item2())) { // break if buylimit exceed
@@ -203,12 +199,7 @@ public class rasCombineScript extends Script {
     @Override
     public void shutdown() {
         stopTimer = 1;
-        //rasMasterScriptScript masterControl = new rasMasterScriptScript();
         rasMasterScriptScript.stopPlugin("ras Combine");
-        do{sleep(2000);}
-        while (rasMasterScriptScript.isPlugEnabled("ras Combine"));
-        //Plugin p = DashboardWebSocket.findPlugin("ras combine");
-        //Microbot.getPluginManager().stopPlugin(p);
         super.shutdown();
     }
     public String processInventory(String item1, String item2, int item1Count, int item2Count,Boolean spaceBar) {

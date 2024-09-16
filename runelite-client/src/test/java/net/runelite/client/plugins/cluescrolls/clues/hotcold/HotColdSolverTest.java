@@ -211,7 +211,7 @@ public class HotColdSolverTest
 	 *
 	 * @param solver                             The hot-cold solver to signal to.
 	 *                                           <br>
-	 *                                           Note: This will mutate the passed solver, which is helpful for testing
+	 *                                           Note: This will mutate the passed solver, which is helpful for testingOverlay
 	 *                                           multiple sequential steps.
 	 * @param testPoint                          The {@link WorldPoint} where the signal occurs.
 	 * @param deviceResponse                     The string containing the temperature and temperature change which is

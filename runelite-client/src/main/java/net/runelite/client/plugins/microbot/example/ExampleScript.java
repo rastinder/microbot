@@ -14,10 +14,10 @@ public class ExampleScript extends Script {
 
     public boolean run(ExampleConfig config) {
         Microbot.enableAutoRunOn = false;
-        if (rasMasterScriptScript.autoShutdown("example"))
-            return true;
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
+                if (rasMasterScriptScript.autoShutdown("example"))
+                    return;
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
                 if (stopTimer == 1)
@@ -28,7 +28,7 @@ public class ExampleScript extends Script {
 
                 long endTime = System.currentTimeMillis();
                 long totalTime = endTime - startTime;
-                System.out.println("Total time for loop " + totalTime);
+                //System.out.println("Total time for loop " + totalTime);
 
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());

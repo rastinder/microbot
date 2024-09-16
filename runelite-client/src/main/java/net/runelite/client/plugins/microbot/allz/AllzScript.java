@@ -350,7 +350,7 @@ public class AllzScript extends Script {
                 "Beer","Beer",  "Knife","Cooked meat","Bread"
         };
         int[] quantities = {1,1,1,1,1};
-        geHandlerScript.goBuyAndReturn(quantities, 5, itemNames);
+        geHandlerScript.goBuyAndReturn(quantities, 10, itemNames);
 
         if(Rs2Player.getRealSkillLevel(Skill.MINING) < 10){
             Rs2Walker.walkTo(new WorldPoint(3283, 3366, 0), 0);

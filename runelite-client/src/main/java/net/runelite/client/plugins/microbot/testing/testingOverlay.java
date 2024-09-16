@@ -1,4 +1,4 @@
-package net.runelite.client.plugins.microbot.testing.example;
+package net.runelite.client.plugins.microbot.testing;
 
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.ui.overlay.OverlayPanel;
@@ -9,9 +9,10 @@ import net.runelite.client.ui.overlay.components.TitleComponent;
 import javax.inject.Inject;
 import java.awt.*;
 
-public class ExampleOverlay extends OverlayPanel {
+public class testingOverlay extends OverlayPanel {
+
     @Inject
-    ExampleOverlay(ExamplePlugin plugin)
+    testingOverlay(testingPlugin plugin)
     {
         super(plugin);
         setPosition(OverlayPosition.TOP_LEFT);
@@ -22,7 +23,7 @@ public class ExampleOverlay extends OverlayPanel {
         try {
             panelComponent.setPreferredSize(new Dimension(200, 300));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text("Micro Example V" + ExampleScript.version)
+                    .text("test")
                     .color(Color.GREEN)
                     .build());
 
@@ -31,6 +32,10 @@ public class ExampleOverlay extends OverlayPanel {
             panelComponent.getChildren().add(LineComponent.builder()
                     .left(Microbot.status)
                     .build());
+            panelComponent.getChildren().add(LineComponent.builder()
+                    .left("Shutdown in: " + (testingScript.stopTimer / 60000) + " minutes")
+                    .build());
+
 
 
         } catch(Exception ex) {

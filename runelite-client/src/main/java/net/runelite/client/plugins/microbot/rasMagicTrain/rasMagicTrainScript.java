@@ -459,7 +459,7 @@ public class rasMagicTrainScript extends Script {
         catch (Exception x)
         {
             System.out.println("problem in function: " +x);
-            //attackLocationFound = false; // comment out for testing otherwise leave it
+            //attackLocationFound = false; // comment out for testingOverlay otherwise leave it
         }
         return true;
     }
@@ -623,7 +623,7 @@ public class rasMagicTrainScript extends Script {
             return false; // Unsupported spell
         }
 
-        return geHandlerScript.goBuyAndReturn(runesNeeded,5, itemsToBuy);
+        return geHandlerScript.goBuyAndReturn(runesNeeded,10, itemsToBuy);
         //return true;
     }
 

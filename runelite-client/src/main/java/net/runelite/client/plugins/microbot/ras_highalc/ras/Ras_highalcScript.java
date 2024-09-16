@@ -123,7 +123,7 @@ public class Ras_highalcScript extends Script {
                 if (stopTimer < System.currentTimeMillis()){
                     System.out.println("wrap up started");
                     if (config.autoBuy())
-                        Microbot.getPluginManager().setPluginValue("highalc", "Autobuy", true); // supposed to be false testing
+                        Microbot.getPluginManager().setPluginValue("highalc", "Autobuy", true); // supposed to be false testingOverlay
                     else if (!config.autoBuy() && config.highAlch() && Rs2Inventory.count() <= 2) {
                         System.out.println("stopping high alch");
                         Rs2Bank.openBank();
@@ -513,7 +513,7 @@ public class Ras_highalcScript extends Script {
                             }
                             if (!super.run()) {
                                 System.out.println("Returning due to super.run() being false");
-                                //return; testing
+                                //return; testingOverlay
                             }
                             highAlch(item);
                             System.out.println("successful bought " + Rs2GrandExchange.hasBoughtOffer());
@@ -536,7 +536,11 @@ public class Ras_highalcScript extends Script {
                         }
                         //inactivityTimer.update();
                     }
+                    else {
+                        nature_rune_check();
+                    }
                 }
+
             }
             System.out.println("Exiting alchInventory() function");
         }
@@ -587,7 +591,7 @@ public class Ras_highalcScript extends Script {
         }
     }
 
-    public class OSRSPriceFetcher {
+    public static class OSRSPriceFetcher {
         private static final String API_URL = "https://prices.runescape.wiki/api/v1/osrs/latest";
         private final HttpClient client = HttpClient.newHttpClient();
         private JsonNode priceData = null;

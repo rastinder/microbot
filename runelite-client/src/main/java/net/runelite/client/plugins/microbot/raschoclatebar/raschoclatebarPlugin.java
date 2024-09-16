@@ -13,7 +13,7 @@ import javax.inject.Inject;
 import java.awt.*;
 
 @PluginDescriptor(
-        name = PluginDescriptor.Default + "Example",
+        name = PluginDescriptor.Default + "choc",
         description = "Microbot example plugin",
         tags = {"example", "microbot"},
         enabledByDefault = false

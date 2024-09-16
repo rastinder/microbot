@@ -952,7 +952,7 @@ public class ModelOutlineRenderer
 		// and instead raster pixels directly. This only looks right for opaque
 		// outlines since some pixels of the outline can get drawn more than once.
 		// Performance becomes worse than queueing when using larger outline widths,
-		// usually around 10 px outline width according to some basic testing.
+		// usually around 10 px outline width according to some basic testingOverlay.
 		boolean directWrite = color.getAlpha() == 255 && outlineWidth <= DIRECT_WRITE_OUTLINE_WIDTH_THRESHOLD &&
 			(feather == 0 || outlineWidth == 1); // Feather has no effect on outlineWidth == 1
 

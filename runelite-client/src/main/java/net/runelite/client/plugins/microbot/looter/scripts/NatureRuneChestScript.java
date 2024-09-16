@@ -117,7 +117,7 @@ public class NatureRuneChestScript extends Script {
         Rs2AntibanSettings.dynamicIntensity = true;
         Rs2AntibanSettings.devDebug = false;
         Rs2AntibanSettings.moveMouseRandomly = true;
-        Rs2AntibanSettings.takeMicroBreaks = true;
+        Rs2AntibanSettings.takeMicroBreaks = false;
         Rs2AntibanSettings.microBreakDurationLow = 3;
         Rs2AntibanSettings.microBreakDurationHigh = 15;
         Rs2AntibanSettings.actionCooldownChance = 0.4;

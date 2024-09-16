@@ -160,7 +160,7 @@ public class Conditions extends ConditionForStep
 			return operation.check(conditionsPassed, quantity);
 		}
 
-		//TODO: Replace with LogicType check, however more testing to be done to make sure nothing breaks
+		//TODO: Replace with LogicType check, however more testingOverlay to be done to make sure nothing breaks
 		if ((conditionsPassed > 0 && logicType == LogicType.OR)
 			|| (conditionsPassed == 0 && logicType == LogicType.NOR)
 			|| (conditionsPassed == conditions.size() && logicType == LogicType.AND)

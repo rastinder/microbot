@@ -407,7 +407,7 @@ public class RecruitmentDrive extends BasicQuestHelper
 		PanelDetails startingPanel = new PanelDetails("Starting out",
 			new ArrayList<>(Collections.singletonList(conditionalTalkToSirAmikVarze)));
 
-		PanelDetails testing = new PanelDetails("Start the testing",
+		PanelDetails testing = new PanelDetails("Start the testingOverlay",
 			Collections.singletonList(talkToSirTiffy), noItemRequirement);
 
 		PanelDetails sirTinleysRoom = new PanelDetails("Sir Tinley",

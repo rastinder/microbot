@@ -108,7 +108,7 @@ public class MWintertodtScript extends Script {
         Rs2AntibanSettings.moveMouseRandomly = true;
         Rs2AntibanSettings.moveMouseOffScreen = true;
         Rs2AntibanSettings.naturalMouse = true;
-        Rs2AntibanSettings.takeMicroBreaks = true;
+        Rs2AntibanSettings.takeMicroBreaks = false;
         Rs2AntibanSettings.profileSwitching = false;
         Rs2AntibanSettings.actionCooldownChance = 0.15;
         Rs2AntibanSettings.microBreakChance = 0.05;

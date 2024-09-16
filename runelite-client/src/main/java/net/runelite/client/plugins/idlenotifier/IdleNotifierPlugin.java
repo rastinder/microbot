@@ -882,7 +882,7 @@ public class IdleNotifierPlugin extends Plugin
 		}
 
 		// We are in combat, so now we have to check for the timer that knocks you out of combat
-		// I think there are other conditions that I don't know about, because during testing I just didn't
+		// I think there are other conditions that I don't know about, because during testingOverlay I just didn't
 		// get removed from combat sometimes.
 		final long lastInteractionAgo = System.currentTimeMillis() - client.getMouseLastPressedMillis();
 		if (lastInteractionAgo < COMBAT_WARNING_MILLIS || client.getKeyboardIdleTicks() < COMBAT_WARNING_CLIENT_TICKS)

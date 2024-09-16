@@ -44,8 +44,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -758,7 +757,7 @@ public class MQuestScript extends Script {
                 Rs2GrandExchange.openExchange();
                 sleep(2000);
             }
-            geHandlerScript.goBuyAndReturn(new int[]{1,1,1,1},5, "Red bead","Yellow bead","Black bead","White bead");
+            geHandlerScript.goBuyAndReturn(new int[]{1,1,1,1},10, "Red bead","Yellow bead","Black bead","White bead");
 
         }
         if((Objects.equals(getQuestHelperPlugin().getSelectedQuest().getQuest().name(), "WITCHS_POTION"))&&("Bring the ingredients to Hetty.".equals(getQuestHelperPlugin().getSelectedQuest().getCurrentStep().getActiveStep().getText().get(0).toString()))&& Rs2Inventory.contains("Rat's tail") && !Rs2Inventory.contains("Burnt meat") && !Rs2Inventory.contains("Eye of newt") && !Rs2Inventory.contains("Onion")){

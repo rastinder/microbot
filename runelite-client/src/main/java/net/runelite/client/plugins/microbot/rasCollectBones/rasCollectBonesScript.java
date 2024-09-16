@@ -55,12 +55,9 @@ public class rasCollectBonesScript extends Script {
         centerY = 0;
         firstTimecheckScript dialog = new firstTimecheckScript();
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            if (rasMasterScriptScript.autoShutdown("ras range bone collector"))
-                return;
+            if (rasMasterScriptScript.autoShutdown("ras range bone collector"))return;
             if (!Microbot.isLoggedIn()) return;
-            if (!super.run()) {
-                return;
-            }
+            if (!super.run()) {return;}
             try {
                 if (stopTimer == 1)
                     stopTimer = rasMasterScriptScript.autoStopTimer();
@@ -485,11 +482,10 @@ public class rasCollectBonesScript extends Script {
     }
     @Override
     public void shutdown() {
+        stopTimer = 1;
         String pluginName = "ras range bone collector";
         //rasMasterScriptScript masterControl = new rasMasterScriptScript();
         rasMasterScriptScript.stopPlugin(pluginName);
-        do{sleep(2000);}
-        while (rasMasterScriptScript.isPlugEnabled(pluginName));
         super.shutdown();
     }
     public static void waitAndPressContinue(){

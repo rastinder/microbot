@@ -200,7 +200,8 @@ public class rasHardLeatherScript extends Script {
         return true;
     }
     public void shutdownviaTime() {
-        if (rasMasterScriptScript.isinALKhrid())
+        Rs2Bank.closeBank();
+        if (rasMasterScriptScript.isinALKhrid() && Rs2Inventory.ItemQuantity(995) < minCoins)
             rasMasterScriptScript.homeTeleport();
         geHandlerScript.goSell(false,5,new int[]{0},"Hard leather");
         stopTimer = 1;

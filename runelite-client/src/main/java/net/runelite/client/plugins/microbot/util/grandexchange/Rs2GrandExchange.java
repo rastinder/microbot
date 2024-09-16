@@ -5,6 +5,7 @@ import net.runelite.api.NPC;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.bank.enums.BankLocation;
@@ -17,6 +18,7 @@ import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 import org.apache.commons.lang3.tuple.Pair;
 
+import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +34,8 @@ public class Rs2GrandExchange {
     public static final int GRAND_EXCHANGE_OFFER_CONTAINER_QTY_X = 30474265;
     public static final int GRAND_EXCHANGE_OFFER_CONTAINER_QTY_1 = 30474265;
     public static final int COLLECT_BUTTON = 30474246;
+    @Inject
+    private static ConfigManager configManager;
 
     /**
      * close the grand exchange interface
@@ -94,6 +98,9 @@ public class Rs2GrandExchange {
      */
     public static boolean buyItem(String itemName, int price, int quantity) {
         return buyItem(itemName, itemName, price, quantity);
+    }
+    public static void getBoughtNumber(){
+        System.out.println( configManager.getRSProfileConfiguration("geoffer", Integer.toString(1)));
     }
 
     /**

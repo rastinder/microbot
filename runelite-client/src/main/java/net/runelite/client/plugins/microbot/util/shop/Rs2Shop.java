@@ -141,7 +141,7 @@ public class Rs2Shop {
     public static void storeShopItemsInMemory(ItemContainerChanged e, int id) {
         List<Rs2Item> list = updateItemContainer(id, e);
         if (list != null) {
-            System.out.println("Storing shopItems");
+            //System.out.println("Storing shopItems");
             shopItems = list;
 
             /*Print each item's name

@@ -119,7 +119,7 @@ import org.apache.commons.lang3.time.DurationFormatUtils;
 public class GrandExchangePlugin extends Plugin
 {
 	@VisibleForTesting
-	static final int GE_SLOTS = 8;
+	public static final int GE_SLOTS = 8;
 	private static final int GE_LOGIN_BURST_WINDOW = 2; // ticks
 	private static final int GE_MAX_EXAMINE_LEN = 100;
 
@@ -200,7 +200,7 @@ public class GrandExchangePlugin extends Plugin
 	private long lastAccount;
 	private int tradeSeq;
 
-	private SavedOffer getOffer(int slot)
+	public SavedOffer getOffer(int slot)
 	{
 		String offer = configManager.getRSProfileConfiguration("geoffer", Integer.toString(slot));
 		if (offer == null)
@@ -823,7 +823,7 @@ public class GrandExchangePlugin extends Plugin
 		}
 	}
 
-	private Instant getLimitResetTime(int itemId)
+	public  Instant getLimitResetTime(int itemId)
 	{
 		Instant lastDateTime = configManager.getRSProfileConfiguration(GrandExchangeConfig.CONFIG_GROUP,
 			BUY_LIMIT_KEY + "." + itemId, Instant.class);
@@ -851,7 +851,7 @@ public class GrandExchangePlugin extends Plugin
 		}
 	}
 
-	private String setExamineText(String examine, String fee, boolean buy)
+	public String setExamineText(String examine, String fee, boolean buy)
 	{
 		final int itemId = client.getVarpValue(VarPlayer.CURRENT_GE_ITEM);
 		StringBuilder sb = new StringBuilder();

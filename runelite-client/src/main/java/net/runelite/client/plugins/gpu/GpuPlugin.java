@@ -1283,7 +1283,7 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 			GL43C.glUniform1i(uniTextures, 1); // texture sampler array is bound to texture1
 
 			// We just allow the GL to do face culling. Note this requires the priority renderer
-			// to have logic to disregard culled faces in the priority depth testing.
+			// to have logic to disregard culled faces in the priority depth testingOverlay.
 			GL43C.glEnable(GL43C.GL_CULL_FACE);
 
 			// Enable blending for alpha

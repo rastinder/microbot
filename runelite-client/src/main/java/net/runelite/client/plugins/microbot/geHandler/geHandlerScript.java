@@ -1,10 +1,15 @@
 package net.runelite.client.plugins.microbot.geHandler;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.widgets.Widget;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.game.ItemManager;
+import net.runelite.client.plugins.grandexchange.GrandExchangePlugin;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
+import net.runelite.client.plugins.microbot.ras_highalc.ras.Ras_highalcScript;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
 import net.runelite.client.plugins.microbot.util.grandexchange.GrandExchangeSlots;
@@ -16,21 +21,39 @@ import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 import net.runelite.http.api.item.ItemPrice;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.Math.abs;
 import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
-
+import java.util.logging.Logger;
 
 public class geHandlerScript extends Script {
+    private static final Logger logger = Logger.getLogger(geHandlerScript.class.getName());
     public static double version = 1.0;
-    @Inject
     private static ItemManager itemManager;
+    private static ConfigManager configManager;
+    public static int boughtQuantity = 0;
+    private static Map<String, Long> itemBuyLimitMap = new HashMap<>();
+    private static final long BUY_LIMIT_DURATION = 4 * 60 * 60 * 1000;
 
+    private static final String API_URL = "https://prices.runescape.wiki/api/v1/osrs/latest";
+    private static final HttpClient client = HttpClient.newHttpClient();
+    private static JsonNode priceData = null;
+
+
+
+    private static final AtomicBoolean isInitialized = new AtomicBoolean(false);
     public boolean run(geHandlerConfig config) {
         Microbot.enableAutoRunOn = false;
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
@@ -43,7 +66,7 @@ public class geHandlerScript extends Script {
 
                 long endTime = System.currentTimeMillis();
                 long totalTime = endTime - startTime;
-                System.out.println("Total time for loop " + totalTime);
+                //System.out.println("gehandel " + totalTime);
 
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
@@ -82,9 +105,13 @@ public class geHandlerScript extends Script {
         long coins = Rs2Inventory.ItemQuantity(995) + coinsInBank;
         Rs2GrandExchange.openExchange();
         for (int i = 0; i < itemNames.length; i++) {
-            if (amounts[i] == 0) {
+            int remainingBuyLimit = GELimits.getRemainingBuyLimit(itemNames[i]);
+            if (amounts[i] == 0 || remainingBuyLimit == 0) {
+                if (remainingBuyLimit == 0)
+                    return false;
                 continue; // Skip this item if the purchase amount is 0
             }
+            amounts[i] = Math.min(amounts[i],remainingBuyLimit);
             int pricePerItem = priceChecker(itemNames[i])[0];
             if (collectInBank)
                 Rs2GrandExchange.collectToBank();
@@ -103,7 +130,7 @@ public class geHandlerScript extends Script {
                     abortAllActiveOffers();
                     Rs2GrandExchange.collectToBank();
                 }
-                if (loopCounter == 20)
+                if (loopCounter == 10)
                     return yesbought;
 
                 // If insufficient coins and compromise is allowed
@@ -127,8 +154,13 @@ public class geHandlerScript extends Script {
 
                 // Proceed with buying if coins are sufficient
                 if (coins >= (long) pricePerItem * amounts[i]) {
+                    boughtQuantity = 0;
                     Rs2GrandExchange.buyItem(itemNames[i], pricePerItem, amounts[i]);
                     sleepUntilTrue(() -> Rs2GrandExchange.hasBoughtOffer(), 500, 12000);
+                    System.out.println("boughtQuantity= " + boughtQuantity);
+                    amounts[i] = amounts[i] - boughtQuantity;
+                    GELimits.setRemainingBuyLimit(itemNames[i],boughtQuantity);
+                    GELimits.printUpdatedBuyLimits();
 
                     Widget[] collectButton = Rs2Widget.getWidget(465, 6).getDynamicChildren();
                     if (!collectButton[1].isSelfHidden() && Rs2GrandExchange.hasBoughtOffer()) {
@@ -154,8 +186,11 @@ public class geHandlerScript extends Script {
         }
         return yesbought;
     }
+    public static void goSell(boolean returnAfterSell, int decreasePricePercent, int[] amounts, String... itemNames){
+        goSell( returnAfterSell,  decreasePricePercent,false,  amounts, itemNames);
+    }
 
-    public static void goSell(boolean returnAfterSell, int decreasePricePercent, int[] amounts, String... itemNames) {
+    public static void goSell(boolean returnAfterSell, int decreasePricePercent,boolean exactname, int[] amounts, String... itemNames) {
         Rs2Walker.setTarget(null);
         WorldPoint savedLocation = Rs2Player.getWorldLocation();
         WorldPoint geLocation = new WorldPoint(3164, 3485, 0); // Coordinates for GE
@@ -177,14 +212,14 @@ public class geHandlerScript extends Script {
         for (int i = 0; i < itemNames.length; i++) {
             int finalI = i;
             if (amounts[i] == 0) {
-                Rs2Bank.withdrawAll(itemNames[finalI]);
+                Rs2Bank.withdrawAll(itemNames[finalI],exactname);
             }
             else if (amounts[i] < 0) {
-                Rs2Bank.withdrawAll(itemNames[finalI]);
+                Rs2Bank.withdrawAll(itemNames[finalI],exactname);
                 sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
                 Rs2Bank.depositX(itemNames[finalI],abs(amounts[i]));
             } else
-                Rs2Bank.withdrawX(itemNames[finalI], amounts[i]);
+                Rs2Bank.withdrawX(false,itemNames[finalI], amounts[i],exactname);
             sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
         }
         Rs2Bank.closeBank();
@@ -236,10 +271,15 @@ public class geHandlerScript extends Script {
         if (itemId == -1) {
             return new int[]{-1, -1}; // Item not found
         }
-
-        int pricePerItem = (int) Microbot.getClientThread().runOnClientThread(() ->
-                Microbot.getItemManager().getItemPrice(itemId));
-
+        int pricePerItem = 0;
+        try {
+             pricePerItem = (int)
+                     getHighPriceForId(itemId);
+        }
+        catch (Exception e) {
+             pricePerItem = (int) Microbot.getClientThread().runOnClientThread(() ->
+                    Microbot.getItemManager().getItemPrice(itemId));
+        }
         return new int[]{pricePerItem, itemId};
     }
     public static boolean abortAllActiveOffers() {
@@ -353,5 +393,39 @@ public class geHandlerScript extends Script {
            return goBuyAndReturn(new int[]{amount},true,true, 5, collectInBank, itemNames);
         }
 
+    }
+    public static void fetchPriceData() throws Exception {
+        System.out.println("Entering fetchPriceData() function");
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(API_URL))
+                .timeout(Duration.ofSeconds(10))
+                .header("User-Agent", "Google Sheet Updater")
+                .GET()
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println(response.statusCode());
+        if (response.statusCode() == 200) {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode rootNode = mapper.readTree(response.body());
+            priceData = rootNode.path("data");
+        } else {
+            throw new RuntimeException("Failed to fetch data: HTTP " + response.statusCode());
+        }
+        System.out.println("Exiting fetchPriceData() function");
+    }
+
+    public static int getHighPriceForId(int id) throws Exception {
+        fetchPriceData();
+        //System.out.println("Entering getHighPriceForId() function");
+        if (priceData == null) {
+            throw new IllegalStateException("Price data has not been fetched yet.");
+        }
+        JsonNode itemData = priceData.path(String.valueOf(id));
+        if (itemData.isMissingNode()) {
+            throw new IllegalArgumentException("No data found for ID " + id);
+        }
+        //System.out.println("Exiting getHighPriceForId() function");
+        return itemData.path("high").asInt();
     }
 }

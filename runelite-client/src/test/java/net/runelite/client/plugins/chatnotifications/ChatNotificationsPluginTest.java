@@ -107,7 +107,7 @@ public class ChatNotificationsPluginTest
 	{
 		when(config.highlightRegexString()).thenReturn("brandie+\ntest");
 
-		var message = "brandieeee testing";
+		var message = "brandieeee testingOverlay";
 		MessageNode messageNode = mock(MessageNode.class);
 		when(messageNode.getValue()).thenReturn(message);
 
@@ -128,7 +128,7 @@ public class ChatNotificationsPluginTest
 	{
 		when(config.highlightRegexString()).thenReturn("brandie+\nwillNotMatch");
 
-		var message = "brandieeee testing";
+		var message = "brandieeee testingOverlay";
 		MessageNode messageNode = mock(MessageNode.class);
 		when(messageNode.getValue()).thenReturn(message);
 
@@ -141,7 +141,7 @@ public class ChatNotificationsPluginTest
 		chatNotificationsPlugin.startUp();
 		chatNotificationsPlugin.onChatMessage(chatMessage);
 
-		verify(messageNode).setValue("<colHIGHLIGHT>brandieeee<colNORMAL> testing");
+		verify(messageNode).setValue("<colHIGHLIGHT>brandieeee<colNORMAL> testingOverlay");
 	}
 
 	@Test

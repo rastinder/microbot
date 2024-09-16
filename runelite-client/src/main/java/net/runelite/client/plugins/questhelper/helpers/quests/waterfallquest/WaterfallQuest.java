@@ -131,7 +131,7 @@ public class WaterfallQuest extends BasicQuestHelper
 		steps.put(4, finishingSteps);
 		steps.put(5, puttingToRest);
 		steps.put(6, puttingToRest);
-		steps.put(7, puttingToRest); // 7 didn't occur during testing
+		steps.put(7, puttingToRest); // 7 didn't occur during testingOverlay
 		steps.put(8, puttingToRest);
 
 		return steps;

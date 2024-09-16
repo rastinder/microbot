@@ -1,5 +1,4 @@
-package net.runelite.client.plugins.microbot.geHandler;
-import java.util.logging.Logger;
+package net.runelite.client.plugins.microbot.testing;
 
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
@@ -12,64 +11,63 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.grandexchange.GrandExchangePlugin;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.ui.overlay.OverlayManager;
 
 import javax.inject.Inject;
 import java.awt.*;
 
-import static net.runelite.client.plugins.microbot.geHandler.geHandlerScript.boughtQuantity;
 
 @PluginDescriptor(
-        name = PluginDescriptor.Default + "geHandler",
+        name = PluginDescriptor.Default + "testing sc",
         description = "Microbot example plugin",
         tags = {"example", "microbot"},
         enabledByDefault = false
 )
-public class geHandlerPlugin extends Plugin {
-    private static final Logger logger = Logger.getLogger(geHandlerPlugin.class.getName());
-
+@Slf4j
+public class testingPlugin extends Plugin {
+    private int[] previousQuantitiesSold = new int[GrandExchangePlugin.GE_SLOTS]; // Store previous quantities for each slot
     @Inject
-    private geHandlerConfig config;
-
-    @Inject
-    private ConfigManager configManager;
+    private testingConfig config;
+    @Provides
+    testingConfig provideConfig(ConfigManager configManager) {
+        return configManager.getConfig(testingConfig.class);
+    }
 
     @Inject
     private OverlayManager overlayManager;
+    @Inject
+    private testingOverlay testingOverlay;
 
     @Inject
-    private geHandlerOverlay geHandlerOverlay;
+    testingScript testingScript;
 
-    @Inject
-    private geHandlerScript geHandlerScript;
-
-    @Provides
-    geHandlerConfig provideConfig(ConfigManager configManager) {
-        return configManager.getConfig(geHandlerConfig.class);
-    }
 
     @Override
     protected void startUp() throws AWTException {
         if (overlayManager != null) {
-            overlayManager.add(geHandlerOverlay);
+            overlayManager.add(testingOverlay);
         }
-        geHandlerScript.run(config);
+        testingScript.run(config);
     }
 
     protected void shutDown() {
-        geHandlerScript.shutdown();
-        overlayManager.remove(geHandlerOverlay);
+        testingScript.shutdown();
+        overlayManager.remove(testingOverlay);
     }
-
     int ticks = 10;
     @Subscribe
-    public void onGameTick(GameTick tick) {
+    public void onGameTick(GameTick tick)
+    {
+        //System.out.println(getName().chars().mapToObj(i -> (char)(i + 3)).map(String::valueOf).collect(Collectors.joining()));
+
         if (ticks > 0) {
             ticks--;
         } else {
             ticks = 10;
         }
+
     }
     @Subscribe
     public void onGrandExchangeOfferChanged(GrandExchangeOfferChanged offerEvent) {
@@ -78,13 +76,12 @@ public class geHandlerPlugin extends Plugin {
 
         if (offer.getState() == GrandExchangeOfferState.EMPTY && Microbot.getClient().getGameState() != GameState.LOGGED_IN)
         {
+            // Trades are cleared by the client during LOGIN_SCREEN/HOPPING/LOGGING_IN, ignore those so we don't
+            // clear the offer config.
             return;
         }
         System.out.println(String.format("GE offer updated: state: %s, slot: %d, item: %d, qty: %d",
                 offer.getState(), slot, offer.getItemId(), offer.getQuantitySold()));
-        if (offer.getState().toString().contains("BOUGHT") ||offer.getState().toString().contains("BUYING")){
-            boughtQuantity = (int) offer.getQuantitySold();
-        }
-
     }
+
 }
