@@ -125,7 +125,7 @@ public class ConfigManager
 			SessionManager sessionManager
 	)
 	{
-		this.configProfileName = profile;
+		configProfileName = profile;
 		this.eventBus = eventBus;
 		this.client = client;
 		this.gson = gson;
@@ -312,6 +312,23 @@ public class ConfigManager
 			}
 
 			profile.setBankPin(bankPin);
+			lock.dirty();
+		}
+	}
+
+	public void setMember(ConfigProfile profile, boolean isMember) {
+
+		// flush pending config changes first in the event the profile being
+		// synced is the active profile.
+		sendConfig();
+
+		try (ProfileManager.Lock lock = profileManager.lock()) {
+			profile = lock.findProfile(profile.getId());
+			if (profile == null || profile.isMember() == isMember) {
+				return;
+			}
+
+			profile.setMember(isMember);
 			lock.dirty();
 		}
 	}

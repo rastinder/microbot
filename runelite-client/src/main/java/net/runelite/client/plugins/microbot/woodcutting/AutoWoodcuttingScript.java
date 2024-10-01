@@ -7,6 +7,9 @@ import net.runelite.api.TileObject;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
+import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
+import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
+import net.runelite.client.plugins.microbot.util.antiban.enums.Activity;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.combat.Rs2Combat;
 import net.runelite.client.plugins.microbot.util.equipment.Rs2Equipment;
@@ -50,12 +53,17 @@ public class AutoWoodcuttingScript extends Script {
         if (config.hopWhenPlayerDetected()) {
             Microbot.showMessage("Make sure autologin plugin is enabled and randomWorld checkbox is checked!");
         }
+        Rs2Antiban.resetAntibanSettings();
+        Rs2Antiban.antibanSetupTemplates.applyWoodcuttingSetup();
+        Rs2AntibanSettings.dynamicActivity = true;
+        Rs2AntibanSettings.dynamicIntensity = true;
         initialPlayerLocation = null;
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
 
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
+                if(Rs2AntibanSettings.actionCooldownActive) return;
 
                 if (initialPlayerLocation == null) {
                     initialPlayerLocation = Rs2Player.getWorldLocation();
@@ -71,16 +79,21 @@ public class AutoWoodcuttingScript extends Script {
                     return;
                 }
 
-                if (Rs2Player.isMoving() || Rs2Player.isAnimating() || Microbot.pauseAllScripts) return;
+                if (Rs2Player.isMoving() || Rs2Player.isAnimating() || Microbot.pauseAllScripts || Rs2AntibanSettings.actionCooldownActive)
+                    return;
+
+                if (Rs2AntibanSettings.actionCooldownActive)
+                    return;
 
                 switch (state) {
                     case WOODCUTTING:
+
                         if (config.hopWhenPlayerDetected()) {
-                            Rs2Player.logoutIfPlayerDetected(1, 10);
-                            return;
+                            if (Rs2Player.logoutIfPlayerDetected(1, 10))
+                                return;
                         }
 
-                        if (Rs2Equipment.isWearing("Dragon axe"))
+                        if (Rs2Equipment.isWearing("Dragon axe") || Rs2Equipment.isWearing("Dragon felling axe"))
                             Rs2Combat.setSpecState(true, 1000);
 
                         if (Rs2Inventory.isFull()) {
@@ -92,9 +105,13 @@ public class AutoWoodcuttingScript extends Script {
                         GameObject tree = Rs2GameObject.findObject(getTreeByLevel().getName(), true, 100, false, getInitialPlayerLocation());
 
                         if (tree != null) {
-                            Rs2GameObject.interact(tree, getTreeByLevel().getAction());
-                            if (config.walkBack().equals(WoodcuttingWalkBack.LAST_LOCATION)) {
-                                returnPoint = Microbot.getClient().getLocalPlayer().getWorldLocation();
+                            if (Rs2GameObject.interact(tree, getTreeByLevel().getAction())) {
+                                Rs2Player.waitForAnimation();
+                                Rs2Antiban.actionCooldown();
+
+                                if (config.walkBack().equals(WoodcuttingWalkBack.LAST_LOCATION)) {
+                                    returnPoint = Rs2Player.getWorldLocation();
+                                }
                             }
                         }
                         break;
@@ -186,7 +203,7 @@ public class AutoWoodcuttingScript extends Script {
     }
 
     private boolean isFiremake() {
-        return Rs2Player.getAnimation() == AnimationID.FIREMAKING;
+        return Rs2Player.isAnimating(1800) && Rs2Player.getLastAnimationID() == AnimationID.FIREMAKING;
     }
 
     private WorldPoint calculateReturnPoint(AutoWoodcuttingConfig config) {
@@ -215,5 +232,13 @@ public class AutoWoodcuttingScript extends Script {
             }
         }
         return bestTree;
+        }
+
+    @Override
+    public void shutdown() {
+        super.shutdown();
+        returnPoint = null;
+        initialPlayerLocation = null;
+        Rs2Antiban.resetAntibanSettings();
     }
 }
