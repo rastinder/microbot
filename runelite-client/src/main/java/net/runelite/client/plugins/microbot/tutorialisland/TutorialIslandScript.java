@@ -258,6 +258,7 @@ public class TutorialIslandScript extends Script {
             Rs2Keyboard.typeString(Integer.toString(random(1, 3)));
             return;
         }
+        if (isInDialogue()) return;
         if (Microbot.getVarbitPlayerValue(281) == 3) {
             Rs2Widget.clickWidget(10747945);
             sleep(1000);

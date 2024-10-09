@@ -6,7 +6,6 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
-import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.geHandler.geHandlerScript;
@@ -35,6 +34,7 @@ import net.runelite.client.plugins.microbot.util.tile.Rs2Tile;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 import net.runelite.client.plugins.questhelper.QuestHelperPlugin;
+import net.runelite.client.plugins.questhelper.questinfo.QuestHelperQuest;
 import net.runelite.client.plugins.questhelper.requirements.Requirement;
 import net.runelite.client.plugins.questhelper.requirements.item.ItemRequirement;
 import net.runelite.client.plugins.questhelper.steps.*;
@@ -75,6 +75,7 @@ public class MQuestScript extends Script {
             return null;
         }
     }
+    public static double version = 0.3;
 
     public static boolean isWithinXDistanceOfPlayer(WorldPoint targetPoint, int distance) {
         WorldPoint playerLocation = Rs2Player.getWorldLocation();
@@ -139,8 +140,8 @@ public class MQuestScript extends Script {
                 if (Rs2Dialogue.isInDialogue() && dialogueStartedStep == null)
                     dialogueStartedStep = questStep;
 
-                if (questStep != null && Rs2Widget.isWidgetVisible(WidgetInfo.DIALOG_OPTION_OPTIONS)){
-                    var dialogOptions = Rs2Widget.getWidget(WidgetInfo.DIALOG_OPTION_OPTIONS);
+                if (questStep != null && Rs2Widget.isWidgetVisible(ComponentID.DIALOG_OPTION_OPTIONS)){
+                    var dialogOptions = Rs2Widget.getWidget(ComponentID.DIALOG_OPTION_OPTIONS);
                     var dialogChoices = dialogOptions.getDynamicChildren();
 
                     for (var choice : questStep.getChoices().getChoices()){
@@ -185,7 +186,7 @@ public class MQuestScript extends Script {
 
                 if (getQuestHelperPlugin().getSelectedQuest() != null && !Microbot.getClientThread().runOnClientThread(() -> getQuestHelperPlugin().getSelectedQuest().isCompleted())) {
                     Widget widget = Rs2Widget.findWidget("Start ");
-                    if (Rs2Widget.isWidgetVisible(WidgetInfo.DIALOG_OPTION_OPTIONS) && getQuestHelperPlugin().getSelectedQuest().getQuest().getId() != Quest.COOKS_ASSISTANT.getId() || (widget != null &&
+                    if (Rs2Widget.isWidgetVisible(ComponentID.DIALOG_OPTION_OPTIONS) && getQuestHelperPlugin().getSelectedQuest().getQuest().getId() != Quest.COOKS_ASSISTANT.getId() || (widget != null &&
                             Microbot.getClientThread().runOnClientThread(() -> widget.getParent().getId()) != 10616888) && !Rs2Bank.isOpen()) {
                         Rs2Keyboard.keyPress('1');
                         Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
@@ -1349,24 +1350,7 @@ public boolean talktoaubury2ndtime = false;
         itemRequirements = new ArrayList<>();
         grandExchangeItems = new ArrayList<>();
     }
-// if((Objects.equals(getQuestHelperPlugin().getSelectedQuest().getQuest().name(), "RUNE_MYSTERIES")) && ("Bring the Research Package to Aubury in south east Varrock.".equals(getQuestHelperPlugin().getSelectedQuest().getCurrentStep().getActiveStep().getText().get(0).toString())) && Rs2Tile.isTileReachable(new WorldPoint(3107,3161,0)) && !TheRestLessGhostOutOfTower ){
-//        sleep(3000);
-//        if(findObjectByIdWithinDistance(new WorldPoint(3107,3162,0),3,23972)){
-//            Rs2GameObject.interact(23972) ; //Open entrance door to tower
-//        }
-//        sleep(2000);
-//        Rs2Walker.walkTo(new WorldPoint(3112, 3165, 0),0);
-//        sleep(2000);
-//        if(findObjectByIdWithinDistance(new WorldPoint(3109,3167,0),3,23972)){
-//            Rs2GameObject.interact(23972) ; //Open entrance door to tower
-//        }
-//        sleep(2000);
-//        Rs2Walker.walkTo(new WorldPoint(3113, 3171, 0),0);
-//        sleep(2000);
-//        Rs2Walker.walkTo(new WorldPoint(3251, 3393, 0),0);
-//        sleep(2000);
-//        TheRestLessGhostOutOfTower=true;
-//    }
+
     public boolean applyStep(QuestStep step) {
         if (step == null) return false;
 
@@ -1569,7 +1553,7 @@ if (!Rs2Player.isMoving() && !Rs2Player.isAnimating() && !Rs2Player.isInteractin
             if (step instanceof NpcEmoteStep){
                 var emoteStep = (NpcEmoteStep)step;
 
-                for (Widget emoteWidget : Rs2Widget.getWidget(WidgetInfo.EMOTE_CONTAINER).getDynamicChildren())
+                for (Widget emoteWidget : Rs2Widget.getWidget(ComponentID.EMOTES_EMOTE_CONTAINER).getDynamicChildren())
                 {
                     if (emoteWidget.getSpriteId() == emoteStep.getEmote().getSpriteId())
                     {
@@ -1970,6 +1954,9 @@ List <WorldPoint> Walkto =Rs2Tile.getWalkableTilesAroundPlayer(1);
             return false;
         }
 
+        /**
+         * TODO: rework this block of code to handle walking closer to an object before interacting with it
+         */
         if (step.getWorldPoint() != null && Microbot.getClient().getLocalPlayer().getWorldLocation().distanceTo2D(step.getWorldPoint()) > 1
                 && !Rs2GameObject.canWalkTo(object, 10)) {
             WorldPoint targetTile = null;
@@ -2090,6 +2077,17 @@ List <WorldPoint> Walkto =Rs2Tile.getWalkableTilesAroundPlayer(1);
     private boolean applyDetailedQuestStep(DetailedQuestStep conditionalStep) {
         if (conditionalStep instanceof NpcStep) return false;
 
+        if (conditionalStep.getIconItemID() != -1
+                && conditionalStep.getWorldPoint() != null
+                && !conditionalStep.getWorldPoint().toWorldArea().hasLineOfSightTo(Microbot.getClient().getTopLevelWorldView(), Rs2Player.getWorldLocation())) {
+            if (Rs2Tile.areSurroundingTilesWalkable(conditionalStep.getWorldPoint(), 1, 1)) {
+                WorldPoint nearestUnreachableWalkableTile = Rs2Tile.getNearestWalkableTileWithLineOfSight(conditionalStep.getWorldPoint());
+                if (nearestUnreachableWalkableTile != null) {
+                    return Rs2Walker.walkTo(nearestUnreachableWalkableTile, 0);
+                }
+            }
+        }
+
         boolean usingItems = false;
         for (Requirement requirement : conditionalStep.getRequirements()) {
             if (requirement instanceof ItemRequirement) {
@@ -2140,6 +2138,15 @@ List <WorldPoint> Walkto =Rs2Tile.getWalkableTilesAroundPlayer(1);
 
         if (!usingItems && conditionalStep.getWorldPoint() != null && !Rs2Walker.walkTo(conditionalStep.getWorldPoint()))
             return true;
+
+        if (conditionalStep.getIconItemID() != -1 && conditionalStep.getWorldPoint() != null
+        && conditionalStep.getWorldPoint().toWorldArea().hasLineOfSightTo(Microbot.getClient().getTopLevelWorldView(), Rs2Player.getWorldLocation())) {
+            if (conditionalStep.getQuestHelper().getQuest() == QuestHelperQuest.ZOGRE_FLESH_EATERS) {
+                if (conditionalStep.getIconItemID() == 4836) { // strange potion
+                    Rs2GroundItem.interact(ItemID.CUP_OF_TEA_4838, "", 20);
+                }
+            }
+        }
 
         return usingItems;
     }
