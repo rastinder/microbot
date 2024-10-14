@@ -51,9 +51,9 @@ public class geHandlerPlugin extends Plugin {
 
     @Override
     protected void startUp() throws AWTException {
-        if (overlayManager != null) {
-            overlayManager.add(geHandlerOverlay);
-        }
+        //if (overlayManager != null) {
+        //    overlayManager.add(geHandlerOverlay);
+       // }
         geHandlerScript.run(config);
     }
 

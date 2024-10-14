@@ -32,12 +32,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.Comparator;
 
+import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
 import static net.runelite.client.plugins.microbot.util.math.Random.random;
 
 
 public class sosScript extends Script {
     public static double version = 1.0;
-    String ansewr = "follow the advice,fake,Virus,Secure my device,Authenticator,banker,Recovery,me,Don't give them,never reused,Through account settings,report,famous person,No.,No,with my email,Me.,Read the text,never buy,Nobody.,Only on,";
+    String ansewr = "follow the advice,fake,Virus,Secure my device,Authenticator,banker,Recovery,Don't give them,never reused,Through account settings,report,famous person,No.,No,with my email,Me.,Read the text,never buy,Nobody.,Only on,";
     List<String> ansewrs = Arrays.asList(ansewr.split(","));
     boolean runInisiated = false;
     boolean depositeEverythingBeforeStart = false;
@@ -84,6 +85,13 @@ public class sosScript extends Script {
                             } else if (Rs2Inventory.hasItem(995)){ //&& Rs2Player.getWorldLocation().distanceTo(new WorldPoint(1902, 5222, 0)) < 2) {
                                 if (Rs2GameObject.interact(20785))
                                     waitForAnimationStop();
+                                if (Rs2Widget.hasWidget("already claimed")){
+                                    level = 5;
+                                    Microbot.getPluginManager().setPluginValue("shortestpath", "useTeleportationPortals", true);
+                                    rasMasterScriptScript.homeTeleport();
+                                    shutdown();
+                                    return;
+                                }
                                 return;
                             } else if (Rs2Inventory.isFull() && !Rs2Inventory.hasItem(995))
                                 Rs2Player.eatAt(100);
@@ -126,12 +134,9 @@ public class sosScript extends Script {
                                 return;
                             } else if (Rs2Inventory.hasItem("boot") ) {
                                 Microbot.getPluginManager().setPluginValue("shortestpath", "useTeleportationPortals", true);
-                                Rs2Tab.switchToMagicTab();
-                                sleepUntil(()->Rs2Tab.getCurrentTab() == InterfaceTab.MAGIC);
-                                sleep(280,500);
-                                Rs2Widget.clickWidget("Lumbridge Home");
-                                Rs2Player.waitForAnimation(2000);
+                                rasMasterScriptScript.homeTeleport();
                                 shutdown();
+                                return;
                             }
                         }
                     }
@@ -155,11 +160,11 @@ public class sosScript extends Script {
                     else if (!Rs2Inventory.isFull()){
                         if (Rs2Player.getWorldLocation().distanceTo(getfishPoint) < 8){
                             if (Rs2GroundItem.exists(333,10)){
-                                Rs2GroundItem.loot(333);
-                                waitForAnimationStop();
+                                Rs2GroundItem.take(333);
+                                sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                             } else if (Rs2GroundItem.exists(329,10)) {
-                                Rs2GroundItem.loot(329);
-                                waitForAnimationStop();
+                                Rs2GroundItem.take(329);
+                                sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                             }
                         }
                         else{
@@ -200,27 +205,31 @@ public class sosScript extends Script {
 
     boolean solveansers() {
         if (Rs2Widget.hasWidget("Click here to continue")) {
+            System.out.println("Click here to continue");
             sleep(50, 150);
             Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
             sleep(50);
             sleepUntil(()->!Rs2Widget.hasWidget("Please"),500);
             return true;
         } else if (Rs2Widget.getWidget(219, 1) != null && Rs2Widget.findWidget("[") != null) {
-            // Widget[] choices = Rs2Widget.getWidget(219,1).getDynamicChildren();
+            System.out.println("[");
             sleep(50, 150);
             System.out.println(Rs2Widget.findWidget("[").getText());
             Rs2Widget.clickWidget(Rs2Widget.findWidget("[").getText());
             return true;
         } else if (Rs2Widget.hasWidget("Warning")) {
-            sleep(50, 150);
+            System.out.println("Warning");
+            //sleep(50, 150);
             Rs2Widget.clickWidget(Rs2Widget.findWidget("Yes").getText());
+            sleep(500, 600);
             return true;
         } else if (Rs2Widget.hasWidget("Report")) {
+            System.out.println("Report");
             sleep(50, 150);
             Rs2Widget.clickWidget(Rs2Widget.findWidget("Report").getText());
             return true;
         } else if (Rs2Widget.hasWidget("Choose")) {
-            //sleep(150, 15000);
+            System.out.println("Choose");
             int actionss = random(14,17);
             Rs2Widget.clickWidget(270,actionss);
             return true;
@@ -235,6 +244,7 @@ public class sosScript extends Script {
     }
     boolean clciksolveansers(String ans){
         if (Rs2Widget.hasWidget(ans)) {
+            System.out.println("found "+ans);
             sleep(50, 150);
             Rs2Widget.clickWidget(Rs2Widget.findWidget(ans).getText());
             return true;

@@ -8,9 +8,9 @@ import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 @Getter
 @RequiredArgsConstructor
 public enum Rocks {
+    CLAY("clay rocks", 1),
     TIN("tin rocks", 1),
     COPPER("copper rocks", 1),
-    CLAY("clay rocks", 1),
     IRON("iron rocks", 15),
     SILVER("silver rocks", 20),
     COAL("coal rocks", 30),

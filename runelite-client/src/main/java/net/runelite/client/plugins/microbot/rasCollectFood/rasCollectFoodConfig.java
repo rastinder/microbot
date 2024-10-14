@@ -1,5 +1,7 @@
 package net.runelite.client.plugins.microbot.rasCollectFood;
 
+import net.runelite.api.coords.WorldArea;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -27,14 +29,36 @@ public interface rasCollectFoodConfig extends Config {
 
     }
     @ConfigItem(
+            keyName = "aretheyGroundObj",
+            name = "Ground Obj?",
+            description = "GroundObj",
+            position = 2,
+            section = generalSection
+    )
+    default boolean isGroundObj()
+    {
+        return true;
+    }
+    @ConfigItem(
             keyName = "sellthem",
             name = "sellthem",
             description = "sellthem",
-            position = 2,
+            position = 3,
             section = generalSection
     )
     default boolean sellthem()
     {
         return true;
+    }
+    @ConfigItem(
+            keyName = "area",
+            name = "area",
+            description = "area",
+            position = 4,
+            section = generalSection
+    )
+    default WorldPoint area()
+    {
+        return new WorldPoint(3105,3432,0);
     }
 }

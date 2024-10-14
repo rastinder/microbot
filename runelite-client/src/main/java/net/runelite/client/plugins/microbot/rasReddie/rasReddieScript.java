@@ -5,6 +5,7 @@ import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
+import net.runelite.client.plugins.microbot.geHandler.geHandlerScript;
 import net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.dialogues.Rs2Dialogue;
@@ -23,6 +24,8 @@ import java.awt.event.KeyEvent;
 import java.security.KeyStore;
 import java.util.concurrent.TimeUnit;
 
+import static net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript.randomSleep;
+import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
 import static net.runelite.client.plugins.microbot.util.math.Random.random;
 
 
@@ -39,22 +42,16 @@ public class rasReddieScript extends Script {
     public static long stopTimer = 1;
 
     public boolean run(rasReddieConfig config) {
-        Microbot.enableAutoRunOn = false;
+        Microbot.enableAutoRunOn = true;
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            if (!super.run()) return;
-            rasMasterScriptScript.autoShutdown("ras Combine");
-            if (stopTimer == 1)
-                 stopTimer = rasMasterScriptScript.autoStopTimer();
             try {
-                if (config.DebugInfofun()) {
-                    System.out.println("Redberries " + Rs2Inventory.count("Redberries"));
-                    System.out.println("Coins " + Rs2Inventory.hasItemAmount("Coins", 30, true));
-                    System.out.println("Red dye " + Rs2Inventory.count("Red dye"));
-                    System.out.println("Red dye " + Microbot.getClient().getLocalPlayer().getWorldLocation());
-                }
+                rasMasterScriptScript.autoShutdown("Ras Red die");
+                if (!super.run()) return;
+                if (!Microbot.isLoggedIn()) return;
+                if (stopTimer == 1)
+                    stopTimer = rasMasterScriptScript.autoStopTimer();
                 if (config.MakeDyefun()) {
-                    long bery = Rs2Inventory.count("Redberries") * 5L;
-                            long paise = Rs2Inventory.ItemQuantity(coins);
+                    randomSleep();
                     if (Rs2Inventory.count("Redberries") > 2 &&  Rs2Inventory.ItemQuantity(coins) > 44) {
                         // we have Redberries and money
                         boolean sleepfirst = true;
@@ -70,9 +67,10 @@ public class rasReddieScript extends Script {
                                 //sleep(15000);
                                 shutdown();
                             }
-                            if (stopTimer < System.currentTimeMillis())
+                            if (stopTimer < System.currentTimeMillis()) {
+                                geHandlerScript.goBuy(new int[]{0}, "Red dye");
                                 shutdown();
-
+                            }
                         }
                     }
                 }
@@ -87,6 +85,7 @@ public class rasReddieScript extends Script {
     @Override
     public void shutdown() {
         stopTimer = 1;
+        rasMasterScriptScript.stopPlugin("Ras Red die");
         super.shutdown();
     }
 
@@ -132,12 +131,14 @@ public class rasReddieScript extends Script {
                     }
 
             } else {
-                Rs2Bank.openBank(Rs2Npc.getNpc(1613));
-                sleep(350, 1800);
+               if ( Rs2Bank.openBank(Rs2Npc.getNpc(1613))) {
+                   Rs2Walker.setTarget(null);
+                   sleep(350, 1800);
+               }
             }
         } else {
             System.out.println("not present in bank");
-            WorldPoint randomBankPoint = bankAreapoint.toWorldPointList().get(Random.random(0, bankAreapoint.toWorldPointList().size() - 2));
+            WorldPoint randomBankPoint = bankAreapoint.toWorldPointList().get(Random.random(0, bankAreapoint.toWorldPointList().size() - 1));
             Rs2Walker.walkTo(randomBankPoint,0);
         }
         return true;
@@ -145,18 +146,25 @@ public class rasReddieScript extends Script {
     public boolean buy_from_grand_exchange(){
         while(true) {
             if (grandexchange.contains(Microbot.getClient().getLocalPlayer().getWorldLocation())) {
-                sleepUntil(() -> Rs2Bank.openBank());
+                sleepUntil(Rs2Bank::openBank);
                 if (Rs2Bank.hasItem("Red dye")) { // check if red dye is being sold , if present in bank and not selling then sell
-                    Rs2Bank.setWithdrawAsNote();
-                    Rs2Bank.withdrawAll("Red dye");
-                    sleepUntil(() -> Rs2Bank.closeBank());
-                    sleepUntil(() -> Rs2GrandExchange.openExchange());
-                    Rs2GrandExchange.sellItemUnder5Percent("Red dye");
+                    //Rs2Bank.setWithdrawAsNote();
+                    //Rs2Bank.withdrawAll("Red dye");
+                    //sleepUntil(() -> Rs2Bank.closeBank());
+                    //sleepUntil(() -> Rs2GrandExchange.openExchange());
+                    //Rs2GrandExchange.sellItemUnder5Percent("Red dye");
+                    geHandlerScript.goSell(false,5,new int[]{0},"Red dye");
                 }
                 if (areWeBuyingRedberries()) {
+                    geHandlerScript.goBuyAndReturn(new int[]{200},true,false,5,true,"Redberries");
+                    return true;
+                    /*
                     Rs2GrandExchange.buyItemAbove5Percent("Redberries", 1000);
                     sleepUntil(() -> Rs2GrandExchange.hasBoughtOffer(), 140000);
+
+                     */
                 }
+                /*
                 if (Rs2GrandExchange.collectToBank()) {
                     Rs2GrandExchange.closeExchange();
                     return true;
@@ -164,16 +172,18 @@ public class rasReddieScript extends Script {
                 else{
                     Rs2GrandExchange.closeExchange();
                     Rs2Bank.openBank();
-                    if (Rs2Bank.hasItem("Redberries"))
+                    if (Rs2Bank.count("Redberries") > 2)
                     {
                         return true;
                     }
                     else return false;
 
                 }
+
+                 */
             } else {
                 WorldPoint randomBankPoint = grandexchange.toWorldPointList().get(Random.random(0, bankArea.toWorldPointList().size() - 1));
-                Rs2Walker.walkTo(randomBankPoint);
+                Rs2Walker.walkTo(randomBankPoint,0);
                 sleepUntil(() -> grandexchange.contains(Microbot.getClient().getLocalPlayer().getWorldLocation()), 180000);
             }
         }
@@ -196,7 +206,8 @@ public class rasReddieScript extends Script {
             return;
         }
         if (!Rs2Widget.hasWidget("What can")) {
-            Rs2Npc.interact(npc, "Talk-to") ;
+            if (Rs2Npc.interact(npc, "Talk-to"))
+                Rs2Walker.setTarget(null);
             sleepUntil(() -> Rs2Widget.hasWidget("What can"),5000);
             if (!Rs2Widget.hasWidget("What can"))
                 System.out.println("cant find dialog");
@@ -222,7 +233,7 @@ public class rasReddieScript extends Script {
             sleepUntil(() -> Rs2Widget.clickWidget("Okay"),wait);
             sleep(60,100);
             sleepUntil(() -> Rs2Dialogue.clickContinue(),wait);
-            sleepUntil(Rs2Inventory::waitForInventoryChanges);
+            sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)),100,2000);
             sleep(300,500);
         }
     }

@@ -1,4 +1,4 @@
-package net.runelite.client.plugins.microbot.example;
+package net.runelite.client.plugins.microbot.rasshopping;
 
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.ui.overlay.OverlayPanel;
@@ -7,13 +7,12 @@ import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.TitleComponent;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.awt.*;
 
-public class ExampleOverlay extends OverlayPanel {
+public class rasshoppingOverlay extends OverlayPanel {
 
     @Inject
-    ExampleOverlay(ExamplePlugin plugin)
+    rasshoppingOverlay(rasshoppingPlugin plugin)
     {
         super(plugin);
         setPosition(OverlayPosition.TOP_LEFT);
@@ -34,7 +33,7 @@ public class ExampleOverlay extends OverlayPanel {
                     .left(Microbot.status)
                     .build());
             panelComponent.getChildren().add(LineComponent.builder()
-                    .left("Shutdown in: " + (ExampleScript.stopTimer / 60000) + " minutes")
+                    .left("Shutdown in: " + (rasshoppingScript.stopTimer / 60000) + " minutes")
                     .build());
 
 

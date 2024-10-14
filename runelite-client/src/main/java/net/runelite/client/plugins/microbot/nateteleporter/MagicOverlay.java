@@ -1,19 +1,20 @@
-package net.runelite.client.plugins.microbot.example;
+package net.runelite.client.plugins.microbot.nateteleporter;
 
 import net.runelite.client.plugins.microbot.Microbot;
+import net.runelite.client.plugins.nateplugins.combat.nateteleporter.MagicPlugin;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.TitleComponent;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.awt.*;
 
-public class ExampleOverlay extends OverlayPanel {
+public class MagicOverlay extends OverlayPanel {
+
 
     @Inject
-    ExampleOverlay(ExamplePlugin plugin)
+    MagicOverlay(MagicPlugin plugin)
     {
         super(plugin);
         setPosition(OverlayPosition.TOP_LEFT);
@@ -22,21 +23,15 @@ public class ExampleOverlay extends OverlayPanel {
     @Override
     public Dimension render(Graphics2D graphics) {
         try {
-            panelComponent.setPreferredSize(new Dimension(200, 300));
+            panelComponent.setPreferredSize(new Dimension(275, 700));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text(getPlugin().getName())
-                    .color(Color.GREEN)
+                    .text("Nate's Mage training Script")
+                    .color(Color.ORANGE)
                     .build());
-
-            panelComponent.getChildren().add(LineComponent.builder().build());
 
             panelComponent.getChildren().add(LineComponent.builder()
                     .left(Microbot.status)
                     .build());
-            panelComponent.getChildren().add(LineComponent.builder()
-                    .left("Shutdown in: " + (ExampleScript.stopTimer / 60000) + " minutes")
-                    .build());
-
 
 
         } catch(Exception ex) {

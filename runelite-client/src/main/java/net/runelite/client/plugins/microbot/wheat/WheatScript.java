@@ -103,7 +103,7 @@ public class WheatScript extends Script {
             WorldPoint randomTile = wheatArea.toWorldPointList().get(Random.random(0, wheatArea.toWorldPointList().size() - 1));
 
             System.out.println("Walking to Wheat at: " + randomTile);
-            Rs2Walker.walkTo(randomTile);
+            Rs2Walker.walkTo(randomTile,0);
         }
     }
 

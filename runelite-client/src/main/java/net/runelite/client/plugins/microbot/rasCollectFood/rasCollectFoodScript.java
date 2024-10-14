@@ -1,7 +1,9 @@
 package net.runelite.client.plugins.microbot.rasCollectFood;
 
 import net.runelite.api.GameState;
+import net.runelite.api.ObjectComposition;
 import net.runelite.api.Skill;
+import net.runelite.api.TileObject;
 import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.Microbot;
@@ -24,6 +26,7 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript.randomSleep;
 import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
 import static net.runelite.client.plugins.microbot.util.math.Random.random;
 
@@ -48,16 +51,19 @@ public class rasCollectFoodScript extends Script {
                 if (stopTimer == 1)
                     stopTimer = rasMasterScriptScript.autoStopTimer();
                 rasMasterScriptScript.autoShutdown("collect food");
-                hopworld();
+                if (config.isGroundObj())
+                    rasMasterScriptScript.hopworld();
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
+                randomSleep();
                 long startTime = System.currentTimeMillis();
+                WorldPoint someArea = config.area();
 
                 if (Rs2Inventory.isFull()){
                     rasMasterScriptScript.bankAllAndGet(0,"ras");
                 }
-                if (Rs2Player.getWorldLocation().distanceTo(edgeville) > 15) {
-                    Rs2Walker.walkTo(edgeville,6);
+                if (Rs2Player.getWorldLocation().distanceTo(someArea) > 15) {
+                    Rs2Walker.walkTo(someArea,6);
                 }
                 if (stopTimer < System.currentTimeMillis()) {
                     if (config.sellthem()) {
@@ -68,33 +74,54 @@ public class rasCollectFoodScript extends Script {
                     }
                     shutdown();
                 }
-                if (Rs2Player.getWorldLocation().distanceTo(edgeville) < 15 && !Rs2Inventory.isFull() ){
-                    RS2Item[] items = Rs2GroundItem.getAll(range);
-                    if( items != null && items.length > 0){
-                        if ( Rs2Player.getWorldLocation().distanceTo(items[0].getTile().getWorldLocation()) > 3) {
-                            Rs2Walker.walkFastCanvas(items[0].getTile().getWorldLocation());
-                            sleepUntilTrue(() -> Rs2Player.getWorldLocation().distanceTo(items[0].getTile().getWorldLocation()) < 2, 100, 3000);
-                        }
-                        for (RS2Item item : items){
-                            if (itemsToPickSet.stream().anyMatch(name-> item.getItem().getName().toLowerCase().contains(name)) && !Rs2Inventory.isFull()) {
-                                try {
-                                    if (Rs2GroundItem.interact(item)) {
-                                        if (range > 2)
-                                            range--;
-                                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                if (Rs2Player.getWorldLocation().distanceTo(someArea) < 15 && !Rs2Inventory.isFull() ){
+                    if (config.isGroundObj()) {
+                        RS2Item[] items = Rs2GroundItem.getAll(range);
+                        if (items != null && items.length > 0) {
+                            if (Rs2Player.getWorldLocation().distanceTo(items[0].getTile().getWorldLocation()) > 3) {
+                                Rs2Walker.walkFastCanvas(items[0].getTile().getWorldLocation());
+                                sleepUntilTrue(() -> Rs2Player.getWorldLocation().distanceTo(items[0].getTile().getWorldLocation()) < 2, 100, 3000);
+                            }
+                            for (RS2Item item : items) {
+                                if (itemsToPickSet.stream().anyMatch(name -> item.getItem().getName().toLowerCase().contains(name))  && !item.getItem().getName().toLowerCase().contains("burnt") && !Rs2Inventory.isFull()) {
+                                    try {
+                                        if (Rs2GroundItem.interact(item)) {
+                                            if (range > 2)
+                                                range--;
+                                            sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
+                                        }
+                                    } catch (Exception e) {
+                                        System.out.println("item gone");
+                                    }
+                                    if (Rs2Inventory.ItemQuantity(item.getItem().getId()) > 0) {
+                                        itemNames.add(item.getItem().getName());
                                     }
                                 }
-                                catch (Exception e){
-                                    System.out.println("item gone");
-                                }
-                                    if(Rs2Inventory.ItemQuantity(item.getItem().getId()) > 0) {
-                                        itemNames.add(item.getItem().getName());
+                            }
+                        } else if (range < 8)
+                            range++;
+                    }
+                    else{
+                        List<TileObject> items = Rs2GameObject.getAll();;
+                        if (items != null && items.size() > 0) {
+                            if (Rs2Player.getWorldLocation().distanceTo(items.get(0).getWorldLocation()) > 3) {
+                                Rs2Walker.walkFastCanvas(items.get(0).getWorldLocation());
+                                sleepUntilTrue(() -> Rs2Player.getWorldLocation().distanceTo(items.get(0).getWorldLocation()) < 2, 100, 3000);
+                            }
+                            if (!Rs2Inventory.isFull()) {
+                                    try {
+                                        if (Rs2GameObject.interact(config.itemsToPick(),"Pick")) {
+                                            sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
+                                        }
+                                    } catch (Exception e) {
+                                        System.out.println("item gone");
+                                    }
+                                    if (Rs2Inventory.ItemQuantity(config.itemsToPick()) > 0) {
+                                        itemNames.add(config.itemsToPick());
                                     }
                                 }
                         }
                     }
-                    else if (range < 8)
-                        range++;
                 }
 
 
@@ -112,28 +139,28 @@ public class rasCollectFoodScript extends Script {
 
     private void hopworld() {
         int world = Microbot.getClient().getWorld();
-        while (world != 301 && world != 308) {
-            Microbot.hopToWorld(301);
-            boolean result = sleepUntil(() -> Rs2Widget.findWidget("Switch World") != null);
-            if (result) {
-                Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
-                sleepUntil(() -> Microbot.getClient().getGameState() == GameState.HOPPING);
-                sleepUntil(() -> Microbot.getClient().getGameState() == GameState.LOGGED_IN);
-            }
-            if (Microbot.getClient().getGameState() == GameState.LOGIN_SCREEN){
-                boolean isHopped = Microbot.hopToWorld(308);
-                if (!isHopped) return;
-                result = sleepUntil(() -> Rs2Widget.findWidget("Switch World") != null);
+            while ((world != 301 && world != 308) || Microbot.getClient().getGameState() == GameState.LOGIN_SCREEN) {
+                Microbot.hopToWorld(301);
+                boolean result = sleepUntil(() -> Rs2Widget.findWidget("Switch World") != null);
                 if (result) {
                     Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
                     sleepUntil(() -> Microbot.getClient().getGameState() == GameState.HOPPING);
                     sleepUntil(() -> Microbot.getClient().getGameState() == GameState.LOGGED_IN);
                 }
+                if (Microbot.getClient().getGameState() == GameState.LOGIN_SCREEN) {
+                    boolean isHopped = Microbot.hopToWorld(308);
+                    if (!isHopped) return;
+                    result = sleepUntil(() -> Rs2Widget.findWidget("Switch World") != null);
+                    if (result) {
+                        Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
+                        sleepUntil(() -> Microbot.getClient().getGameState() == GameState.HOPPING);
+                        sleepUntil(() -> Microbot.getClient().getGameState() == GameState.LOGGED_IN);
+                    }
 
+                }
+                world = Microbot.getClient().getWorld();
             }
-            world = Microbot.getClient().getWorld();
-        }
-        Rs2Tab.switchToInventoryTab();
+            Rs2Tab.switchToInventoryTab();
     }
 
     @Override
@@ -151,7 +178,7 @@ public class rasCollectFoodScript extends Script {
         sleepUntil(()-> Rs2Player.getWorldLocation().distanceTo(cabage)< 10,50000);
         while(!Rs2Inventory.isFull()){
             Rs2GameObject.interact("Cabbage","pick");
-            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 3000);
+            sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 3000);
         }
 
     }

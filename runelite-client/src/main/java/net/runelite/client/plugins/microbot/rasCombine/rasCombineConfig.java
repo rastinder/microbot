@@ -88,10 +88,22 @@ public interface rasCombineConfig extends Config {
     }
 
     @ConfigItem(
+            keyName = "itembuylimit",
+            name = "itembuylimit",
+            description = "itembuylimit",
+            position = 7,
+            section = generalSection
+    )
+    default int itemMaxLimit()
+    {
+        return 1500;
+    }
+
+    @ConfigItem(
             keyName = "press space",
             name = "press space?",
             description = "need to press space or not?",
-            position = 7,
+            position = 8,
             section = generalSection
     )
     default boolean spacepress()
@@ -103,7 +115,7 @@ public interface rasCombineConfig extends Config {
             keyName = "buyMissingItems",
             name = "buyMissingItems",
             description = "buyMissingItems",
-            position = 8,
+            position = 9,
             section = generalSection
     )
     default boolean itemFromGE()

@@ -142,11 +142,11 @@ public class WorldPointFunctionMap extends Script {
         if (!Rs2Inventory.isFull()){
             for (String name : names){
                 if(Rs2GroundItem.loot(name,10)) {
-                    sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 9000);
+                    sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 9000);
                     if (Equip){
                         if (!Rs2Equipment.hasEquippedContains(name)){
                             Rs2Inventory.interact(name,"Wield");
-                            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 9000);
+                            sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 9000);
                         }
                     }
                 }

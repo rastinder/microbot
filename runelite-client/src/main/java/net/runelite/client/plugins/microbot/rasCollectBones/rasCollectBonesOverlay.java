@@ -9,6 +9,8 @@ import net.runelite.client.ui.overlay.components.TitleComponent;
 import javax.inject.Inject;
 import java.awt.*;
 
+import static net.runelite.client.plugins.microbot.rasCollectBones.rasCollectBonesScript.stopTimer;
+
 public class rasCollectBonesOverlay extends OverlayPanel {
     private static final Color RED_TRANSLUCENT = new Color(255, 0, 0, 50);
     private void renderPolygon(Graphics2D graphics, Polygon polygon, Color color) {
@@ -35,9 +37,13 @@ public class rasCollectBonesOverlay extends OverlayPanel {
                     .build());
 
             panelComponent.getChildren().add(LineComponent.builder().build());
-
+            long diff = stopTimer - System.currentTimeMillis();
+            String countdown = String.format("%02d:%02d:%02d",
+                    diff / 3600000,
+                    (diff / 60000) % 60,
+                    (diff / 1000) % 60);
             panelComponent.getChildren().add(LineComponent.builder()
-                    .left(Microbot.status)
+                    .left(countdown)
                     .build());
         } catch(Exception ex) {
             System.out.println("overlay error "+ ex.getMessage());

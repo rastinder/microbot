@@ -1,8 +1,9 @@
 package net.runelite.client.plugins.microbot.firstTimeChecks;
 
-import net.runelite.api.NPC;
+import net.runelite.api.*;
 import net.runelite.api.Point;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.plugins.Plugin;
@@ -27,6 +28,7 @@ import net.runelite.client.plugins.microbot.util.tabs.Rs2Tab;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 
+import javax.inject.Inject;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -35,6 +37,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static net.runelite.api.Varbits.DISABLE_LEVEL_UP_INTERFACE;
 import static net.runelite.client.plugins.microbot.util.Global.sleepUntil;
 import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
 import static net.runelite.client.plugins.microbot.util.math.Random.random;
@@ -51,6 +54,9 @@ public class firstTimecheckScript extends Script {
     WorldPoint deathlocation = new WorldPoint(3176, 5726, 0);
     WorldPoint deathlocation1 = new WorldPoint(3222, 3218, 0);
     List<Runnable> function = new ArrayList<>();
+    public static Boolean settingss=false;
+    @Inject
+    private static Client client;
 
 
     public boolean run(firstTimecheckConfig config) {
@@ -82,7 +88,7 @@ public class firstTimecheckScript extends Script {
                 }
                 if (progress == 4) {
                     killOrSettings(function);
-                    //warnings();
+                    //kill();
                     progress++;
                 }
                 if (progress == 5) {
@@ -93,6 +99,9 @@ public class firstTimecheckScript extends Script {
                 }
                 if (progress == 6) {
                     shutdown();
+                    progress++;
+                    return;
+
                 }
 
 
@@ -109,69 +118,153 @@ public class firstTimecheckScript extends Script {
 
     @Override
     public void shutdown() {
-        stopPlugin("ras firsttime check");
+        rasMasterScriptScript.stopPlugin("ras firsttime check");
         super.shutdown();
     }
 
-    public static void warnings() {
-        Rs2Tab.switchToSettingsTab();
-        sleep(800);
-        Rs2Widget.clickWidget(Rs2Widget.findWidget("ALL Settings").getText());
-        sleep(800);
-        Rs2Widget.clickWidget(Rs2Widget.findWidget("Warnings").getText());
-        sleep(800);
-        String alcho = Rs2Widget.getWidget(134,18).getDynamicChildren()[117].getText();
-        System.out.println(alcho);
-        //Rectangle widgtrs = Rs2Widget.getWidget(134,14).getDynamicChildren()[5].getBounds();
-        Point widgtr = Rs2Widget.findWidget("Teleports").getCanvasLocation();
-        Rs2Widget.clickWidget("Disable teleport");
-        boolean again = false;
-        for (int j = 0; j < 5; j++) {
-            Microbot.getMouse().scrollDown(widgtr);
-            sleep(310);
-            Microbot.getMouse().scrollDown(widgtr);
-            sleep(310);
-            if (Rs2Widget.hasWidget("Disable tablet") && !again){
-                Rs2Widget.clickWidget("Disable tablet");
-                again = true;
-            }
-        //do{
-            Microbot.getMouse().scrollDown(widgtr);
-            sleep(310);
-            if (Rs2Widget.getWidget(134,18).getDynamicChildren()[110] != null) {
-                Widget alch = Rs2Widget.getWidget(134,18).getDynamicChildren()[110];
-                System.out.print("visible");
-                if (!alch.getText().contains(randmills)) {
-                    Microbot.click(alch.getBounds());
-                    sleep(510);
-                    if (Rs2Widget.isWidgetVisible(162,37)) {
-                        Rs2Keyboard.typeString(randmills);
-                        sleep(110);
-                        Rs2Keyboard.keyPress(KeyEvent.VK_ENTER);
+    public static void warnings1() {
+        boolean settingssssss = false;
+        String alchCompare = "123";
+        while (!settingssssss) {
+            try {
+                Rs2Tab.switchToSettingsTab();
+                sleep(800);
+                sleepUntilTrue(() -> Rs2Widget.findWidget("ALL Settings") != null, 100, 5000);
+                Rs2Widget.clickWidget(Rs2Widget.findWidget("ALL Settings").getText());
+                sleep(800);
+                sleepUntilTrue(() -> Rs2Widget.findWidget("Warnings") != null, 100, 5000);
+                Rs2Widget.clickWidget(Rs2Widget.findWidget("Warnings").getText());
+                sleep(800);
+                String alcho = Rs2Widget.getWidget(134, 18).getDynamicChildren()[117].getText();
+                System.out.println(alcho);
+                //Rectangle widgtrs = Rs2Widget.getWidget(134,14).getDynamicChildren()[5].getBounds();
+                Point widgtr = Rs2Widget.findWidget("Teleports").getCanvasLocation();
+                Rs2Widget.clickWidget("Disable teleport");
+                boolean again = false;
+                for (int j = 0; j < 5; j++) {
+                    Microbot.getMouse().scrollDown(widgtr);
+                    sleep(310);
+                    Microbot.getMouse().scrollDown(widgtr);
+                    sleep(310);
+                    if (Rs2Widget.hasWidget("Disable tablet") && !again) {
+                        Rs2Widget.clickWidget("Disable tablet");
+                        again = true;
+                    }
+                    //do{
+                    Microbot.getMouse().scrollDown(widgtr);
+                    sleep(310);
+                    if (Rs2Widget.getWidget(134, 18).getDynamicChildren()[110] != null) {
+                        Widget alch = Rs2Widget.getWidget(134, 18).getDynamicChildren()[110];
+                        System.out.print("visible");
+                        if (!alch.getText().contains(alchCompare)) {
+                            Microbot.click(alch.getBounds());
+                            sleep(510);
+                            if (Rs2Widget.isWidgetVisible(162, 37)) {
+                                Rs2Keyboard.typeString(randmills);
+                                sleep(110);
+                                Rs2Keyboard.keyPress(KeyEvent.VK_ENTER);
+                                sleep(110);
+                                sleep(110);
+                                alchCompare = Rs2Widget.getWidget(134, 18).getDynamicChildren()[110].getText();
+
+                            }
+                        }
+                    } else
+                        System.out.print("not visible");
+                    // }while (!Rs2Widget.hasWidget("Alchemy spells warning"));
+                    Widget[] widgts = Rs2Widget.getWidget(134, 18).getDynamicChildren();
+                    for (Widget widgt : widgts) {
+                        System.out.println("Total time for loop " + widgt.getSpriteId());
+                        if (widgt.getSpriteId() == 2848 && !Rs2Widget.getWidget(8781834).getBounds().intersects(widgt.getBounds())) {
+                            sleep(300);
+                            Microbot.getMouse().click(widgt.getBounds());
+                            sleep(150);
+                        }
                     }
                 }
-            }else
-                System.out.print("not visible");
-       // }while (!Rs2Widget.hasWidget("Alchemy spells warning"));
-        Widget[] widgts = Rs2Widget.getWidget(134, 18).getDynamicChildren();
-        for (Widget widgt : widgts) {
-            System.out.println("Total time for loop " + widgt.getSpriteId());
-            if (widgt.getSpriteId() == 2848 && !Rs2Widget.getWidget(8781834).getBounds().intersects(widgt.getBounds()) ) {
-                sleep(300);
-                Microbot.getMouse().click(widgt.getBounds());
-                sleep(150);
+                sleep(200);
+                Rs2Widget.clickWidget(Rs2Widget.findWidget("Interface").getText());
+                sleep(400);
+                widgtr = Rs2Widget.findWidget("General").getCanvasLocation();
+                Microbot.getMouse().scrollDown(widgtr);
+                sleep(400);
+                if (Rs2Widget.getWidget(134, 18).getDynamicChildren()[36].getSpriteId() == 2847)
+                    Microbot.getMouse().click(Rs2Widget.getWidget(134, 18).getDynamicChildren()[36].getBounds());
+                sleep(400);
+                Rs2Keyboard.keyPress(KeyEvent.VK_ESCAPE);
+                settingssssss = true;
             }
-        }}
-        sleep(200);
-        Rs2Widget.clickWidget(Rs2Widget.findWidget("Interface").getText());
-        sleep(400);
-        widgtr = Rs2Widget.findWidget("General").getCanvasLocation();
-        Microbot.getMouse().scrollDown(widgtr);
-        sleep(400);
-        if (Rs2Widget.getWidget(134,18).getDynamicChildren()[36].getSpriteId() == 2847)
-            Microbot.getMouse().click(Rs2Widget.getWidget(134,18).getDynamicChildren()[36].getBounds());
-        sleep(400);
-        Rs2Keyboard.keyPress(KeyEvent.VK_ESCAPE);
+            catch (Exception e){
+                System.out.println("error in warning() "+ e);
+            }
+        }
+
+    }
+    public static void warnings() {
+        //boolean settingssssss = false;
+
+        String alchCompare = "123";
+        while (!firstTimecheckScript.settingss) {
+            try {
+                Rs2Tab.switchToSettingsTab();
+                sleep(800);
+                sleepUntilTrue(() -> Rs2Widget.findWidget("ALL Settings") != null, 100, 5000);
+                Rs2Widget.clickWidget(Rs2Widget.findWidget("ALL Settings").getText());
+                sleep(800);
+                sleepUntilTrue(() -> Rs2Widget.findWidget("Warnings") != null, 100, 5000);
+                Rs2Widget.clickWidget(Rs2Widget.findWidget("Warnings").getText());
+                sleep(800);
+                String alcho = Rs2Widget.getWidget(134, 18).getDynamicChildren()[117].getText();
+                System.out.println(alcho);
+                //Rectangle widgtrs = Rs2Widget.getWidget(134,14).getDynamicChildren()[5].getBounds();
+                Point widgtr = Rs2Widget.findWidget("Teleports").getCanvasLocation();
+                //Rs2Widget.clickWidget("Disable teleport");
+                boolean again = false;
+                changeVarbit("warnigs");
+                for (int j = 0; j < 5; j++) {
+                    Microbot.getMouse().scrollDown(widgtr);
+                    sleep(310);
+                    Microbot.getMouse().scrollDown(widgtr);
+                    sleep(310);
+                    //do{
+                    Microbot.getMouse().scrollDown(widgtr);
+                    sleep(310);
+                    if (Rs2Widget.getWidget(134, 18).getDynamicChildren()[110] != null) {
+                        Widget alch = Rs2Widget.getWidget(134, 18).getDynamicChildren()[110];
+                        System.out.print("visible");
+                        if (!alch.getText().contains(alchCompare)) {
+                            Microbot.click(alch.getBounds());
+                            sleep(510);
+                            if (Rs2Widget.isWidgetVisible(162, 37)) {
+                                Rs2Keyboard.typeString(randmills);
+                                sleep(110);
+                                Rs2Keyboard.keyPress(KeyEvent.VK_ENTER);
+                                sleep(110);
+                                sleep(110);
+                                alchCompare = Rs2Widget.getWidget(134, 18).getDynamicChildren()[110].getText();
+
+                            }
+                        }
+                    } else
+                        System.out.print("not visible");
+                }
+                sleep(200);
+                Rs2Widget.clickWidget(Rs2Widget.findWidget("Interface").getText());
+                sleepUntilTrue(() -> Rs2Widget.findWidget("General") != null, 100, 5000);
+                sleep(400);
+                widgtr = Rs2Widget.findWidget("General").getCanvasLocation();
+                Microbot.getMouse().scrollDown(widgtr);
+                sleep(400);
+                changeVarbit("interface");
+                sleep(400);
+                Rs2Keyboard.keyPress(KeyEvent.VK_ESCAPE);
+                firstTimecheckScript.settingss = true;
+            }
+            catch (Exception e){
+                System.out.println("error in warning() "+ e);
+            }
+        }
+
     }
 
     private void bank() {
@@ -181,7 +274,7 @@ public class firstTimecheckScript extends Script {
         }
         if (random(0, 2) == 0) {
             Rs2GroundItem.loot("Mind rune", 10);
-            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+            sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
         }
         Rs2Bank.walkToBank();
         sleepUntil(() -> Rs2Bank.isNearBank(5), 15000);
@@ -193,7 +286,7 @@ public class firstTimecheckScript extends Script {
             Rs2Widget.clickWidget(664, 29);
         sleep(850);
         Rs2Bank.depositAll();
-        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+        sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
         sleep(450);
         if (random(0,2) == 0){
             if (random(0,2) == 0){
@@ -201,7 +294,7 @@ public class firstTimecheckScript extends Script {
                 Collections.shuffle(items);
                 for (String item : items) {
                     Rs2Bank.withdrawAll(item);
-                    sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                    sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                     sleep(280,350);
                 }
             }
@@ -210,7 +303,7 @@ public class firstTimecheckScript extends Script {
                 Collections.shuffle(items);
                 for (String item : items) {
                     Rs2Bank.withdrawAll(item);
-                    sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                    sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                     sleep(280,350);
                 }
             }
@@ -252,10 +345,13 @@ public class firstTimecheckScript extends Script {
     }
     private void kill() {
         while(true) {
-            if (randomattack()) {
-                deathdialog();
-                break;
+            try {
+                if (randomattack()) {
+                    deathdialog();
+                    break;
+                }
             }
+            catch (Exception e){}
         }
     }
     private void killOrSettings(List<Runnable> function) {
@@ -304,7 +400,7 @@ public class firstTimecheckScript extends Script {
         for (RS2Item item : items) {
             if (item.getItem().getName().contains("rune")) {
                 Rs2GroundItem.loot(item.getItem().getId());
-                sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
             }
         }
     }
@@ -400,6 +496,9 @@ public class firstTimecheckScript extends Script {
 
     private boolean randomattack() {
         System.out.println("attack");
+        if (Rs2Player.getWorldLocation().distanceTo(deathlocation) < 15) {
+            return true;
+        }
         if (enemylevels < 10) {
             if (random(0, 2) == 0) {
                 NPC jon = null;
@@ -449,22 +548,28 @@ public class firstTimecheckScript extends Script {
                     }
                     sleep(1200, 1600);
                     if (random(0, 2) == 0) {
-                        RS2Item[] groundItems = Rs2GroundItem.getAll(3);
+                        RS2Item[] groundItems = Rs2GroundItem.getAll(5);
                         for (RS2Item groundItem : groundItems) {
-                            Rs2GroundItem.loot(groundItem.getItem().getId());
-                            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                            try {
+                                if (!Rs2Inventory.isFull()) {
+                                    Rs2GroundItem.loot(groundItem.getItem().getId());
+                                    sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
+                                }
+                            }catch (Exception e){
+                                System.out.println("no item");
+                            }
                         }
                        // while (Rs2Inventory.hasItem("Bones")) {
                         //    sleep(400, 800);
                        //     Rs2Inventory.interact("Bones", "Bury");
-                       //     sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                       //     sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                        // }
                     }
                 }
             }
             if (random(0, 2) == 0) {
                 NPC jon = null;
-                 jon = Rs2Npc.getNpc("Rat");
+                 jon = Rs2Npc.getNpc("rat");
                 if (jon == null) {
                     if (random(0, 2) == 0) {
                         if (Rs2Player.getWorldLocation().distanceTo(new WorldPoint(3233, 3225, 0)) > 10) {
@@ -520,22 +625,28 @@ public class firstTimecheckScript extends Script {
                         if (Rs2Player.getWorldLocation().distanceTo(deathlocation) < 10) {
                             return true;
                         }
-                        if (Rs2Player.getWorldLocation().distanceTo(deathlocation1) < 5) {
-                            return true;
-                        }
+                       // if (Rs2Player.getWorldLocation().distanceTo(deathlocation1) < 5) {
+                       //     return true;
+                       // }
                     }
                     sleep(1200, 1600);
                     if (random(0, 2) == 0) {
-                        RS2Item[] groundItems = Rs2GroundItem.getAll(3);
+                        RS2Item[] groundItems = Rs2GroundItem.getAll(5);
                         for (RS2Item groundItem : groundItems) {
-                            Rs2GroundItem.loot(groundItem.getItem().getId());
-                            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                            try {
+                                if (!Rs2Inventory.isFull()) {
+                                    Rs2GroundItem.loot(groundItem.getItem().getId());
+                                    sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
+                                }
+                            }catch (Exception e){
+                                System.out.println("no item");
+                            }
                         }
                         /*
                         while (Rs2Inventory.hasItem("Bones")) {
                             sleep(400, 800);
                             Rs2Inventory.interact("Bones", "Bury");
-                            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                            sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                         }
                          */
                     }
@@ -576,24 +687,29 @@ public class firstTimecheckScript extends Script {
                     if (Rs2Player.getWorldLocation().distanceTo(deathlocation) < 10) {
                         return true;
                     }
-                    if (Rs2Player.getWorldLocation().distanceTo(deathlocation1) < 5) {
-                        return true;
-                    }
+                   // if (Rs2Player.getWorldLocation().distanceTo(deathlocation1) < 5) {
+                   //     return true;
+                   // }
                 }
                 sleepUntil(jon::isDead, 20000);
                 sleep(1200, 1600);
                 if (random(0, 2) == 0) {
-                    RS2Item[] groundItems = Rs2GroundItem.getAll(3);
+                    RS2Item[] groundItems = Rs2GroundItem.getAll(5);
                     for (RS2Item groundItem : groundItems) {
-                        Rs2GroundItem.loot(groundItem.getItem().getId());
-                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                        try {
+                            if (!Rs2Inventory.isFull()) {
+                                Rs2GroundItem.loot(groundItem.getItem().getId());
+                                sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
+                            }
+                        }catch (Exception e){
+                            System.out.println("no item");
+                        }
                     }
-                    while (Rs2Inventory.hasItem("Bones")) {
-                        sleep(400, 800);
-                        Rs2Inventory.interact("Bones", "Bury");
-                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
-
-                    }
+                    //while (Rs2Inventory.hasItem("Bones")) {
+                    //    sleep(400, 800);
+                    //    Rs2Inventory.interact("Bones", "Bury");
+                    //    sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
+                    //}
                 }
             }
 
@@ -614,6 +730,7 @@ public class firstTimecheckScript extends Script {
                 Rs2Tab::switchToSettingsTab,
                 Rs2Tab::switchToEmotesTab,
                 Rs2Tab::switchToMusicTab,
+                Rs2Tab::switchToQuestTab,
         };
 
         int switches = random(0, 5);
@@ -657,6 +774,9 @@ public class firstTimecheckScript extends Script {
             case "music":
                 Rs2Tab.switchToMusicTab();
                 break;
+            case "quest":
+                Rs2Tab.switchToQuestTab();
+                break;
             default:
                 throw new IllegalArgumentException("Unknown tab name: " + finalTabName);
         }
@@ -685,6 +805,7 @@ public class firstTimecheckScript extends Script {
     }
     public void waitAndClickDialog(String dialog) throws Exception {
         sleepUntil(() -> Rs2Widget.hasWidget(dialog));
+        sleep(300,800);
 
         if (Rs2Widget.hasWidget(dialog)) {
             //Rs2Widget.clickWidget(Rs2Widget.findWidget(dialog).getText());
@@ -754,6 +875,49 @@ public class firstTimecheckScript extends Script {
             }
         }
         return null;
+    }
+    public static void changeVarbit(String settingName) {
+        if (Objects.equals(settingName,"warnings")){
+            varbitValue(236,0);
+            varbitValue(2684,0);
+            varbitValue(6285,0);
+            varbitValue(6286,0);
+            varbitValue(6287,0);
+            varbitValue(13985,1);
+            varbitValue(13985,1);
+
+            varbitValue(23323,0);
+
+            varbitValue(5411,0);
+            varbitValue(13113,1);
+            varbitValue(4100,1);
+            varbitValue(14700,1);
+            varbitValue(14701,1);
+        } else if (Objects.equals(settingName,"interface")) {
+            // interface
+            varbitValue(DISABLE_LEVEL_UP_INTERFACE,1);
+            varbitValue(13130,1);
+
+        }
+    }
+    public static void varbitValue(int varbit, int value) {
+        Microbot.getClientThread().runOnClientThread(() -> {
+            try {
+                if (Microbot.getClient().getVarbitValue(varbit) != value) {
+                    client.setVarbitValue(client.getVarps(), varbit, value);
+                    VarbitComposition varbitComposition = client.getVarbit(varbit);
+                    client.queueChangedVarp(varbitComposition.getIndex());
+                    client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Set varbit " + varbit + " to " + value, null);
+                    VarbitChanged varbitChanged = new VarbitChanged();
+                    varbitChanged.setVarbitId(varbit);
+                    varbitChanged.setValue(value);
+                    sleep(500);
+                }
+            } catch (Exception e) {
+                System.out.println(e);
+            }
+            return null; // or return some appropriate value
+        });
     }
 
 }

@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import static net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript.randomSleep;
+
 
 public class rascleanleafScript extends Script {
     public static double version = 1.0;
@@ -26,6 +28,7 @@ public class rascleanleafScript extends Script {
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             if (!super.run()) return;
             try {
+                randomSleep();
                 if (!Rs2Bank.isOpen() && !Rs2Inventory.hasItem(Grimy)) {
                     Rs2Bank.openBank();
                     sleepUntil(() -> Rs2Bank.isOpen());

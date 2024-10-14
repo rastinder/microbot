@@ -4,6 +4,8 @@ import net.runelite.api.GameObject;
 import net.runelite.api.Skill;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
+import net.runelite.client.plugins.microbot.mining.enums.Rocks;
+import net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
@@ -17,6 +19,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript.randomSleep;
 
 enum State {
     MINING,
@@ -41,6 +45,7 @@ public class AutoMiningScript extends Script {
                 if (initialPlayerLocation == null) {
                     initialPlayerLocation = Rs2Player.getWorldLocation();
                 }
+                randomSleep();
 
                 if (!config.ORE().hasRequiredLevel()) {
                     Microbot.log("You do not have the required mining level to mine this ore.");
@@ -59,7 +64,13 @@ public class AutoMiningScript extends Script {
                             return;
                         }
 
-                        GameObject rock = Rs2GameObject.findObject(config.ORE().getName(), true, config.distanceToStray(), true, initialPlayerLocation);
+                        Rocks bestRock = getRockByLevel();
+                        if (bestRock == null) {
+                            Microbot.log("No available rocks to mine.");
+                            return;
+                        }
+
+                        GameObject rock = Rs2GameObject.findObject(bestRock.getName(), true, config.distanceToStray(), true, initialPlayerLocation);
 
                         if (rock != null) {
                             if (Rs2GameObject.interact(rock)) {
@@ -93,5 +104,22 @@ public class AutoMiningScript extends Script {
     public void shutdown(){
         super.shutdown();
         Rs2Antiban.resetAntibanSettings();
+    }
+    public static Rocks getRockByLevel() {
+        int level = Microbot.getClient().getRealSkillLevel(Skill.MINING);
+        Rocks bestRock = null;
+        for (Rocks rock : Rocks.values()) {
+            if (rock.getMiningLevel() <= level) {
+                // Check if the rock is available in the game world
+                if (Rs2GameObject.get(rock.getName(), false) != null) {
+                    if (Rs2GameObject.findObject(rock.getName(), true, 100, false, Rs2Player.getWorldLocation()) != null) {
+                        bestRock = rock;
+                    }
+                }
+            } else {
+                break; // No need to check further as rocks are ordered by level
+            }
+        }
+        return bestRock;
     }
 }

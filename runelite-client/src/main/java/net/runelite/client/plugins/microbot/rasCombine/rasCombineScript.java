@@ -12,6 +12,7 @@ import net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScrip
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.grandexchange.Rs2GrandExchange;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
+import net.runelite.client.plugins.microbot.util.inventory.Rs2Item;
 import net.runelite.client.plugins.microbot.util.keyboard.Rs2Keyboard;
 import net.runelite.client.plugins.microbot.util.tabs.Rs2Tab;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
@@ -21,6 +22,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript.randomSleep;
 import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
 import static net.runelite.client.plugins.microbot.util.math.Random.random;
 
@@ -43,6 +45,7 @@ public class rasCombineScript extends Script {
             if (stopTimer == 1)
                 stopTimer = rasMasterScriptScript.autoStopTimer();
             try {
+                randomSleep();
                 if (!Rs2Inventory.hasItem(config.item1()) || !Rs2Inventory.hasItem(config.item2())) {
                     if (!Rs2Bank.isNearBank(5) && !config.itemFromGE()){
                         Rs2Bank.walkToBank();
@@ -62,15 +65,15 @@ public class rasCombineScript extends Script {
                     }
                     else if (!Rs2Inventory.isEmpty()){
                         Rs2Bank.depositAll();
-                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                        sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                     }
                     if (Rs2Bank.hasItem(config.item1()) && Rs2Bank.hasItem(config.item2())) {
                         sleep(350, 450);
                         Rs2Bank.withdrawX(true, config.item1(), config.item1Count());
-                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                        sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                         sleep(350, 450);
                         Rs2Bank.withdrawX(true, config.item2(), config.item2Count());
-                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                        sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                         sleep(350, 450);
                     }
                     else{
@@ -90,7 +93,7 @@ public class rasCombineScript extends Script {
                     sleep(350, 450);
                     hasItem = !config.item3().isEmpty() && Rs2Bank.hasItem(config.item3());
                     if (((!Rs2Inventory.hasItem(config.item1()) || !Rs2Inventory.hasItem(config.item2())) && !hasItem) && !config.itemFromGE()) {
-                        shutdown();
+                        shutdown();return;
                     } else if (((!Rs2Inventory.hasItem(config.item1()) || !Rs2Inventory.hasItem(config.item2())) && !hasItem) && config.itemFromGE()) {
                         if (!String.valueOf(item12).isEmpty()) {
                             geHandlerScript.goSell(false, 5, new int[]{0}, String.valueOf(item12));
@@ -99,7 +102,7 @@ public class rasCombineScript extends Script {
                         }
                         if (stopTimer < System.currentTimeMillis()) {
                             sellLeftOvers();
-                            shutdown();
+                            shutdown();return;
                         }
                         long coinsInBank = (long) Rs2Bank.count("Coins", true);
                         sleep(350, 450);
@@ -113,18 +116,22 @@ public class rasCombineScript extends Script {
                             int count = (int) (item1Count == 0 ? item2Count : item1Count);
                             String itemName = item1Count == 0 ? config.item1() : config.item2();
                             if (!geHandlerScript.goBuyAndReturn(new int[] {count},true,false,10,true,itemName))
-                                shutdown();
+                                shutdown();return;
                         } else {
+                            if (stopTimer < System.currentTimeMillis()) {
+                                sellLeftOvers();
+                                shutdown();return;
+                            }else
                             if (config.item1Count() != 1) { //== 14
-                                if (!geHandlerScript.buyItemsWithRatio(coins, new double[]{1, 1}, 500, true, config.item1(), config.item2())) { // break if buylimit exceed
+                                if (!geHandlerScript.buyItemsWithRatio(coins, new double[]{1, 1}, config.itemMaxLimit(), true, config.item1(), config.item2())) { // break if buylimit exceed
                                     // todo , sell spare stuff
-                                    shutdown();
+                                    shutdown();return;
                                 }
-                            }
+                            }else
                             if (config.item1Count() == 1) {
-                                if (!geHandlerScript.buyItemsWithRatio(coins, new double[]{1}, 3000, true, new String[]{config.item2()})) { // break if buylimit exceed
+                                if (!geHandlerScript.buyItemsWithRatio(coins, new double[]{1}, config.itemMaxLimit(), true, new String[]{config.item2()})) { // break if buylimit exceed
                                     // todo , sell spare stuff
-                                    shutdown();
+                                    shutdown();return;
                                 }
                             }
                         }
@@ -217,7 +224,23 @@ public class rasCombineScript extends Script {
                 sleepUntil(() -> Rs2Tab.getCurrentTab() == InterfaceTab.INVENTORY);
             }
             if (spaceBar) {
-                Rs2Inventory.combine(item1, item2);
+                if (random(0,2)==0) {
+                    Rs2Inventory.combineClosest(item1, item2);
+                }
+                else if (random(0,2)==0){
+                    List<Rs2Item> items = Rs2Inventory.items();
+                    int lastItem1Slot = -1, firstItem2Slot = -1;
+                    for (int i = 0; i < items.size(); i++) {
+                        if (items.get(i).getName().toLowerCase().contains(item1.toLowerCase())) lastItem1Slot = i;
+                        if (firstItem2Slot == -1 && items.get(i).getName().toLowerCase().contains(item2.toLowerCase()))
+                            firstItem2Slot = i;
+                    }
+                    Microbot.getMouse().click(inventory[lastItem1Slot].getBounds());
+                    Microbot.getMouse().click(inventory[firstItem2Slot].getBounds());
+                }
+                else
+                    Rs2Inventory.combine(item1, item2);
+
                 sleepUntil(()-> Rs2Widget.hasWidget("Choose a"));
                 sleep(400,600);
                 Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
@@ -299,7 +322,7 @@ public class rasCombineScript extends Script {
 
         while (true) {
             //if (Rs2Player.isAnimating()) {
-            if (sleepUntil(Rs2Inventory::waitForInventoryChanges)) {
+            if (sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)),100,500 )) {
                 wasAnimating = true;
                 startTime = System.currentTimeMillis();
                 nonAnimatingStartTime = 0; // Reset non-animating timer

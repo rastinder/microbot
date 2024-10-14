@@ -2181,7 +2181,7 @@ public class Rs2Inventory {
         final int currentInventoryStackableSize = stackableSize();
         sleepUntil(() ->  {
             actionWhileWaiting.run();
-            sleepUntil(() -> currentInventorySize != size() || currentInventoryStackableSize != stackableSize(), Random.random(600, 2100));
+            sleepUntil(() -> currentInventorySize != size() || currentInventoryStackableSize != stackableSize(), Random.random(300, 600));
             return currentInventorySize != size() || currentInventoryStackableSize != stackableSize();
         });
         return currentInventorySize != size() || currentInventoryStackableSize != stackableSize();

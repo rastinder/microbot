@@ -6,6 +6,7 @@ import net.runelite.api.Point;
 import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.geometry.RectangleUnion;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.RuneLiteConfig;
@@ -31,14 +32,17 @@ import net.runelite.client.plugins.skillcalculator.skills.MagicAction;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.inject.Inject;
+import java.awt.*;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
 import static net.runelite.client.plugins.microbot.util.math.Random.random;
@@ -46,7 +50,7 @@ import static net.runelite.client.plugins.microbot.util.math.Random.random;
 public class Ras_highalcScript extends Script {
     public static double version = 1.0;
     public static String opitem = "";
-    private static final WorldArea grandexchange = new WorldArea(3167, 3486, 5, 5, 0);
+    private static final WorldArea grandexchange = new WorldArea(3161, 3484, 12, 12, 0);
     private static final long UPDATE_INTERVAL = 4 * 60 * 60 * 1000; // Update interval in milliseconds (4 hours)
     private static Map<String, ProfitData> profitDataMap = new HashMap<>();
     private OSRSPriceFetcher fetcher = new OSRSPriceFetcher();
@@ -123,15 +127,21 @@ public class Ras_highalcScript extends Script {
                 if (stopTimer < System.currentTimeMillis()){
                     System.out.println("wrap up started");
                     if (config.autoBuy())
-                        Microbot.getPluginManager().setPluginValue("highalc", "Autobuy", true); // supposed to be false testingOverlay
+                        Microbot.getPluginManager().setPluginValue("highalc", "Autobuy", false); // supposed to be false testingOverlay
                     else if (!config.autoBuy() && config.highAlch() && Rs2Inventory.count() <= 2) {
                         System.out.println("stopping high alch");
+                        geHandlerScript.abortAllActiveOffers();
+                        sleepUntilTrue(Rs2GrandExchange::collectToBank,200,1000);
+                        sleepUntilTrue(Rs2GrandExchange::collectToBank,200,1000);
+                        Rs2GrandExchange.closeExchange();
+                        sleep(800);
                         Rs2Bank.openBank();
                         sleep(350);
                         Rs2Bank.depositAll();
                         sleep(350);
-                        Rs2Bank.closeBank();
+                        //Rs2Bank.closeBank();
                         shutdown();
+                        sleep(10500);
                     }
                 }
                 sleep(800);
@@ -303,6 +313,7 @@ public class Ras_highalcScript extends Script {
 
     @Override
     public void shutdown() {
+        withdrawcoins = false;
         System.out.println("Entering shutdown() function");
         String pluginName = "ras_high alc";
         //rasMasterScriptScript masterControl = new rasMasterScriptScript();
@@ -315,9 +326,18 @@ public class Ras_highalcScript extends Script {
 
     public boolean goto_grand_exchange() {
         System.out.println("Entering goto_grand_exchange() function");
-        WorldPoint randomBankPoint = grandexchange.toWorldPointList().get(Random.random(0, grandexchange.toWorldPointList().size() - 1));
-        Rs2Walker.walkTo(randomBankPoint);
-        sleepUntil(() -> grandexchange.contains(Microbot.getClient().getLocalPlayer().getWorldLocation()), 30000);
+        WorldPoint randomBankPoint;
+        do {
+            randomBankPoint = grandexchange.toWorldPointList().get(Random.random(0, grandexchange.toWorldPointList().size() - 1));
+        } while ((randomBankPoint.getX() % 9 < 3 || randomBankPoint.getY() % 9 < 3) || (randomBankPoint.getX() % 9 > 6 || randomBankPoint.getY() % 9 > 6));
+
+        while (!grandexchange.contains(Microbot.getClient().getLocalPlayer().getWorldLocation())) {
+            Rs2Walker.setTarget(null);
+            Rs2Walker.walkTo(randomBankPoint, 1);
+            sleepUntilTrue(() -> grandexchange.contains(Microbot.getClient().getLocalPlayer().getWorldLocation()), 1000, 10000);
+        }
+        Rs2Walker.setTarget(null);
+        Rs2Player.waitForAnimation();
         System.out.println("Exiting goto_grand_exchange() function");
         return true;
     }
@@ -465,11 +485,11 @@ public class Ras_highalcScript extends Script {
         Rs2GrandExchange.collectToInventory();
         Pair<GrandExchangeSlots, Integer> slot = Rs2GrandExchange.getAvailableSlot();
         //System.out.println(slot.getLeft());
-        if (slot.getLeft() != null && totalCount < 1000 && Rs2Inventory.count() < 16) { // inItems.size() < 25 t on sure inv doesnt go full
+        if (slot.getLeft() != null && totalCount < 600 && Rs2Inventory.count() < 16) { // inItems.size() < 25 t on sure inv doesnt go full
             System.out.println("Exiting isTimetobuy() function with true");
             return true;
         } else {
-            if (totalCount >= 1500) // to protect that inv doesnt get full // inItems.size() < 25
+            if (totalCount >= 600) // to protect that inv doesnt get full // inItems.size() < 25
                 inactivityTimer.update();
             System.out.println("Exiting isTimetobuy() function with false");
             return false;
@@ -480,13 +500,54 @@ public class Ras_highalcScript extends Script {
         System.out.println("Entering onetimeChecks() function");
         goto_grand_exchange();
         Rs2Bank.openBank();
-        sleepUntilTrue(Rs2Bank::openBank,1000,52000);
-        if (Rs2Bank.hasBankItem("coins")) {
+        sleepUntilTrue(Rs2Bank::openBank, 1000, 25000);
+        List<String> itemList = Arrays.asList(itemListString.split(","));
+        List<String> excludeItems = itemList.stream()
+                .map(i -> i.substring(0, i.indexOf(':')).trim())
+                .collect(Collectors.toList());
+        excludeItems.add("Coins");
+        excludeItems.add("Nature rune");
+        System.out.println(excludeItems);
+        Rs2Bank.depositAllExcept(excludeItems);
+        sleep(1090);
+
+        if (Rs2Bank.hasBankItem("Coins")) {
             Rs2Bank.withdrawAll("Coins");
-            sleepUntil(() -> Rs2Inventory.hasItem("coins"));
+            sleepUntilTrue(() -> Rs2Inventory.waitForInventoryChanges(() -> sleep(100)), 100, 1000);
         }
-        sleepUntil(() -> Rs2Bank.closeBank());
+
+        boolean hasWithdrawAsNote = Rs2Bank.hasWithdrawAsNote();
+        for (String item : itemList) {
+            int colonIndex = item.indexOf(':');
+            if (colonIndex == -1) continue;
+
+            String itemName = item.substring(0, colonIndex).trim();
+            try {
+                boolean isRuneItem = itemName.contains("Rune full helm") || itemName.contains("Rune kiteshield") || itemName.contains("Rune pickaxe") ||
+                        itemName.contains("Rune platebody") || itemName.contains("Rune platelegs") || itemName.contains("Rune scimitar") ||
+                        itemName.contains("Rune axe");
+
+                if (isRuneItem && Rs2Bank.count(itemName) > 1) {
+                    if (!hasWithdrawAsNote) {
+                        Rs2Bank.setWithdrawAsNote();
+                        hasWithdrawAsNote = true;
+                    }
+                    Rs2Bank.withdrawX(itemName, Rs2Bank.count(itemName) - 1);
+                    sleepUntilTrue(() -> Rs2Inventory.waitForInventoryChanges(() -> sleep(100)), 100, 1000);
+                } else if (Rs2Bank.hasItem(itemName, true)) {
+                    if (!hasWithdrawAsNote) {
+                        Rs2Bank.setWithdrawAsNote();
+                        hasWithdrawAsNote = true;
+                    }
+                    Rs2Bank.withdrawAll(itemName);
+                    sleepUntilTrue(() -> Rs2Inventory.waitForInventoryChanges(() -> sleep(100)), 100, 1000);
+                }
+            } catch (Exception e) {
+                System.out.println("Error getting item " + item + " in inv");
+            }
+        }
         inventrySetup();
+        Rs2Bank.closeBank();
         System.out.println("Exiting onetimeChecks() function");
     }
 
@@ -510,10 +571,6 @@ public class Ras_highalcScript extends Script {
                             if (!config.highAlch()) {
                                 System.out.println("Returning due to config.highAlch() being false");
                                 return;
-                            }
-                            if (!super.run()) {
-                                System.out.println("Returning due to super.run() being false");
-                                //return; testingOverlay
                             }
                             highAlch(item);
                             System.out.println("successful bought " + Rs2GrandExchange.hasBoughtOffer());
@@ -552,42 +609,18 @@ public class Ras_highalcScript extends Script {
                 Rs2Tab.switchToMagicTab();
                 sleepUntil(() -> Rs2Tab.getCurrentTab() == InterfaceTab.MAGIC, 5000);
             }
+            Rectangle alchs = Rs2Widget.findWidget(MagicAction.HIGH_LEVEL_ALCHEMY.getName()).getBounds();
             sleep(150, 300);
             net.runelite.client.plugins.microbot.util.magic.Rs2Magic.alch(item);
             // Find the high alchemy widget
             Widget highAlch = Rs2Widget.findWidget(MagicAction.HIGH_LEVEL_ALCHEMY.getName());
+            if (random(0,5) > 2){
+                if (alchs != null){
+                    Microbot.getMouse().move(alchs);
+                }
+            }
             sleepUntil(() -> Rs2Tab.getCurrentTab() == InterfaceTab.MAGIC, 5000);
             System.out.println("Exiting highAlch() function");
-            return;
-            /*
-            // If high alchemy widget is not found, return
-            if (highAlch.getSpriteId() != 41) {
-                onetimeChecks();
-                return;
-            }
-
-            // Get the center point of the high alchemy widget
-            Point point = new Point((int) highAlch.getBounds().getCenterX(), (int) highAlch.getBounds().getCenterY());
-
-            Rs2Tab.getCurrentTab();
-            // Click on the high alchemy widget
-            Microbot.getMouse().click(point);
-            sleepUntil(() -> Rs2Tab.getCurrentTab() == InterfaceTab.INVENTORY, 5000);
-
-            if (Rs2Tab.getCurrentTab() == InterfaceTab.INVENTORY) {
-                Microbot.status = "Alching " + item.name;
-                //System.out.println("Alching " + item.name);
-                //System.out.println("type " + item.name.getClass().getName());
-            } else {
-                Rs2Tab.switchToInventoryTab();
-                sleepUntil(() -> Rs2Tab.getCurrentTab() == InterfaceTab.INVENTORY, 5000);
-                Microbot.status = "Alching " + item.name;
-            }
-            Rs2Inventory.interact(item.name, "Cast");
-            sleepUntil(() -> Rs2Tab.getCurrentTab() == InterfaceTab.MAGIC, 5000);
-            System.out.println("Exiting highAlch() function");
-
-             */
         }
     }
 
@@ -657,8 +690,6 @@ public class Ras_highalcScript extends Script {
     }
 
     public long getInactivityTimer() {
-        //System.out.println("Entering getInactivityTimer() function");
-        //System.out.println("Exiting getInactivityTimer() function");
         return inactivityTimer.lastActiveTime;
     }
 
@@ -722,17 +753,16 @@ public class Ras_highalcScript extends Script {
         }
     }
     public void randomSleep(){
-        if (random(1, 60) == 1) {
+        if (random(1, 50) == 1) {
             System.out.println("sleep max 3sec");
-            sleep(2000,3000);
+            sleep(2000,5000);
         } else if (random(1,300) == 1) {
             System.out.println("sleep max 30sec");
             sleep(20000,30000);
 
-        } else if (random(1,3000) == 1) {
+        } else if (random(1,2000) == 1) {
             System.out.println("sleep max 10min");
             sleep(280000, 600000);
         }
-
     }
 }

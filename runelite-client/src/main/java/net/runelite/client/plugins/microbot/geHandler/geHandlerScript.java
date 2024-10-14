@@ -36,6 +36,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.Math.abs;
 import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
+import static net.runelite.client.plugins.microbot.util.math.Random.random;
+
 import java.util.logging.Logger;
 
 public class geHandlerScript extends Script {
@@ -79,6 +81,9 @@ public class geHandlerScript extends Script {
     public void shutdown() {
         super.shutdown();
     }
+    public static boolean goBuy(int[] amounts, String... itemNames) {
+        return goBuyAndReturn(amounts,false,false,10,true,itemNames);
+    }
     public static boolean goBuy(int[] amounts, int highBuyPercent, String... itemNames) {
         return goBuyAndReturn(amounts,false,false,highBuyPercent,true,itemNames);
     }
@@ -120,15 +125,15 @@ public class geHandlerScript extends Script {
             int loopCounter = 0;
             while (!Rs2GrandExchange.hasBoughtOffer()) { // break if buy limit exceeded
                 if (loopCounter > 0) {
-                    pricePerItem = (int) Math.ceil(pricePerItem + (pricePerItem * highBuyPercent / 100.0));
+                    pricePerItem = Math.max((int) Math.ceil(pricePerItem + (pricePerItem * highBuyPercent / 100.0)), pricePerItem + 10);
                 }
-
-                System.out.println("price: " + pricePerItem + "  amount: " + amounts[i] + "  item: " + itemNames[i]);
+                System.out.println("price: " + pricePerItem + "  amount: " + amounts[i] + "  item: " + itemNames[i] + " current attempt "+ loopCounter );
                 Microbot.log("isAllSlotsEmpty " + Rs2GrandExchange.isAllSlotsEmpty());
 
                 if (!Rs2GrandExchange.isAllSlotsEmpty()) { // always returns false
                     abortAllActiveOffers();
-                    Rs2GrandExchange.collectToBank();
+                    sleepUntilTrue(Rs2GrandExchange::collectToBank,100,800);
+                    //Rs2GrandExchange.collectToBank();
                 }
                 if (loopCounter == 10)
                     return yesbought;
@@ -173,7 +178,6 @@ public class geHandlerScript extends Script {
                         break;
                     }
                 }
-
                 loopCounter++;
             }
         }
@@ -193,16 +197,25 @@ public class geHandlerScript extends Script {
     public static void goSell(boolean returnAfterSell, int decreasePricePercent,boolean exactname, int[] amounts, String... itemNames) {
         Rs2Walker.setTarget(null);
         WorldPoint savedLocation = Rs2Player.getWorldLocation();
-        WorldPoint geLocation = new WorldPoint(3164, 3485, 0); // Coordinates for GE
-        while (Rs2Player.getWorldLocation().distanceTo(geLocation) > 5) {
-            Rs2Walker.walkTo(geLocation, 3);
-            Rs2Player.waitForWalking();
-        }
-        Rs2Bank.openBank();
+        WorldPoint geLocation = new WorldPoint(3162, 3487, 0); // Coordinates for GE
+           while (true) {
+               while (Rs2Player.getWorldLocation().distanceTo(geLocation) > 5) {
+                   Rs2Walker.walkTo(geLocation, 3);
+                   Rs2Player.waitForWalking();
+               }
+               if (Rs2Player.getWorldLocation().distanceTo(geLocation) <= 5) {
+                   Rs2Walker.walkCanvas(new WorldPoint(random(0, 5) + 3162, 3487, 0));
+                   sleep(499, 800);
+                   Rs2Bank.openBank();
+                   sleepUntilTrue(Rs2Bank::isOpen, 100, 3000);
+                   if (Rs2Bank.isOpen())
+                       break;
+               }
+           }
         sleep(280, 350);
         if (!Rs2Inventory.isEmpty()) { // if this cause problem then remove
             Rs2Bank.depositAll();
-            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+            sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
             sleep(280, 350);
         }
 
@@ -216,11 +229,11 @@ public class geHandlerScript extends Script {
             }
             else if (amounts[i] < 0) {
                 Rs2Bank.withdrawAll(itemNames[finalI],exactname);
-                sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                 Rs2Bank.depositX(itemNames[finalI],abs(amounts[i]));
             } else
                 Rs2Bank.withdrawX(false,itemNames[finalI], amounts[i],exactname);
-            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+            sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
         }
         Rs2Bank.closeBank();
         while (!Rs2GrandExchange.isOpen()) {
@@ -255,7 +268,7 @@ public class geHandlerScript extends Script {
         }
     }
 
-    public static int[] priceChecker(String itemName) {
+    public static int[] priceChecker(String itemName){
         int itemId = (int) Microbot.getClientThread().runOnClientThread(() -> {
             List<ItemPrice> items = Microbot.getItemManager().search(itemName);
             return items.stream()
@@ -299,15 +312,20 @@ public class geHandlerScript extends Script {
         }
         return abortedAny;
     }
-    public static boolean buyItemsWithRatio(long coins, double[] ratio, int limit,boolean collectInBank, String... itemNames) {
-        if (itemNames.length >1) {
+    public static boolean buyItemsWithRatio(long coins, double[] ratio, int limit, boolean collectInBank, String... itemNames) {
+        if (itemNames.length > 1) {
             Map<String, Integer> itemPrices = new HashMap<>();
             Map<String, Integer> itemsBought = new HashMap<>();
+            Map<String, Integer> itemBuyLimits = new HashMap<>(); // Map to store buy limits
 
+            // Initialize item prices and buy limits
             for (String itemName : itemNames) {
-                int pricePerItem = (int) (priceChecker(itemName)[0] * 1.25); // increase price by 25% for giving room to increase percentage
+                int pricePerItem = (int) (priceChecker(itemName)[0] * 1.25); // Increase price by 25%
                 itemPrices.put(itemName, pricePerItem);
                 itemsBought.put(itemName, 0);
+                int buyLimit = GELimits.getRemainingBuyLimit(itemName); // Get the buy limit for each item
+                if (buyLimit == 0) return false; // Return false if any item's buy limit is zero
+                itemBuyLimits.put(itemName, buyLimit);
             }
 
             double totalRatio = 0;
@@ -317,40 +335,50 @@ public class geHandlerScript extends Script {
             Map<String, Integer> initialItemsToBuy = new HashMap<>();
             boolean limitHit = false;
 
-            // Ensure at least one item hits the limit
+            // Calculate maximum quantities while considering the buy limits
             for (int i = 0; i < itemNames.length; i++) {
                 initialItemsToBuy.clear();
                 totalCost = 0;
+                int buyLimit = itemBuyLimits.get(itemNames[i]);
+
+                // Check if the current item hits the buy limit
                 for (int j = 0; j < itemNames.length; j++) {
                     String itemName = itemNames[j];
                     int pricePerItem = itemPrices.get(itemName);
                     double itemRatio = ratio[j];
                     int quantity;
                     if (i == j) {
-                        quantity = limit;
+                        quantity = Math.min(limit, buyLimit); // Use Math.min for the current item
                         limitHit = true;
                     } else {
-                        quantity = (int) Math.floor(limit * (itemRatio / ratio[i]));
+                        quantity = (int) Math.floor(Math.min(limit, buyLimit) * (itemRatio / ratio[i]));
                     }
                     initialItemsToBuy.put(itemName, quantity);
                     totalCost += quantity * pricePerItem;
                 }
-                if (totalCost <= coins) break;
+
+                if (totalCost <= coins) {
+                    break;
+                }
             }
 
-            // Ensure at least one item hits the limit
-            initialItemsToBuy.clear();
-            initialItemsToBuy.put(itemNames[1], limit);  // Set item2 to limit
-            totalCost = limit * itemPrices.get(itemNames[1]);
+            // If no item hit the buy limit in the above loop, manually enforce the buy limit for one item
+            if (!limitHit) {
+                initialItemsToBuy.clear();
+                String itemName = itemNames[1];
+                int buyLimit = itemBuyLimits.get(itemName);
+                initialItemsToBuy.put(itemName, Math.min(limit, buyLimit)); // Set item2 to limit or buyLimit
+                totalCost = initialItemsToBuy.get(itemName) * itemPrices.get(itemName);
 
-            // Calculate quantities for other items based on ratio
-            for (int i = 0; i < itemNames.length; i++) {
-                if (i == 1) continue;  // Skip item2 since it already hits the limit
-                String itemName = itemNames[i];
-                int pricePerItem = itemPrices.get(itemName);
-                int quantity = (int) Math.floor(limit * (ratio[i] / ratio[1]));
-                initialItemsToBuy.put(itemName, quantity);
-                totalCost += quantity * pricePerItem;
+                // Calculate quantities for other items based on ratio
+                for (int i = 0; i < itemNames.length; i++) {
+                    if (i == 1) continue; // Skip item2 since it already hits the limit
+                    itemName = itemNames[i];
+                    int pricePerItem = itemPrices.get(itemName);
+                    int quantity = (int) Math.floor(Math.min(limit, buyLimit) * (ratio[i] / ratio[1]));
+                    initialItemsToBuy.put(itemName, quantity);
+                    totalCost += quantity * pricePerItem;
+                }
             }
 
             // Adjust the quantities proportionally to fit within the remaining coins
@@ -362,16 +390,20 @@ public class geHandlerScript extends Script {
                 }
             }
 
+            // Update itemsBought and subtract cost from coins
             for (String itemName : itemNames) {
                 int itemsToBuyItem = initialItemsToBuy.get(itemName);
                 itemsBought.put(itemName, itemsToBuyItem);
                 coins -= itemsToBuyItem * itemPrices.get(itemName);
             }
+
+            // Adjust quantities to ensure even values if necessary
             for (int i = 0; i < itemNames.length; i++) {
                 if ((ratio[i] % 2 == 0) && (itemsBought.get(itemNames[i]) % 2 != 0)) {
                     itemsBought.put(itemNames[i], itemsBought.get(itemNames[i]) - 1);
                 }
             }
+
             // Print final results
             for (String itemName : itemNames) {
                 System.out.println(itemName + ": " + itemsBought.get(itemName) + " items bought at " + itemPrices.get(itemName) + " coins each.");
@@ -384,16 +416,15 @@ public class geHandlerScript extends Script {
                 amounts[i] = itemsBought.get(itemNames[i]);
             }
             return goBuyAndReturn(amounts, 5, collectInBank, itemNames);
+        } else {
+            String itemName = itemNames[0];
+            int pricePerItem = (int) priceChecker(itemName)[0];
+            int amount = (int) Math.min(Math.floor((double) coins / pricePerItem), limit);
+            System.out.println("price: " + pricePerItem + " amount: " + amount + " item: " + itemNames);
+            return goBuyAndReturn(new int[]{amount}, true, true, 10, collectInBank, itemNames);
         }
-        else{
-           String itemName = itemNames[0];
-           int pricePerItem = (int) priceChecker(itemName)[0];
-           int amount = (int) Math.min(Math.floor((double) coins /pricePerItem),limit);
-            System.out.println("price: " + pricePerItem +" amount: "+amount  +" item: "+itemNames);
-           return goBuyAndReturn(new int[]{amount},true,true, 5, collectInBank, itemNames);
-        }
-
     }
+
     public static void fetchPriceData() throws Exception {
         System.out.println("Entering fetchPriceData() function");
         HttpRequest request = HttpRequest.newBuilder()
@@ -426,6 +457,7 @@ public class geHandlerScript extends Script {
             throw new IllegalArgumentException("No data found for ID " + id);
         }
         //System.out.println("Exiting getHighPriceForId() function");
-        return itemData.path("high").asInt();
+        //return itemData.path("high").asInt();
+        return Math.max(itemData.path("high").asInt(), itemData.path("low").asInt());
     }
 }

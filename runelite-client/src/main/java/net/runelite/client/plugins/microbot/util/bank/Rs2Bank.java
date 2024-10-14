@@ -1292,7 +1292,7 @@ public class Rs2Bank {
      */
     public static boolean setWithdrawAsNote() {
         if (hasWithdrawAsNote()) return true;
-        Rs2Widget.clickWidget(786456);
+        Rs2Widget.clickWidget(786458);
         sleep(600);
         return hasWithdrawAsNote();
     }

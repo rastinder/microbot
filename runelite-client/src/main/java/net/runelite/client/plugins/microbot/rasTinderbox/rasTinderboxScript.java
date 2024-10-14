@@ -24,6 +24,7 @@ import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript.randomSleep;
 import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
 import static net.runelite.client.plugins.microbot.util.math.Random.random;
 
@@ -47,7 +48,7 @@ public class rasTinderboxScript extends Script {
                 if (stopTimer == 1)
                     stopTimer = rasMasterScriptScript.autoStopTimer();
                 long startTime = System.currentTimeMillis();
-
+                randomSleep();
                 if (Rs2Inventory.isFull() ){
                    // if (Rs2GameObject.interact(doorLocation,"Open"))
                    //     Rs2Player.waitForAnimation();
@@ -56,7 +57,7 @@ public class rasTinderboxScript extends Script {
                     Rs2Bank.openBank();
                     sleepUntilTrue(Rs2Bank::isOpen,100,10000);
                     Rs2Bank.depositAll();
-                    sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                    sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                     if (stopTimer < System.currentTimeMillis()){
                         geHandlerScript.goSell(false,5,new int[]{-1},"Tinderbox");
                         shutdown();
@@ -75,7 +76,7 @@ public class rasTinderboxScript extends Script {
                     // collect from ground
                     while (!Rs2Inventory.isFull()) {
                         Rs2GroundItem.loot(590);
-                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                        sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                     }
 
 

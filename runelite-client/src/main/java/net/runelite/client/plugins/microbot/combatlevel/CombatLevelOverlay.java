@@ -22,30 +22,29 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.combatlevel;
+package net.runelite.client.plugins.microbot.combatlevel;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.Experience;
 import net.runelite.api.Skill;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.client.plugins.combatlevel.CombatLevelConfig;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.tooltip.Tooltip;
 import net.runelite.client.ui.overlay.tooltip.TooltipManager;
 import net.runelite.client.util.ColorUtil;
 
-public class CombatLevelOverlay extends Overlay
+import javax.inject.Inject;
+import java.awt.*;
+
+class CombatLevelOverlay extends Overlay
 {
 	private static final Color COMBAT_LEVEL_COLOUR = new Color(0xff981f);
 
 	private final Client client;
-	private final CombatLevelConfig config;
+	private final net.runelite.client.plugins.combatlevel.CombatLevelConfig config;
 	private final TooltipManager tooltipManager;
 
 	@Inject

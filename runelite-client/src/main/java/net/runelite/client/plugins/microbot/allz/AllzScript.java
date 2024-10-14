@@ -249,7 +249,7 @@ public class AllzScript extends Script {
         }
         if (!Rs2Inventory.isEmpty()) {
             Rs2Bank.depositAll();
-            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+            sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
         }
         while (!Rs2Inventory.isEmpty()) {
             if (Rs2Inventory.contains("Antique lamp")){
@@ -341,7 +341,7 @@ public class AllzScript extends Script {
             boolean  hasAxe1 = Rs2Inventory.get("pickaxe", false) != null;
             while (!hasAxe1) {
                 Rs2Bank.withdrawItem("pickaxe");
-                sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                 hasAxe1 = Rs2Inventory.get("pickaxe", false) != null;
             }
             Rs2Bank.closeBank();
@@ -382,7 +382,7 @@ public class AllzScript extends Script {
             System.out.println("Waiting for quest to complete...");
             if (Rs2Inventory.contains("Bronze pickaxe")){
                 Rs2Inventory.interact("Bronze pickaxe","Wield");
-                sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
             }
             if(isWithinXDistanceOfPlayer(new WorldPoint(2951, 5771, 0),10)){
                 Rs2Tab.switchToCombatOptionsTab();
@@ -749,7 +749,7 @@ public class AllzScript extends Script {
             boolean  hasAxe1 = Rs2Inventory.get("Spade", false) != null;
             while (!hasAxe1) {
                 Rs2Bank.withdrawX("Spade", 1);
-                sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                 hasAxe1 = Rs2Inventory.get("Spade", false) != null;
             }
             if (Rs2Inventory.contains("Spade")){
@@ -766,7 +766,7 @@ public class AllzScript extends Script {
             sleepTillAnimationStop();
             while(!Rs2Inventory.contains("Spade")){
                 Rs2GroundItem.interact("Spade","Take");
-                sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                 while(Rs2Player.isAnimating() || Rs2Player.isInteracting() || Rs2Player.isMoving()){
                     sleep(1000);
                 }

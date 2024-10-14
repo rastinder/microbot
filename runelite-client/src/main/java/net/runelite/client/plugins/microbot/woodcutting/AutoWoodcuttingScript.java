@@ -27,6 +27,9 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript.randomSleep;
+import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
+
 enum State {
     RESETTING,
     WOODCUTTING,
@@ -63,7 +66,7 @@ public class AutoWoodcuttingScript extends Script {
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
                 if(Rs2AntibanSettings.actionCooldownActive) return;
-
+                randomSleep();
                 if (initialPlayerLocation == null) {
                     initialPlayerLocation = Rs2Player.getWorldLocation();
                 }
@@ -164,7 +167,7 @@ public class AutoWoodcuttingScript extends Script {
             else if (Rs2Inventory.get("log") !=null) {
                 Rs2Inventory.use(Rs2Inventory.get("log"));
             }
-            sleepUntil(Rs2Inventory::waitForInventoryChanges);
+            sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)),100,2000);
         }
         sleepUntil(() -> !isFiremake() && !Rs2Player.isStandingOnGameObject() && !Rs2Player.isStandingOnGroundItem(), 3500);
         return true;
@@ -217,13 +220,14 @@ public class AutoWoodcuttingScript extends Script {
         Rs2Walker.walkTo(new WorldPoint(calculateReturnPoint(config).getX() - Random.random(-1, 1), calculateReturnPoint(config).getY() - Random.random(-1, 1), calculateReturnPoint(config).getPlane()));
         sleepUntil(() -> Rs2Player.getWorldLocation().distanceTo(calculateReturnPoint(config)) <= 4);
     }
+
     public static WoodcuttingTree getTreeByLevel() {
         int level = Rs2Player.getRealSkillLevel(Skill.WOODCUTTING);
         WoodcuttingTree bestTree = null;
         for (WoodcuttingTree tree : WoodcuttingTree.values()) {
             if (tree.getWoodcuttingLevel() <= level) {
-                if (Rs2GameObject.get(tree.getName() ,false)!= null){
-                    if (Rs2GameObject.findObject(tree.getName(),true,100,false,Rs2Player.getWorldLocation())!= null)
+                if (Rs2GameObject.get(tree.getName(), false) != null) {
+                    if (Rs2GameObject.findObject(tree.getName(), true, 100, false, Rs2Player.getWorldLocation()) != null)
                         bestTree = tree;
                     }
             } else {

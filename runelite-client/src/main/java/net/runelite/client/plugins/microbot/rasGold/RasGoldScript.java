@@ -17,6 +17,7 @@ import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.TimeUnit;
 
+import static net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript.randomSleep;
 import static net.runelite.client.plugins.microbot.util.Global.sleepUntilTrue;
 
 
@@ -36,8 +37,7 @@ public class RasGoldScript extends Script {
                 boolean hasBars = Rs2Inventory.hasItem(config.getBarName());
                 boolean hasStone = !(config.stoneNeeded() && !Rs2Inventory.hasItem(config.stoneProductName()));
                 boolean hasMould = !(config.mouldNeeded() && !Rs2Inventory.hasItem(config.mouldProductName()));
-
-
+                randomSleep();
                 if (hasRunEnergy) Rs2Player.toggleRunEnergy(true);
                 if (Microbot.pauseAllScripts) return;
 
@@ -67,7 +67,7 @@ public class RasGoldScript extends Script {
                 if (!hasBars && isBankVisible) {
                     if (Rs2Bank.isOpen()) {
                         Rs2Bank.depositAll(config.finishedProductName());
-                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                        sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                         sleep(200, 400);
                         if (Rs2Bank.hasItem(config.getBarName())) {
                             Rs2Bank.withdrawX(config.getBarName(), config.getBarCount());

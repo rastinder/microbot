@@ -16,7 +16,7 @@ public class ExampleScript extends Script {
         Microbot.enableAutoRunOn = false;
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
-                if (rasMasterScriptScript.autoShutdown("example"))
+                if (rasMasterScriptScript.autoShutdown("rasshoppingScript"))
                     return;
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;

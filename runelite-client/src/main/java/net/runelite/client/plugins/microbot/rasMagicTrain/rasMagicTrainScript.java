@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import java.util.stream.Collectors;
 
+import static net.runelite.client.plugins.microbot.rasMasterScript.rasMasterScriptScript.randomSleep;
 import static net.runelite.client.plugins.microbot.raschoclatebar.raschoclatebarScript.waitForAnimationStop;
 import static net.runelite.client.plugins.microbot.util.Global.*;
 import static net.runelite.client.plugins.microbot.util.math.Random.random;
@@ -69,6 +70,7 @@ public class rasMagicTrainScript extends Script {
                 if (!super.run()) return;
                 if (stopTimer == 1)
                     stopTimer = rasMasterScriptScript.autoStopTimer();
+                randomSleep();
                 long startTime = System.currentTimeMillis();
                 System.out.println("magic level " + Rs2Player.getRealSkillLevel(Skill.MAGIC));
                 if(!Rs2Player.isInteracting()) {
@@ -535,7 +537,7 @@ public class rasMagicTrainScript extends Script {
             if (!Rs2Equipment.hasEquippedContains(staffName)) {
                 if (Rs2Bank.hasItem(staffName)) {
                     Rs2Bank.withdrawX(staffName, 1);
-                    sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                    sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                     sleep(110, 280);
                     if (Rs2Inventory.hasItem(staffName)) {
                         Wield = true;

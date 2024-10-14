@@ -1,4 +1,4 @@
-package net.runelite.client.plugins.microbot.example;
+package net.runelite.client.plugins.microbot.rasCombatTrain;
 
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.ui.overlay.OverlayPanel;
@@ -7,13 +7,11 @@ import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.TitleComponent;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.awt.*;
 
-public class ExampleOverlay extends OverlayPanel {
-
+public class rasCombatTrainOverlay extends OverlayPanel {
     @Inject
-    ExampleOverlay(ExamplePlugin plugin)
+    rasCombatTrainOverlay(rasCombatTrainPlugin plugin)
     {
         super(plugin);
         setPosition(OverlayPosition.TOP_LEFT);
@@ -24,7 +22,7 @@ public class ExampleOverlay extends OverlayPanel {
         try {
             panelComponent.setPreferredSize(new Dimension(200, 300));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text(getPlugin().getName())
+                    .text("Combat train" + rasCombatTrainScript.version)
                     .color(Color.GREEN)
                     .build());
 
@@ -33,10 +31,6 @@ public class ExampleOverlay extends OverlayPanel {
             panelComponent.getChildren().add(LineComponent.builder()
                     .left(Microbot.status)
                     .build());
-            panelComponent.getChildren().add(LineComponent.builder()
-                    .left("Shutdown in: " + (ExampleScript.stopTimer / 60000) + " minutes")
-                    .build());
-
 
 
         } catch(Exception ex) {

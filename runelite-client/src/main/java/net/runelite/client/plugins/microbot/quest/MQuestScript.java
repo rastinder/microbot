@@ -75,7 +75,6 @@ public class MQuestScript extends Script {
             return null;
         }
     }
-    public static double version = 0.3;
 
     public static boolean isWithinXDistanceOfPlayer(WorldPoint targetPoint, int distance) {
         WorldPoint playerLocation = Rs2Player.getWorldLocation();
@@ -589,7 +588,7 @@ public class MQuestScript extends Script {
                     }
                     while (!(Rs2Inventory.count("Clay")>6)) {
                         Rs2GameObject.interact("Clay rocks");
-                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                        sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                         while (Rs2Player.isAnimating() || Rs2Player.isInteracting() || Rs2Player.isMoving()) {
                             sleep(1000);
                         }
@@ -605,7 +604,7 @@ public class MQuestScript extends Script {
                     }
                     while (!(Rs2Inventory.count("Clay")>6)) {
                         Rs2GameObject.interact("Clay rocks");
-                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                        sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                         while (Rs2Player.isAnimating() || Rs2Player.isInteracting() || Rs2Player.isMoving()) {
                             sleep(1000);
                         }
@@ -623,7 +622,7 @@ public class MQuestScript extends Script {
                     }
                     while (!(Rs2Inventory.count("Copper ore")>4)) {
                         Rs2GameObject.interact("Copper rocks");
-                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                        sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                         while (Rs2Player.isAnimating() || Rs2Player.isInteracting() || Rs2Player.isMoving()) {
                             sleep(1000);
                         }
@@ -639,7 +638,7 @@ public class MQuestScript extends Script {
                     }
                     while (!(Rs2Inventory.count("Copper ore")>4)) {
                         Rs2GameObject.interact("Copper rocks");
-                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                        sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                         while (Rs2Player.isAnimating() || Rs2Player.isInteracting() || Rs2Player.isMoving()) {
                             sleep(1000);
                         }
@@ -688,7 +687,7 @@ public class MQuestScript extends Script {
                     }
                     while (!(Rs2Inventory.count("Iron ore")>4)) {
                         Rs2GameObject.interact("Iron rocks");
-                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                        sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                         while (Rs2Player.isAnimating() || Rs2Player.isInteracting() || Rs2Player.isMoving()) {
                             sleep(1000);
                         }
@@ -704,7 +703,7 @@ public class MQuestScript extends Script {
                     }
                     while (!(Rs2Inventory.count("Iron ore")>4)) {
                         Rs2GameObject.interact("Iron rocks");
-                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                        sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                         while (Rs2Player.isAnimating() || Rs2Player.isInteracting() || Rs2Player.isMoving()) {
                             sleep(1000);
                         }
@@ -773,7 +772,7 @@ public class MQuestScript extends Script {
             }
             while(!Rs2Inventory.contains("Onion")){
                 Rs2GameObject.interact("onion","Pick");
-                sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
             }
 
         }
@@ -795,7 +794,7 @@ public class MQuestScript extends Script {
                 Rs2Npc.interact("Betty","Trade");
                 sleepUntil(Rs2Shop::isOpen, 5000);
                 Rs2Shop.buyItem("Eye of newt","1");
-                sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                 /*
                 NewMenuEntry menuEntry = new NewMenuEntry(
                         "Buy 1",                   // Option
@@ -832,10 +831,10 @@ public class MQuestScript extends Script {
             Rs2Walker.walkFastCanvas(targetTile);
             sleepTillAnimationStop();
             Rs2GameObject.interact(1276,"Chop down");
-            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+            sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
             while( !Rs2Inventory.contains(1511)){
                 Rs2GameObject.interact(1276,"Chop down");
-                sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
             }
             }
             WorldPoint targetTile = new WorldPoint(2920, 3288, 0);
@@ -853,7 +852,7 @@ public class MQuestScript extends Script {
                 }
                 sleep(2000);
                 Rs2GroundItem.interact("raw beef", "Take");
-                sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
             }
                  Rs2Inventory.use(1511);
                 sleep(2000);
@@ -965,7 +964,7 @@ public class MQuestScript extends Script {
                         int randomIndex = random.nextInt(SheepIDtoShear.length);
                         int selectedNumber = SheepIDtoShear[randomIndex];
                         Rs2Npc.interact(selectedNumber,"Shear");
-                        sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                        sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                     }
                 }
 
@@ -1025,7 +1024,7 @@ public class MQuestScript extends Script {
                     sleep(1000);
                 }
                 Rs2GroundItem.interact("bucket","Take");
-                sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                 while(!Rs2GroundItem.exists("egg", 5)){
                     sleep(1000);
                 }
@@ -1048,7 +1047,7 @@ public class MQuestScript extends Script {
                         sleepTillAnimationStop();
                     }
                     Rs2GroundItem.interact("egg","Take");
-                    sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                    sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                     if (Rs2Inventory.contains("egg")){
                         break;
                     }
@@ -1098,12 +1097,12 @@ public class MQuestScript extends Script {
         }
         }
         sleep(3000);
-            while (!Rs2GroundItem.exists(1931,5)){
+            while (!Rs2GroundItem.take(1931)){
                 sleep(1000);
             }
             while(!Rs2Inventory.contains(1931)){
                 Rs2GroundItem.interact("pot","Take");
-                sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
             }
 
             Rs2Walker.walkTo(new WorldPoint(3161,3295,0),10);
@@ -1116,7 +1115,7 @@ public class MQuestScript extends Script {
                 sleepTillAnimationStop();
             }
             Rs2GameObject.interact(15506,"Pick");
-            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 300, 5000);
+            sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 300, 5000);
 
 
         }
@@ -1144,9 +1143,9 @@ public class MQuestScript extends Script {
             // Perform the desired actions
 
             Rs2GameObject.interact("onion","Pick");
-            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+            sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
             Rs2GameObject.interact("onion","Pick");
-            sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+            sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
         }
 
         }
@@ -1190,9 +1189,9 @@ public class MQuestScript extends Script {
 
                 // Perform the desired actions
                 Rs2GameObject.interact("redberry","Pick");
-                sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                 Rs2GameObject.interact("redberry","Pick");
-                sleepUntilTrue(Rs2Inventory::waitForInventoryChanges, 100, 5000);
+                sleepUntilTrue(()->Rs2Inventory.waitForInventoryChanges(() -> sleep(100)) , 100, 5000);
                 if (((Rs2Inventory.count("Onion") >= 2) &&(Rs2Inventory.hasItemAmount("woad leaf",2,true)) && ((Rs2Inventory.hasItemAmount("redberries",3,false))))){
                     dyesItemsCollected = true;
                 }

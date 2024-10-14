@@ -11,7 +11,7 @@ import javax.inject.Inject;
 import java.awt.*;
 
 @PluginDescriptor(
-        name = PluginDescriptor.Default + "0",
+        name = PluginDescriptor.Default + "Ras Red die",
         description = "Ras da plugin",
         tags = {"Ras", "microbot"},
         enabledByDefault = false
